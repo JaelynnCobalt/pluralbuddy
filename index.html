@@ -6,87 +6,48 @@
 <title>System Master Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root {
---bg: #fff0f6;
---panel: #ffffff;
---soft-pink: #ffdeeb;
---magenta: #ff00ff;
---front-gold: #fff9c4;
---sidekick-blue: #e3f2fd;
-}
-
+:root { --bg: #fff0f6; --panel: #ffffff; --soft-pink: #ffdeeb; --magenta: #ff00ff; --front-gold: #fff9c4; }
 * { font-family: 'Georgia', serif; box-sizing: border-box; color: var(--magenta); }
 body { background-color: var(--bg); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
-h1, h2, h3, h4 { color: var(--magenta) !important; }
+h1, h2, h3 { color: var(--magenta) !important; }
 
-#auth-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80vh; width: 100%; }
-.auth-card { background: white; padding: 40px; border-radius: 30px; border: 3px solid var(--magenta); box-shadow: 0 15px 35px rgba(255, 0, 255, 0.1); text-align: center; max-width: 400px; width: 100%; }
 #dashboard { display: none; width: 100%; max-width: 1100px; }
-
 nav { margin-bottom: 30px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-
-.tab-btn { 
-    padding: 10px 20px; 
-    border: 2px solid var(--magenta); 
-    background: white; 
-    cursor: pointer; 
-    border-radius: 50px; 
-    font-weight: bold; 
-    transition: 0.3s; 
-    font-size: 0.9rem;
-}
+.tab-btn, .nav-link { padding: 10px 20px; border: 2px solid var(--magenta); background: white; cursor: pointer; border-radius: 50px; font-weight: bold; transition: 0.3s; text-decoration: none; font-size: 0.9rem; }
 .tab-btn.active { background: var(--magenta); color: white !important; }
-.tab-btn:hover { background: var(--soft-pink); }
 
 .view-section { display: none; width: 100%; }
 .view-section.active { display: block; }
-
 section, .card { background: var(--panel); padding: 20px; border-radius: 20px; border: 2px solid var(--soft-pink); box-shadow: 0 10px 25px rgba(255, 0, 255, 0.05); margin-bottom: 20px; }
-input, textarea, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid var(--soft-pink); border-radius: 10px; background: white; }
-.main-btn { background: var(--magenta); color: white !important; border: none; padding: 12px; border-radius: 10px; cursor: pointer; width: 100%; font-size: 1rem; }
+input, textarea, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid var(--soft-pink); border-radius: 10px; }
+.main-btn { background: var(--magenta); color: white !important; border: none; padding: 12px; border-radius: 10px; cursor: pointer; width: 100%; font-size: 1rem; font-weight: bold; }
 
-#toast { visibility: hidden; min-width: 250px; background-color: var(--magenta); color: #fff; text-align: center; border-radius: 50px; padding: 16px; position: fixed; z-index: 1000; bottom: 30px; font-weight: bold; }
+/* OVERVIEW DIRECTORY STYLES */
+.directory-card { border-left: 10px solid; display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; }
+
+/* PROFILE GRID */
+.grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+.profile-card { border-top: 10px solid; position: relative; display: flex; flex-direction: column; }
+.pfp-img { width: 120px; height: 120px; border-radius: 15px; object-fit: cover; border: 3px solid var(--soft-pink); align-self: center; margin-bottom: 15px; }
+.detail-label { font-weight: bold; font-size: 0.7rem; text-transform: uppercase; margin-top: 10px; opacity: 0.7; }
+.detail-text { font-size: 0.95rem; font-weight: bold; white-space: pre-wrap; margin: 0; }
+.mini-btn { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--soft-pink); cursor: pointer; background: white; font-size: 0.8rem; margin-top: 5px; font-weight: bold; }
+
+/* FRONTING */
+.fronting-box { background: var(--front-gold); border: 2px dashed var(--magenta); padding: 25px; border-radius: 20px; text-align: center; margin-bottom: 20px; }
+.front-card-mini { background: white; padding: 10px 15px; border-radius: 15px; border: 2px solid; display: flex; align-items: center; gap: 12px; position: relative; }
+.remove-front-btn { position: absolute; top: -8px; right: -8px; background: white; border: 2px solid; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; }
+
+/* OVERLAY */
+#profile-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 240, 246, 0.98); z-index: 9999; overflow-y: auto; padding: 20px; }
+.overlay-content { max-width: 1000px; margin: 40px auto; background: white; padding: 30px; border-radius: 30px; border: 3px solid var(--magenta); position: relative; }
+.close-overlay { position: absolute; top: 20px; right: 25px; font-size: 40px; cursor: pointer; }
+.floating-chat-link { position: fixed; bottom: 30px; right: 30px; background: var(--magenta); color: white !important; padding: 15px 25px; border-radius: 50px; text-decoration: none; font-weight: bold; box-shadow: 0 10px 20px rgba(255, 0, 255, 0.3); z-index: 10001; }
+
+#toast { visibility: hidden; min-width: 250px; background-color: var(--magenta); color: #fff; text-align: center; border-radius: 50px; padding: 16px; position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); }
 #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
 @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
 @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
-
-.grid-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-.profile-card { display: flex; flex-direction: column; padding: 20px; height: 100%; }
-.pfp-img { width: 120px; height: 120px; border-radius: 15px; object-fit: cover; border: 3px solid var(--soft-pink); align-self: center; margin-bottom: 15px; }
-.detail-label { font-weight: bold; font-size: 0.7rem; text-transform: uppercase; margin-top: 10px; display: block; opacity: 0.7; }
-.detail-text { font-size: 0.95rem; margin: 0; word-wrap: break-word; font-weight: bold; white-space: pre-wrap; }
-.mini-btn { width: 100%; padding: 6px; border-radius: 8px; border: 1px solid var(--soft-pink); cursor: pointer; background: white; font-size: 0.8rem; margin-top: 5px;}
-
-.sidekick-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
-.sidekick-card { border: 2px solid var(--soft-pink); border-radius: 15px; padding: 15px; margin-bottom: 10px; background: white; position: relative; transition: 0.2s; cursor: pointer; }
-.sidekick-card:hover { border-color: var(--magenta); transform: translateY(-2px); }
-.status-dot { width: 12px; height: 12px; border-radius: 50%; background: #ccc; display: inline-block; margin-right: 8px; border: 2px solid white; }
-.status-dot.active { background: #00ff00; box-shadow: 0 0 8px #00ff00; }
-
-#profile-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 240, 246, 0.98); z-index: 9999; overflow-y: auto; padding: 20px; }
-.overlay-content { max-width: 1000px; margin: 40px auto; background: white; padding: 30px; border-radius: 30px; border: 3px solid var(--magenta); position: relative; }
-.close-overlay { position: absolute; top: 20px; right: 25px; font-size: 40px; cursor: pointer; color: var(--magenta); }
-
-.floating-chat-link { position: fixed; bottom: 30px; right: 30px; background: var(--magenta); color: white !important; padding: 15px 25px; border-radius: 50px; text-decoration: none; font-weight: bold; box-shadow: 0 10px 20px rgba(255, 0, 255, 0.3); z-index: 10001; }
-
-.chat-interface { display: flex; height: 500px; border: 1px solid var(--soft-pink); border-radius: 15px; overflow: hidden; background: white; }
-.chat-sidebar { width: 220px; background: var(--bg); border-right: 1px solid var(--soft-pink); display: flex; flex-direction: column; padding: 10px; }
-.channel-list { flex: 1; overflow-y: auto; }
-.channel-item { padding: 8px 12px; margin-bottom: 5px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; }
-.channel-item.active { background: var(--magenta); color: white !important; }
-.chat-main { flex: 1; display: flex; flex-direction: column; padding: 15px; background: #fffafa; }
-#chat-display { flex: 1; overflow-y: auto; margin-bottom: 15px; display: flex; flex-direction: column; gap: 10px; padding: 10px; }
-.chat-msg { display: flex; gap: 12px; align-items: flex-start; padding: 10px; border-radius: 12px; background: white; border: 1px solid var(--soft-pink); }
-.chat-pfp { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid currentColor; }
-
-.fronting-box { background: var(--front-gold); border: 2px dashed var(--magenta); padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 20px; }
-.front-card-mini { background: white; padding: 10px; border-radius: 15px; border: 2px solid var(--magenta); display: flex; align-items: center; gap: 10px; position: relative;}
-.front-pfp { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid currentColor; }
-.remove-front-btn { background: white; border: 1px solid currentColor; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; position: absolute; top: -5px; right: -5px;}
-
-table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; }
-th { background: var(--soft-pink); padding: 12px; text-align: left; }
-td { padding: 12px; border-bottom: 1px solid var(--soft-pink); }
 </style>
 </head>
 <body>
@@ -97,18 +58,17 @@ td { padding: 12px; border-bottom: 1px solid var(--soft-pink); }
     <div class="overlay-content">
         <span class="close-overlay" onclick="closeOverlay()">&times;</span>
         <div id="overlay-body"></div>
-        <a href="chat.html" class="floating-chat-link">🌍 Global Chat</a>
+        <a href="chat.html" class="floating-chat-link">💬 Open Global Chat</a>
     </div>
 </div>
 
 <div id="auth-screen">
-    <div class="auth-card">
-        <h1 id="auth-title">System Entry</h1>
-        <input type="email" id="email-input" placeholder="Email address...">
-        <input type="password" id="passcode-input" placeholder="Password...">
-        <button class="main-btn" id="auth-btn" onclick="handleAuth()">Login</button>
-        <p id="switch-auth" style="font-size: 0.8rem; margin-top: 15px; cursor: pointer;" onclick="toggleAuthMode()">No account? Register</p>
-    </div>
+    <section class="card" style="max-width: 400px; margin: 100px auto; text-align: center;">
+        <h1>System Entry</h1>
+        <input type="email" id="email-input" placeholder="Email">
+        <input type="password" id="passcode-input" placeholder="Password">
+        <button class="main-btn" onclick="handleAuth()">Login / Register</button>
+    </section>
 </div>
 
 <div id="dashboard">
@@ -116,33 +76,34 @@ td { padding: 12px; border-bottom: 1px solid var(--soft-pink); }
         <button class="tab-btn active" id="btn-overview" onclick="showTab('overview')">Overview</button>
         <button class="tab-btn" id="btn-profiles" onclick="showTab('profiles')">Profiles</button>
         <button class="tab-btn" id="btn-sidekicks" onclick="showTab('sidekicks')">Sidekicks</button>
-        <button class="tab-btn" id="btn-chat" onclick="showTab('chat')">Internal Chat</button>
-        <button class="tab-btn" id="btn-history" onclick="showTab('history')">History</button>
+        <a href="internal.html" class="nav-link">🏠 Internal Chat</a>
         <button class="tab-btn" style="border-color: #aaa; color: #aaa;" onclick="logout()">Logout</button>
     </nav>
 
     <div id="overview" class="view-section active">
         <section>
             <h1 id="view-sys-name">System Name</h1>
-            <p id="view-sys-bio">Description...</p>
-            <div style="display: flex; gap: 10px;">
-                <input type="text" id="edit-sys-name" placeholder="Update Name">
-                <input type="text" id="edit-sys-bio" placeholder="Update Bio">
-                <button class="main-btn" onclick="updateSystemInfo()" style="width: 120px;">Save</button>
+            <p id="view-sys-bio">Bio loading...</p>
+            <div style="display: flex; gap: 10px; margin-top:15px;">
+                <input type="text" id="edit-sys-name" placeholder="System Name" style="flex:1">
+                <input type="text" id="edit-sys-bio" placeholder="System Bio" style="flex:2">
+                <button class="mini-btn" onclick="updateSystemInfo()" style="width: 80px;">Save</button>
             </div>
-            <div style="margin-top: 10px;">
-                <label style="font-size: 0.7rem; font-weight: bold;">YOUR SYSTEM USERNAME:</label>
+            <div style="margin-top: 15px;">
+                <label style="font-size: 0.7rem; font-weight: bold;">SYSTEM USERNAME:</label>
                 <div style="display: flex; gap: 10px;">
-                    <input type="text" id="edit-username" placeholder="Unique username">
+                    <input type="text" id="edit-username" placeholder="Username">
                     <button class="mini-btn" onclick="updateUsername()" style="width: 100px;">Set</button>
                 </div>
             </div>
         </section>
+
         <div class="fronting-box">
             <h3 style="margin-top:0">Currently Fronting</h3>
-            <div id="fronting-display" style="display:flex; flex-wrap:wrap; justify-content:center; gap:15px;">No one is fronting.</div>
+            <div id="fronting-display" style="display:flex; flex-wrap:wrap; justify-content:center; gap:15px;"></div>
         </div>
-        <h3>Directory</h3>
+
+        <h3>System Directory</h3>
         <div id="overview-list"></div>
     </div>
 
@@ -154,9 +115,12 @@ td { padding: 12px; border-bottom: 1px solid var(--soft-pink); }
                 <input type="text" id="name" placeholder="Name">
                 <input type="text" id="pronouns" placeholder="Pronouns">
                 <input type="text" id="role" placeholder="Role">
-                <div><label style="font-size: 0.7rem;">Theme Color:</label><input type="color" id="color" value="#ff00ff"></div>
                 <input type="text" id="fandoms" placeholder="Fandoms">
-                <textarea id="bio" placeholder="Bio (Description...)" style="grid-column: span 2; height: 80px;"></textarea>
+                <div style="grid-column: span 2;">
+                    <label style="font-size: 0.7rem; font-weight:bold;">Theme Color:</label>
+                    <input type="color" id="color" value="#ff00ff">
+                </div>
+                <textarea id="bio" placeholder="Bio..." style="grid-column: span 2; height: 100px;"></textarea>
                 <input type="file" id="pfp" accept="image/*" style="grid-column: span 2;">
             </div>
             <button class="main-btn" onclick="saveAlter()" style="margin-top:10px;">Save Alter</button>
@@ -166,52 +130,17 @@ td { padding: 12px; border-bottom: 1px solid var(--soft-pink); }
     </div>
 
     <div id="sidekicks" class="view-section">
-        <div class="sidekick-grid">
+        <div style="display:grid; grid-template-columns: 1fr 2fr; gap:20px;">
             <section>
-                <h3>Add a Buddy</h3>
-                <input type="text" id="sidekick-search" placeholder="Enter username...">
+                <h3>Add Buddy</h3>
+                <input type="text" id="sidekick-search" placeholder="Username...">
                 <button class="main-btn" onclick="addSidekick()">Add Sidekick</button>
             </section>
             <section>
                 <h3>My Sidekicks</h3>
-                <div id="sidekicks-list">Loading buddies...</div>
+                <div id="sidekicks-list"></div>
             </section>
         </div>
-    </div>
-
-    <div id="chat" class="view-section">
-        <section>
-            <h2 id="current-channel-title">Internal Chat</h2>
-            <div class="chat-interface">
-                <div class="chat-sidebar">
-                    <div id="channel-list" class="channel-list"></div>
-                    <button class="mini-btn" onclick="addChannel()">+ New Room</button>
-                </div>
-                <div class="chat-main">
-                    <div id="chat-display"></div>
-                    <div style="display: flex; gap: 10px; align-items: flex-end;">
-                        <div style="flex: 1;">
-                            <select id="chat-speaker"></select>
-                            <textarea id="chat-input" placeholder="Type a message..." style="height: 50px;"></textarea>
-                        </div>
-                        <button class="main-btn" onclick="sendMessage()" style="width: 80px; height: 50px;">Send</button>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </div>
-
-    <div id="history" class="view-section">
-        <section>
-            <h2>Fronting History</h2>
-            <div style="overflow-x: auto;">
-                <table>
-                    <thead><tr><th>Name</th><th>Status</th><th>Started</th><th>Ended</th><th>Total Time</th></tr></thead>
-                    <tbody id="history-log"></tbody>
-                </table>
-            </div>
-            <button class="mini-btn" style="width:auto; margin-top:20px;" onclick="clearHistory()">Clear All History</button>
-        </section>
     </div>
 </div>
 
@@ -220,36 +149,26 @@ const SB_URL = 'https://ctrbkrwiwpojbzfpsxwl.supabase.co';
 const SB_KEY = 'sb_publishable_uK-ihohO48o6BPRW8rmDqQ_LbJnfTI7';
 const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
-let isRegisterMode = false;
-let systemData = {
-    name: "System Name", bio: "Bio...", members: [], history: [],
-    channels: { "general": [] }, activeChannel: "general"
-};
-
-function toggleAuthMode() {
-    isRegisterMode = !isRegisterMode;
-    document.getElementById('auth-title').innerText = isRegisterMode ? "Register System" : "System Entry";
-    document.getElementById('switch-auth').innerText = isRegisterMode ? "Login instead" : "No account? Register";
-}
+let systemData = { name: "System Name", bio: "Bio...", members: [] };
 
 async function handleAuth() {
     const email = document.getElementById('email-input').value;
-    const pass = document.getElementById('passcode-input').value;
-    if(isRegisterMode) await _supabase.auth.signUp({ email, password: pass });
-    else await _supabase.auth.signInWithPassword({ email, password: pass });
+    const password = document.getElementById('passcode-input').value;
+    const { error } = await _supabase.auth.signInWithPassword({ email, password });
+    if (error) await _supabase.auth.signUp({ email, password });
     location.reload();
 }
 
-async function loadSystemData() {
+async function loadData() {
     const { data: { user } } = await _supabase.auth.getUser();
     if (!user) return;
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('dashboard').style.display = 'block';
-
+    
     const { data } = await _supabase.from('profiles').select('*').eq('user_id', user.id).single();
     if (data?.system_data) systemData = data.system_data;
     if (data?.username) document.getElementById('edit-username').value = data.username;
-    refreshUI(); loadSidekicks();
+    refreshUI();
 }
 
 async function sync() {
@@ -258,36 +177,36 @@ async function sync() {
     showToast();
 }
 
-function updateUsername() {
-    const name = document.getElementById('edit-username').value;
-    _supabase.auth.getUser().then(({data}) => {
-        _supabase.from('profiles').update({ username: name }).eq('user_id', data.user.id).then(() => alert("Username set!"));
-    });
-}
-
 function updateSystemInfo() {
     systemData.name = document.getElementById('edit-sys-name').value || systemData.name;
     systemData.bio = document.getElementById('edit-sys-bio').value || systemData.bio;
     refreshUI(); sync();
 }
 
+function updateUsername() {
+    const newU = document.getElementById('edit-username').value;
+    _supabase.auth.getUser().then(({data}) => {
+        _supabase.from('profiles').update({ username: newU }).eq('user_id', data.user.id).then(() => alert("Username updated!"));
+    });
+}
+
 function saveAlter() {
     const id = document.getElementById('edit-id').value;
     const finalize = (img) => {
-        const m = {
+        const member = {
             id: id ? parseInt(id) : Date.now(),
             name: document.getElementById('name').value || "Unnamed",
             pronouns: document.getElementById('pronouns').value,
             role: document.getElementById('role').value,
+            fandoms: document.getElementById('fandoms').value,
             color: document.getElementById('color').value,
             bio: document.getElementById('bio').value,
-            fandoms: document.getElementById('fandoms').value,
-            pfp: img || (id ? systemData.members.find(x => x.id == id).pfp : "https://via.placeholder.com/150"),
-            isFronting: id ? systemData.members.find(x => x.id == id).isFronting : false
+            pfp: img || (id ? systemData.members.find(m => m.id == id).pfp : "https://via.placeholder.com/150"),
+            isFronting: id ? systemData.members.find(m => m.id == id).isFronting : false
         };
-        if(id) systemData.members[systemData.members.findIndex(x => x.id == id)] = m;
-        else systemData.members.push(m);
-        refreshUI(); clearForm(); sync();
+        if (id) systemData.members[systemData.members.findIndex(m => m.id == id)] = member;
+        else systemData.members.push(member);
+        sync(); refreshUI(); clearForm();
     };
     const file = document.getElementById('pfp').files[0];
     if (file) {
@@ -296,87 +215,128 @@ function saveAlter() {
     } else finalize();
 }
 
-function toggleFront(id) {
-    const m = systemData.members.find(x => x.id == id);
-    const now = new Date();
-    if(!m.isFronting) {
-        m.isFronting = true; m.startTime = now.getTime();
-    } else {
-        const dur = now.getTime() - m.startTime;
-        systemData.history.unshift({ name: m.name, start: new Date(m.startTime).toLocaleString(), total: Math.floor(dur/60000) + "m", color: m.color });
-        m.isFronting = false;
+function deleteAlter(id) {
+    if(confirm("Delete this alter permanently?")) {
+        systemData.members = systemData.members.filter(m => m.id !== id);
+        sync(); refreshUI();
     }
+}
+
+function toggleFront(id) {
+    const m = systemData.members.find(m => m.id == id);
+    m.isFronting = !m.isFronting;
     refreshUI(); sync();
 }
 
 function refreshUI() {
+    document.getElementById('view-sys-name').innerText = systemData.name;
+    document.getElementById('view-sys-bio').innerText = systemData.bio;
+    
     const frontDisplay = document.getElementById('fronting-display');
     const overviewList = document.getElementById('overview-list');
     const detailedList = document.getElementById('detailed-profiles-list');
-    const chatSpeaker = document.getElementById('chat-speaker');
-    const historyLog = document.getElementById('history-log');
-
-    frontDisplay.innerHTML = ''; overviewList.innerHTML = ''; detailedList.innerHTML = ''; historyLog.innerHTML = '';
-    chatSpeaker.innerHTML = '<option value="system">System Note</option>';
+    
+    frontDisplay.innerHTML = ''; overviewList.innerHTML = ''; detailedList.innerHTML = '';
 
     systemData.members.forEach(m => {
-        chatSpeaker.innerHTML += `<option value="${m.id}">${m.name}</option>`;
-        if(m.isFronting) frontDisplay.innerHTML += `<div class="front-card-mini" style="border-color:${m.color}"><img src="${m.pfp}" class="front-pfp"><b>${m.name}</b></div>`;
-        overviewList.innerHTML += `<div class="card" style="border-left: 10px solid ${m.color}"><strong>${m.name}</strong> — ${m.role}</div>`;
+        // Fronting Box
+        if(m.isFronting) {
+            frontDisplay.innerHTML += `
+                <div class="front-card-mini" style="border-color:${m.color}; color:${m.color}">
+                    <img src="${m.pfp}" style="width:45px;height:45px;border-radius:10px;object-fit:cover;">
+                    <b>${m.name}</b>
+                    <button class="remove-front-btn" style="border-color:${m.color}; color:${m.color}" onclick="toggleFront(${m.id})">×</button>
+                </div>`;
+        }
+        
+        // Directory
+        overviewList.innerHTML += `
+            <div class="card directory-card" style="border-color:${m.color}">
+                <div style="display:flex; align-items:center; gap:15px;">
+                    <div style="width:12px;height:12px;border-radius:50%;background:${m.isFronting ? '#00ff00' : '#ccc'}"></div>
+                    <strong style="color:${m.color}">${m.name}</strong> <small>— ${m.role}</small>
+                </div>
+                <button class="mini-btn" style="width:100px; margin:0;" onclick="toggleFront(${m.id})">${m.isFronting ? 'Exit Front' : 'Front'}</button>
+            </div>`;
+
+        // Detailed Profiles
         detailedList.innerHTML += `
-            <div class="card profile-card" style="border-top: 8px solid ${m.color}">
-                <img src="${m.pfp}" class="pfp-img">
-                <h2 style="color:${m.color} !important; text-align:center;">${m.name}</h2>
-                <span class="detail-label">Pronouns</span><p class="detail-text">${m.pronouns}</p>
+            <div class="card profile-card" style="border-color:${m.color}">
+                <img src="${m.pfp}" class="pfp-img" style="border-color:${m.color}">
+                <h2 style="text-align:center; margin:0; color:${m.color} !important;">${m.name}</h2>
                 <span class="detail-label">Role</span><p class="detail-text">${m.role}</p>
                 <span class="detail-label">Fandoms</span><p class="detail-text">${m.fandoms}</p>
                 <span class="detail-label">Bio</span><p class="detail-text">${m.bio}</p>
-                <button class="mini-btn" onclick="toggleFront(${m.id})">${m.isFronting ? 'Leave Front' : 'Front'}</button>
-                <button class="mini-btn" onclick="editAlter(${m.id})">Edit</button>
+                <div style="margin-top:auto; padding-top:15px; display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
+                    <button class="mini-btn" onclick="toggleFront(${m.id})">${m.isFronting ? 'Leave Front' : 'Front'}</button>
+                    <button class="mini-btn" onclick="editAlter(${m.id})">Edit</button>
+                    <button class="mini-btn" style="grid-column:span 2; color:red; border-color:red" onclick="deleteAlter(${m.id})">Delete Alter</button>
+                </div>
             </div>`;
-    });
-    systemData.history.forEach(h => {
-        historyLog.innerHTML += `<tr><td style="color:${h.color}">${h.name}</td><td>Active</td><td>${h.start}</td><td>-</td><td>${h.total}</td></tr>`;
     });
 }
 
 function editAlter(id) {
-    const m = systemData.members.find(x => x.id == id);
-    document.getElementById('edit-id').value = m.id; document.getElementById('name').value = m.name;
-    document.getElementById('pronouns').value = m.pronouns; document.getElementById('role').value = m.role;
-    document.getElementById('color').value = m.color; document.getElementById('bio').value = m.bio;
-    document.getElementById('fandoms').value = m.fandoms; showTab('profiles');
+    const m = systemData.members.find(m => m.id == id);
+    document.getElementById('edit-id').value = m.id;
+    document.getElementById('name').value = m.name;
+    document.getElementById('pronouns').value = m.pronouns;
+    document.getElementById('role').value = m.role;
+    document.getElementById('fandoms').value = m.fandoms;
+    document.getElementById('color').value = m.color;
+    document.getElementById('bio').value = m.bio;
+    document.getElementById('form-title').innerText = "Editing: " + m.name;
+    document.getElementById('cancel-edit').style.display = 'block';
+    showTab('profiles');
 }
 
-function clearForm() { document.getElementById('edit-id').value = ''; document.getElementById('form-title').innerText = "Manage Alters"; }
+function clearForm() {
+    document.getElementById('edit-id').value = '';
+    document.getElementById('form-title').innerText = "Manage Alters";
+    document.getElementById('cancel-edit').style.display = 'none';
+    document.querySelectorAll('#profiles input, #profiles textarea').forEach(i => i.value = '');
+}
 
 async function addSidekick() {
     const target = document.getElementById('sidekick-search').value;
     const { data: friend } = await _supabase.from('profiles').select('user_id').eq('username', target).single();
-    if(friend) {
-        const { data: { user } } = await _supabase.auth.getUser();
-        await _supabase.from('connections').insert([{ user_id: user.id, friend_id: friend.user_id }]);
-        alert("Added!"); loadSidekicks();
-    }
+    if(!friend) return alert("System not found!");
+    const { data: { user } } = await _supabase.auth.getUser();
+    await _supabase.from('connections').insert([{ user_id: user.id, friend_id: friend.user_id }]);
+    loadSidekicks();
 }
 
 async function loadSidekicks() {
+    const list = document.getElementById('sidekicks-list');
     const { data: { user } } = await _supabase.auth.getUser();
     const { data: connections } = await _supabase.from('connections').select('friend_id').eq('user_id', user.id);
+    if (!connections?.length) return list.innerHTML = "No sidekicks added.";
+
     const { data: profiles } = await _supabase.from('profiles').select('username, system_data').in('user_id', connections.map(c => c.friend_id));
-    const list = document.getElementById('sidekicks-list');
     list.innerHTML = '';
-    profiles.forEach(p => {
-        const card = document.createElement('div');
-        card.className = 'sidekick-card';
-        card.onclick = () => openOverlay(p);
-        card.innerHTML = `<strong>${p.username}</strong>`;
-        list.appendChild(card);
+    profiles.forEach(buddy => {
+        const fronting = (buddy.system_data?.members || []).filter(m => m.isFronting);
+        list.innerHTML += `
+            <div class="card" style="cursor:pointer" onclick='openOverlay(${JSON.stringify(buddy)})'>
+                <strong>${buddy.username}</strong> — ${fronting.length ? 'Fronting: ' + fronting.map(m=>m.name).join(', ') : 'Internal'}
+            </div>`;
     });
 }
 
-function openOverlay(p) {
-    document.getElementById('overlay-body').innerHTML = `<h1>${p.username}</h1><p>${p.system_data?.bio || ''}</p>`;
+function openOverlay(buddy) {
+    const bData = buddy.system_data || {};
+    const members = bData.members || [];
+    document.getElementById('overlay-body').innerHTML = `
+        <h1>${bData.name || buddy.username}</h1>
+        <p>${bData.bio || 'No bio.'}</p>
+        <div class="grid-container">${members.map(m => `
+            <div class="card profile-card" style="border-color:${m.color}">
+                <img src="${m.pfp}" class="pfp-img" style="border-color:${m.color}">
+                <h2 style="color:${m.color} !important">${m.name} ${m.isFronting ? '⭕' : ''}</h2>
+                <span class="detail-label">Role</span><p class="detail-text">${m.role}</p>
+                <span class="detail-label">Bio</span><p class="detail-text">${m.bio}</p>
+            </div>`).join('')}
+        </div>`;
     document.getElementById('profile-overlay').style.display = 'block';
 }
 
@@ -384,12 +344,14 @@ function closeOverlay() { document.getElementById('profile-overlay').style.displ
 function showTab(id) {
     document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById(id).classList.add('active'); document.getElementById('btn-' + id).classList.add('active');
+    document.getElementById(id).classList.add('active');
+    document.getElementById('btn-'+id).classList.add('active');
+    if(id === 'sidekicks') loadSidekicks();
 }
-function showToast() { const t = document.getElementById("toast"); t.className = "show"; setTimeout(() => t.className = "", 3000); }
-function logout() { _supabase.auth.signOut().then(() => location.reload()); }
+function showToast() { const t = document.getElementById('toast'); t.className = 'show'; setTimeout(() => t.className = '', 3000); }
+function logout() { _supabase.auth.signOut(); location.reload(); }
 
-window.onload = loadSystemData;
+window.onload = loadData;
 </script>
 </body>
 </html>

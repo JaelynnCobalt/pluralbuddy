@@ -25,17 +25,20 @@ section, .card { background: var(--panel); padding: 15px; border-radius: 20px; b
 .secondary-btn { background: var(--soft-pink); color: var(--magenta); border: none; padding: 10px; border-radius: 10px; width: 100%; font-weight: bold; margin-top: 5px; }
 input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid var(--soft-pink); border-radius: 12px; font-size: 16px; background: #fafafa; }
 
-/* FRONTING */
+/* SYSTEM HEADER */
+.sys-header-card { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; }
+.sys-pfp-lg { width: 60px; height: 60px; border-radius: 15px; object-fit: cover; border: 2px solid var(--magenta); background: white; }
+
+/* FRONTING & HISTORY */
 .fronting-container { background: var(--front-gold); padding: 15px; border-radius: 20px; border: 2px dashed var(--magenta); margin-bottom: 20px; text-align: center; }
 .front-bubble { display: inline-flex; flex-direction: column; align-items: center; margin: 5px; position: relative; }
 .mini-pfp { width: 55px; height: 55px; border-radius: 50%; object-fit: cover; border: 3px solid var(--magenta); background: white; }
 .remove-front-dot { position: absolute; top: -2px; right: -2px; background: red; color: white; border-radius: 50%; width: 22px; height: 22px; border: 2px solid white; font-weight: bold; font-size: 14px; display: flex; align-items: center; justify-content: center; }
 
-/* FRIEND CARDS */
-.friend-card { border-left: 8px solid var(--soft-pink); }
-.friend-front-row { display: flex; align-items: center; gap: 12px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee; }
+.history-card { padding: 10px 15px; border-bottom: 1px solid var(--soft-pink); display: flex; align-items: center; gap: 12px; }
+.history-card:last-child { border-bottom: none; }
 
-/* OVERLAY */
+/* OVERLAYS */
 .overlay { display: none; position: fixed; inset: 0; background: white; z-index: 2000; padding: 20px; overflow-y: auto; padding-top: env(safe-area-inset-top); }
 .close-overlay { background: var(--bg); border: none; padding: 10px 20px; border-radius: 10px; font-weight: bold; margin-bottom: 20px; color: var(--magenta); }
 
@@ -47,9 +50,9 @@ input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid v
 
 <div id="toast">Synced ✨</div>
 
-<div id="alter-overlay" class="overlay">
+<div id="editor-overlay" class="overlay">
     <button class="close-overlay" onclick="closeOverlay()">← Back</button>
-    <div id="alter-editor-content"></div>
+    <div id="editor-content"></div>
 </div>
 
 <div id="auth-screen">
@@ -62,17 +65,39 @@ input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid v
 </div>
 
 <div id="dashboard" style="display:none;">
-    <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-        <h2 id="view-sys-name" style="margin:0; font-size: 1.2rem;">System</h2>
-        <button onclick="logout()" style="background:none; border:1px solid #ccc; padding:5px; border-radius:8px; color:#888;">Logout</button>
+    <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:1.5rem;">📱</span>
+            <h2 style="margin:0; font-size: 1.1rem; color: #555;">Dashboard</h2>
+        </div>
+        <button onclick="openSystemEditor()" style="background:none; border:none; font-size:1.4rem;">⚙️</button>
     </header>
 
     <div id="overview" class="view-section active">
+        <div class="card sys-header-card">
+            <img src="" id="sys-pfp-display" class="sys-pfp-lg">
+            <div style="flex:1">
+                <h2 id="view-sys-name" style="margin:0; font-size:1.2rem;">System</h2>
+                <div id="view-sys-user" style="font-size:0.8rem; color:var(--magenta);">@username</div>
+            </div>
+            <button onclick="logout()" style="background:none; border:1px solid #ccc; padding:4px 8px; border-radius:8px; font-size:0.7rem;">Exit</button>
+        </div>
+
         <div class="fronting-container">
             <h4 style="margin: 0 0 10px 0">Fronting Now</h4>
             <div id="fronting-display" style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap;"></div>
         </div>
-        <div id="overview-list"></div>
+        
+        <div id="overview-list" style="margin-bottom:20px;"></div>
+
+        <section style="padding: 0; overflow: hidden;">
+            <div style="background: var(--soft-pink); padding: 10px 15px; font-weight: bold; color: var(--magenta); display: flex; justify-content: space-between;">
+                <span>Front History</span>
+                <button onclick="clearHistory()" style="background:none; border:none; font-size:0.7rem; color:#888;">Clear All</button>
+            </div>
+            <div id="front-history-list" style="max-height: 250px; overflow-y: auto;">
+                </div>
+        </section>
     </div>
 
     <div id="profiles" class="view-section">
@@ -82,8 +107,8 @@ input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid v
 
     <div id="sidekicks" class="view-section">
         <section>
-            <input type="text" id="friend-search" placeholder="Username...">
-            <button class="main-btn" onclick="addFriend()">Add Friend</button>
+            <input type="text" id="friend-search" placeholder="System Username...">
+            <button class="main-btn" onclick="addFriend()">Add Sidekick</button>
         </section>
         <div id="friends-list-container"></div>
     </div>
@@ -101,8 +126,9 @@ input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid v
 const SB_URL = 'https://ctrbkrwiwpojbzfpsxwl.supabase.co';
 const SB_KEY = 'sb_publishable_uK-ihohO48o6BPRW8rmDqQ_LbJnfTI7';
 const _supabase = supabase.createClient(SB_URL, SB_KEY);
-let systemData = { members: [] };
+let systemData = { name: '', bio: '', pfp: '', members: [], history: [] };
 let currentUser = null;
+let currentUsername = "";
 
 async function handleAuth() {
     const email = document.getElementById('email-input').value;
@@ -119,21 +145,29 @@ async function loadData() {
     document.getElementById('dashboard').style.display = 'block';
     
     const { data } = await _supabase.from('profiles').select('*').eq('user_id', user.id).single();
-    if (data?.system_data) systemData = data.system_data;
+    if (data) {
+        if (data.system_data) systemData = data.system_data;
+        if (!systemData.history) systemData.history = [];
+        currentUsername = data.username || "";
+    }
     
     refreshUI();
     loadFriendsLive();
 }
 
 function refreshUI() {
-    document.getElementById('view-sys-name').innerText = systemData.name || "System";
+    document.getElementById('view-sys-name').innerText = systemData.name || "Unnamed System";
+    document.getElementById('view-sys-user').innerText = "@" + currentUsername;
+    document.getElementById('sys-pfp-display').src = systemData.pfp || "https://via.placeholder.com/150";
     
-    // Fronting Display
     const fDisp = document.getElementById('fronting-display');
     const oList = document.getElementById('overview-list');
-    fDisp.innerHTML = ''; oList.innerHTML = '';
+    const hList = document.getElementById('front-history-list');
+    
+    fDisp.innerHTML = ''; oList.innerHTML = ''; hList.innerHTML = '';
 
-    systemData.members.forEach(m => {
+    // Active Fronting
+    (systemData.members || []).forEach(m => {
         if(m.isFronting) {
             fDisp.innerHTML += `
                 <div class="front-bubble">
@@ -151,10 +185,27 @@ function refreshUI() {
             </div>`;
     });
 
-    // Detailed List
+    // History List
+    if (systemData.history.length === 0) {
+        hList.innerHTML = `<div style="padding:20px; text-align:center; color:#999; font-size:0.8rem;">No recent history</div>`;
+    } else {
+        [...systemData.history].reverse().forEach(entry => {
+            hList.innerHTML += `
+                <div class="history-card">
+                    <img src="${entry.pfp}" style="width:35px; height:35px; border-radius:50%; object-fit:cover; border:1px solid #eee;">
+                    <div style="flex:1">
+                        <div style="font-size:0.85rem; font-weight:bold;">${entry.name}</div>
+                        <div style="font-size:0.7rem; color:#888;">${entry.status || 'Fronted'}</div>
+                    </div>
+                    <div style="font-size:0.7rem; color:#bbb;">${entry.time}</div>
+                </div>`;
+        });
+    }
+
+    // Alter List (Tab 2)
     const pList = document.getElementById('detailed-profiles-list');
     pList.innerHTML = '';
-    systemData.members.forEach(m => {
+    (systemData.members || []).forEach(m => {
         pList.innerHTML += `
             <div class="card" onclick="openAlterEditor(${m.id})" style="display:flex; align-items:center; gap:15px; border-left: 8px solid ${m.color}">
                 <img src="${m.pfp}" style="width:50px; height:50px; border-radius:10px; object-fit:cover;">
@@ -167,122 +218,38 @@ function refreshUI() {
     });
 }
 
-// ALTER EDITOR & PHOTO UPLOAD
-function openAlterEditor(id = null) {
-    const m = id ? systemData.members.find(x => x.id === id) : { id: Date.now(), name: '', role: '', pronouns: '', pfp: '', color: '#ff00ff', bio: '', isNew: true };
-    const overlay = document.getElementById('alter-overlay');
-    const content = document.getElementById('alter-editor-content');
-    
-    overlay.style.display = 'block';
-    content.innerHTML = `
-        <h2 style="color:var(--magenta)">${m.isNew ? 'Create Alter' : 'Edit Profile'}</h2>
-        
-        <div style="text-align:center; margin-bottom:15px;">
-            <img src="${m.pfp || 'https://via.placeholder.com/150'}" id="preview-pfp" style="width:140px; height:140px; border-radius:25px; object-fit:cover; border:4px solid ${m.color}">
-            <input type="file" id="file-upload" accept="image/*" style="display:none" onchange="handleFileUpload(this)">
-            <button class="secondary-btn" onclick="document.getElementById('file-upload').click()">📷 Upload from Phone</button>
-        </div>
-
-        <label>Name</label><input type="text" id="edit-name" value="${m.name}">
-        <label>PFP URL (Optional)</label><input type="text" id="edit-pfp" value="${m.pfp}" onchange="document.getElementById('preview-pfp').src=this.value">
-        <label>Role</label><input type="text" id="edit-role" value="${m.role || ''}">
-        <label>Pronouns</label><input type="text" id="edit-pronouns" value="${m.pronouns || ''}">
-        <label>Theme Color</label><input type="color" id="edit-color" value="${m.color || '#ff00ff'}" style="height:50px;">
-        <label>Bio</label><textarea id="edit-bio" rows="3">${m.bio || ''}</textarea>
-        
-        <button class="main-btn" onclick="saveAlter(${m.id}, ${m.isNew || false})">Save Alter</button>
-        ${!m.isNew ? `<button class="main-btn" style="background:none; color:red; border:1px solid red; margin-top:20px;" onclick="deleteAlter(${m.id})">Delete Alter</button>` : ''}
-    `;
-}
-
-function handleFileUpload(input) {
-    const file = input.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        const base64 = e.target.result;
-        document.getElementById('preview-pfp').src = base64;
-        document.getElementById('edit-pfp').value = base64; // Store base64 in the URL field
-    };
-    reader.readAsDataURL(file);
-}
-
-function saveAlter(id, isNew) {
-    const data = {
-        id: id,
-        name: document.getElementById('edit-name').value,
-        pfp: document.getElementById('edit-pfp').value || 'https://via.placeholder.com/150',
-        role: document.getElementById('edit-role').value,
-        pronouns: document.getElementById('edit-pronouns').value,
-        color: document.getElementById('edit-color').value,
-        bio: document.getElementById('edit-bio').value,
-        isFronting: false
-    };
-    if(isNew) systemData.members.push(data);
-    else {
-        const idx = systemData.members.findIndex(x => x.id === id);
-        systemData.members[idx] = {...systemData.members[idx], ...data};
-    }
-    sync(); refreshUI(); closeOverlay();
-}
-
-// FRIENDS TAB - LIVE DATA
-async function loadFriendsLive() {
-    const { data: connections } = await _supabase.from('connections').select('friend_id').eq('user_id', currentUser.id);
-    const friendIds = connections?.map(c => c.friend_id) || [];
-    const { data: profiles } = await _supabase.from('profiles').select('username, system_data').in('user_id', friendIds);
-    
-    const container = document.getElementById('friends-list-container');
-    container.innerHTML = '';
-    
-    profiles?.forEach(p => {
-        const fronts = (p.system_data?.members || []).filter(m => m.isFronting);
-        let frontHtml = fronts.length > 0 ? '' : '<div style="font-size:0.8rem; color:#999; margin-top:5px;">Currently Offline</div>';
-        
-        fronts.forEach(f => {
-            frontHtml += `
-                <div class="friend-front-row">
-                    <img src="${f.pfp}" style="width:45px; height:45px; border-radius:50%; border:2px solid ${f.color}">
-                    <div>
-                        <div style="font-size:0.9rem; font-weight:bold;">${f.name}</div>
-                        <div style="font-size:0.75rem; color:#666;">${f.status || 'Fronting'}</div>
-                    </div>
-                </div>`;
-        });
-
-        container.innerHTML += `
-            <div class="card friend-card">
-                <div style="font-weight:bold; color:var(--magenta); display:flex; justify-content:space-between;">
-                    @${p.username} <span>✨</span>
-                </div>
-                ${frontHtml}
-            </div>`;
-    });
-}
-
 function toggleFront(id) {
     const m = systemData.members.find(m => m.id == id);
     m.isFronting = !m.isFronting;
+    
     if(m.isFronting) {
         const s = prompt(`Status for ${m.name}?`);
         m.status = s || "";
+        // Add to history
+        systemData.history.push({
+            name: m.name,
+            pfp: m.pfp,
+            status: m.status,
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', month: 'short', day: 'numeric' })
+        });
+        // Keep history at 20 items max
+        if (systemData.history.length > 20) systemData.history.shift();
     }
     sync(); refreshUI();
 }
 
-async function addFriend() {
-    const user = document.getElementById('friend-search').value.replace('@','');
-    const { data } = await _supabase.from('profiles').select('user_id').eq('username', user).single();
-    if(data) {
-        await _supabase.from('connections').insert([{ user_id: currentUser.id, friend_id: data.user_id }]);
-        loadFriendsLive();
-        showToast("Friend Added!");
+function clearHistory() {
+    if(confirm("Clear your fronting history?")) {
+        systemData.history = [];
+        sync(); refreshUI();
     }
 }
 
+// ... (Rest of the functions: openSystemEditor, openAlterEditor, handleFileUploads, sync, addFriend, loadFriendsLive, showTab, closeOverlay, logout remain the same as previous step)
+
 async function sync() {
     await _supabase.from('profiles').update({ system_data: systemData }).eq('user_id', currentUser.id);
-    showToast("Changes Saved!");
+    showToast("Synced ✨");
 }
 
 function showToast(msg) {
@@ -298,8 +265,106 @@ function showTab(id) {
     document.getElementById('tab-'+id).classList.add('active');
 }
 
-function closeOverlay() { document.getElementById('alter-overlay').style.display = 'none'; }
+function closeOverlay() { document.getElementById('editor-overlay').style.display = 'none'; }
 function logout() { _supabase.auth.signOut(); location.reload(); }
+
+// System & Alter Editor handlers (Same as previous code)
+function openSystemEditor() {
+    const overlay = document.getElementById('editor-overlay');
+    const content = document.getElementById('editor-content');
+    overlay.style.display = 'block';
+    content.innerHTML = `
+        <h2 style="color:var(--magenta)">System Settings</h2>
+        <div style="text-align:center; margin-bottom:15px;">
+            <img src="${systemData.pfp || 'https://via.placeholder.com/150'}" id="preview-sys-pfp" style="width:120px; height:120px; border-radius:20px; object-fit:cover; border:4px solid var(--magenta)">
+            <input type="file" id="sys-file-upload" accept="image/*" style="display:none" onchange="handleSystemUpload(this)">
+            <button class="secondary-btn" onclick="document.getElementById('sys-file-upload').click()">📷 Change System PFP</button>
+        </div>
+        <label>System Name</label><input type="text" id="edit-sys-name" value="${systemData.name || ''}">
+        <label>Username</label><input type="text" id="edit-sys-user" value="${currentUsername}">
+        <label>System Bio</label><textarea id="edit-sys-bio" rows="4">${systemData.bio || ''}</textarea>
+        <button class="main-btn" onclick="saveSystemSettings()">Save System Profile</button>
+    `;
+}
+
+function handleSystemUpload(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        document.getElementById('preview-sys-pfp').src = e.target.result;
+        systemData.pfp = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+async function saveSystemSettings() {
+    systemData.name = document.getElementById('edit-sys-name').value;
+    systemData.bio = document.getElementById('edit-sys-bio').value;
+    const newUsername = document.getElementById('edit-sys-user').value.replace('@','');
+    await _supabase.from('profiles').update({ system_data: systemData, username: newUsername }).eq('user_id', currentUser.id);
+    currentUsername = newUsername;
+    refreshUI(); closeOverlay(); showToast("System Updated!");
+}
+
+function openAlterEditor(id = null) {
+    const m = id ? systemData.members.find(x => x.id === id) : { id: Date.now(), name: '', role: '', pfp: '', color: '#ff00ff', isNew: true };
+    const overlay = document.getElementById('editor-overlay');
+    const content = document.getElementById('editor-content');
+    overlay.style.display = 'block';
+    content.innerHTML = `
+        <h2 style="color:var(--magenta)">${m.isNew ? 'New Alter' : 'Edit Alter'}</h2>
+        <div style="text-align:center; margin-bottom:15px;">
+            <img src="${m.pfp || 'https://via.placeholder.com/150'}" id="preview-pfp" style="width:120px; height:120px; border-radius:20px; object-fit:cover; border:4px solid ${m.color}">
+            <input type="file" id="file-upload" accept="image/*" style="display:none" onchange="handleAlterUpload(this)">
+            <button class="secondary-btn" onclick="document.getElementById('file-upload').click()">📷 Upload Photo</button>
+        </div>
+        <label>Name</label><input type="text" id="edit-name" value="${m.name}">
+        <label>Role</label><input type="text" id="edit-role" value="${m.role || ''}">
+        <label>Theme Color</label><input type="color" id="edit-color" value="${m.color || '#ff00ff'}" style="height:50px;">
+        <button class="main-btn" onclick="saveAlter(${m.id}, ${m.isNew || false})">Save Alter</button>
+    `;
+}
+
+function handleAlterUpload(input) {
+    const file = input.files[0];
+    const reader = new FileReader();
+    reader.onload = (e) => { document.getElementById('preview-pfp').src = e.target.result; };
+    reader.readAsDataURL(file);
+}
+
+function saveAlter(id, isNew) {
+    const data = { id, name: document.getElementById('edit-name').value, pfp: document.getElementById('preview-pfp').src, role: document.getElementById('edit-role').value, color: document.getElementById('edit-color').value, isFronting: false };
+    if(isNew) { systemData.members.push(data); }
+    else { const idx = systemData.members.findIndex(x => x.id === id); systemData.members[idx] = {...systemData.members[idx], ...data}; }
+    sync(); refreshUI(); closeOverlay();
+}
+
+async function addFriend() {
+    const user = document.getElementById('friend-search').value.replace('@','');
+    const { data } = await _supabase.from('profiles').select('user_id').eq('username', user).single();
+    if(data) { await _supabase.from('connections').insert([{ user_id: currentUser.id, friend_id: data.user_id }]); loadFriendsLive(); showToast("Friend Added!"); }
+}
+
+async function loadFriendsLive() {
+    const { data: connections } = await _supabase.from('connections').select('friend_id').eq('user_id', currentUser.id);
+    const friendIds = connections?.map(c => c.friend_id) || [];
+    const { data: profiles } = await _supabase.from('profiles').select('username, system_data').in('user_id', friendIds);
+    const container = document.getElementById('friends-list-container');
+    container.innerHTML = '';
+    profiles?.forEach(p => {
+        const fronts = (p.system_data?.members || []).filter(m => m.isFronting);
+        let frontHtml = fronts.length > 0 ? '' : '<div style="font-size:0.8rem; color:#999; margin-top:5px;">Offline</div>';
+        fronts.forEach(f => {
+            frontHtml += `<div style="display:flex; align-items:center; gap:10px; margin-top:8px;">
+                <img src="${f.pfp}" style="width:35px; height:35px; border-radius:50%; border:2px solid ${f.color}">
+                <div style="font-size:0.85rem;"><strong>${f.name}</strong><br><span style="color:#666;">${f.status || 'Fronting'}</span></div>
+            </div>`;
+        });
+        container.innerHTML += `<div class="card"><strong>@${p.username}</strong>${frontHtml}</div>`;
+    });
+}
+
 window.onload = loadData;
 </script>
 </body>

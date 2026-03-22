@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>System Chat</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+    --bg: #fff0f6;
+    --panel: #ffffff;
+    --soft-pink: #ffdeeb;
+    --magenta: #ff00ff;
+    --text: #444;
+}
+
+* { box-sizing: border-box; font-family: 'Georgia', serif; -webkit-tap-highlight-color: transparent; }
+body { margin: 0; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; flex-direction: column; }
+
+/* MOBILE SIDEBAR (DRAWER) */
+.sidebar { 
+    position: fixed;
+    left: -280px; /* Hidden by default on mobile */
+    top: 0;
+    width: 280px; 
+    height: 100%;
+    background: var(--panel); 
+    display: flex; 
+    flex-direction: column; 
+    border-right: 2px solid var(--soft-pink); 
+    transition: 0.3s ease;
+    z-index: 2000;
+}
+.sidebar.open { left: 0; box-shadow: 5px 0 15px rgba(0,0,0,0.1); }
+
+.sidebar-header { padding: 20px; font-weight: bold; border-bottom: 2px solid var(--soft-pink); display: flex; justify-content: space-between; align-items: center; color: var(--magenta); }
+.room-list { flex: 1; overflow-y: auto; padding: 10px; }
+.room-item { padding: 12px; border-radius: 12px; cursor: pointer; margin-bottom: 5px; color: var(--magenta); font-weight: bold; border: 1px solid transparent; }
+.room-item.active { background: var(--magenta); color: white; }
+
+/* MAIN CHAT AREA */
+.chat-container { flex: 1; display: flex; flex-direction: column; background: var(--panel); width: 100%; position: relative; }
+
+.chat-header { 
+    padding: 15px; 
+    padding-top: calc(15px + env(safe-area-inset-top));
+    background: white; 
+    border-bottom: 2px solid var(--soft-pink); 
+    font-weight: bold; 
+    color: var(--magenta); 
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+/* MOBILE TOGGLE BUTTON */
+.menu-toggle {
+    background: var(--soft-pink);
+    border: none;
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: var(--magenta);
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#chat-display { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; background: var(--bg); }
+
+/* MESSAGES */
+.message { display: flex; gap: 10px; align-items: flex-start; max-width: 100%; }
+.msg-pfp { width: 40px; height: 40px; border-radius: 10px; object-fit: cover; border: 2px solid var(--soft-pink); flex-shrink: 0; }
+.msg-content { flex: 1; min-width: 0; }
+.msg-author { font-weight: bold; font-size: 0.85rem; margin-bottom: 2px; color: var(--magenta); }
+.msg-time { font-size: 0.65rem; color: #999; margin-left: 5px; font-weight: normal; }
+.msg-text { background: white; padding: 10px 12px; border-radius: 0 12px 12px 12px; border: 1px solid var(--soft-pink); font-size: 0.95rem; word-wrap: break-word; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+
+/* INPUT AREA */
+.input-area { 
+    padding: 10px; 
+    padding-bottom: calc(10px + env(safe-area-inset-bottom));
+    background: white; 
+    border-top: 2px solid var(--soft-pink); 
+}
+.proxy-bar { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
+#proxy-select { flex: 1; background: var(--bg); border: 1px solid var(--soft-pink); border-radius: 8px; padding: 8px; font-size: 14px; color: var(--magenta); font-weight: bold; }
+
+.chat-box-wrapper { display: flex; gap: 8px; }
+#msg-input { flex: 1; background: var(--bg); border: 1px solid var(--soft-pink); border-radius: 12px; padding: 10px; font-size: 16px; /* Prevents iOS zoom */ resize: none; }
+.send-btn { background: var(--magenta); color: white; border: none; padding: 10px 15px; border-radius: 12px; font-weight: bold; }
+
+/* OVERLAY WHEN MENU OPEN */
+#sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.2);
+    z-index: 1500;
+}
+
+@media (min-width: 768px) {
+    body { flex-direction: row; }
+    .sidebar { position: relative; left: 0; }
+    .menu-toggle { display: none; }
+    #sidebar-overlay { display: none !important; }
+}
+</style>
+</head>
+<body>
+
+<div id="sidebar-overlay" onclick="toggleMenu()"></div>
+
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <span>Rooms</span>
+        <button style="background:var(--magenta); color:white; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer;" onclick="addRoom()">+</button>
+    </div>
+    <div class="room-list" id="room-list"></div>
+    <div style="padding: 15px; border-top: 1px solid var(--soft-pink);">
+        <a href="index.html" style="color:var(--magenta); text-decoration:none; font-weight:bold; font-size:0.9rem;">🏠 Back to Dashboard</a>
+    </div>
+</div>
+
+<div class="chat-container">
+    <div class="chat-header">
+        <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+        <span id="current-room-name"># general</span>
+    </div>
+
+    <div id="chat-display"></div>
+    
+    <div class="input-area">
+        <div class="proxy-bar">
+            <select id="proxy-select">
+                <option value="system">System</option>
+            </select>
+        </div>
+        <div class="chat-box-wrapper">
+            <textarea id="msg-input" placeholder="Message..." rows="1"></textarea>
+            <button class="send-btn" onclick="sendInternalMessage()">Send</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const SB_URL = 'https://ctrbkrwiwpojbzfpsxwl.supabase.co';
+const SB_KEY = 'sb_publishable_uK-ihohO48o6BPRW8rmDqQ_LbJnfTI7';
+const _supabase = supabase.createClient(SB_URL, SB_KEY);
+
+let systemData = { members: [], internalRooms: { "general": [] }, activeRoom: "general" };
+
+async function loadData() {
+    const { data: { user } } = await _supabase.auth.getUser();
+    if (!user) return window.location.href = 'index.html';
+    
+    const { data } = await _supabase.from('profiles').select('system_data').eq('user_id', user.id).single();
+    if (data?.system_data) {
+        systemData = data.system_data;
+        if (!systemData.internalRooms) systemData.internalRooms = { "general": [] };
+        if (!systemData.activeRoom) systemData.activeRoom = "general";
+    }
+    renderRooms();
+    renderProxies();
+    renderMessages();
+}
+
+function toggleMenu() {
+    const side = document.getElementById('sidebar');
+    const over = document.getElementById('sidebar-overlay');
+    side.classList.toggle('open');
+    over.style.display = side.classList.contains('open') ? 'block' : 'none';
+}
+
+function renderProxies() {
+    const select = document.getElementById('proxy-select');
+    select.innerHTML = '<option value="system">System Default</option>';
+    (systemData.members || []).forEach(m => {
+        select.innerHTML += `<option value="${m.id}">${m.name}</option>`;
+    });
+}
+
+function renderRooms() {
+    const list = document.getElementById('room-list');
+    list.innerHTML = '';
+    Object.keys(systemData.internalRooms).forEach(room => {
+        const div = document.createElement('div');
+        div.className = `room-item ${systemData.activeRoom === room ? 'active' : ''}`;
+        div.innerText = `# ${room}`;
+        div.onclick = () => switchRoom(room);
+        list.appendChild(div);
+    });
+}
+
+function switchRoom(room) {
+    systemData.activeRoom = room;
+    document.getElementById('current-room-name').innerText = `# ${room}`;
+    renderRooms();
+    renderMessages();
+    if(window.innerWidth < 768) toggleMenu(); // Auto close menu on mobile
+}
+
+function addRoom() {
+    const name = prompt("Room Name:");
+    if (name) {
+        const slug = name.toLowerCase().replace(/\s+/g, '-');
+        if (!systemData.internalRooms[slug]) {
+            systemData.internalRooms[slug] = [];
+            switchRoom(slug);
+            sync();
+        }
+    }
+}
+
+function renderMessages() {
+    const display = document.getElementById('chat-display');
+    display.innerHTML = '';
+    const messages = systemData.internalRooms[systemData.activeRoom] || [];
+    
+    messages.forEach(msg => {
+        display.innerHTML += `
+            <div class="message">
+                <img src="${msg.pfp}" class="msg-pfp" style="border-color:${msg.color || '#ff00ff'}">
+                <div class="msg-content">
+                    <div class="msg-author" style="color:${msg.color || '#ff00ff'}">
+                        ${msg.name} <span class="msg-time">${msg.time}</span>
+                    </div>
+                    <div class="msg-text">${msg.text}</div>
+                </div>
+            </div>`;
+    });
+    display.scrollTop = display.scrollHeight;
+}
+
+async function sendInternalMessage() {
+    const input = document.getElementById('msg-input');
+    const proxyId = document.getElementById('proxy-select').value;
+    if (!input.value.trim()) return;
+
+    let speaker;
+    if (proxyId === "system") {
+        speaker = { name: "System", color: "#ff00ff", pfp: "https://via.placeholder.com/150" };
+    } else {
+        speaker = systemData.members.find(m => m.id == proxyId);
+    }
+
+    const newMessage = {
+        name: speaker.name,
+        color: speaker.color,
+        pfp: speaker.pfp,
+        text: input.value,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+
+    systemData.internalRooms[systemData.activeRoom].push(newMessage);
+    input.value = '';
+    renderMessages();
+    sync();
+}
+
+async function sync() {
+    const { data: { user } } = await _supabase.auth.getUser();
+    await _supabase.from('profiles').update({ system_data: systemData }).eq('user_id', user.id);
+}
+
+document.getElementById('msg-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendInternalMessage();
+    }
+});
+
+window.onload = loadData;
+</script>
+</body>
+</html>

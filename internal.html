@@ -1,67 +1,91 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Inner World Chat</title>
+<title>System Chat</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root {
-    --bg: #1e1e1e; /* Darker Discord-like bg */
-    --sidebar: #2f3136;
-    --chat-bg: #36393f;
-    --magenta: #ff00ff;
-    --text: #ffffff;
+    --bg: #fff0f6;
+    --panel: #ffffff;
     --soft-pink: #ffdeeb;
+    --magenta: #ff00ff;
+    --text: #444;
 }
 
-* { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+* { box-sizing: border-box; font-family: 'Georgia', serif; }
 body { margin: 0; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
 
-/* SIDEBAR - ROOMS */
-.sidebar { width: 260px; background: var(--sidebar); display: flex; flex-direction: column; border-right: 1px solid #202225; }
-.sidebar-header { padding: 20px; font-weight: bold; border-bottom: 1px solid #202225; display: flex; justify-content: space-between; align-items: center; }
+/* SIDEBAR - PINK THEME */
+.sidebar { width: 280px; background: var(--panel); display: flex; flex-direction: column; border-right: 2px solid var(--soft-pink); }
+.sidebar-header { padding: 20px; font-weight: bold; border-bottom: 2px solid var(--soft-pink); display: flex; justify-content: space-between; align-items: center; color: var(--magenta); }
 .room-list { flex: 1; overflow-y: auto; padding: 10px; }
-.room-item { padding: 10px; border-radius: 5px; cursor: pointer; margin-bottom: 2px; transition: 0.2s; color: #8e9297; }
-.room-item:hover { background: #393c43; color: #dcddde; }
-.room-item.active { background: #4f545c; color: white; }
+.room-item { padding: 12px; border-radius: 12px; cursor: pointer; margin-bottom: 5px; transition: 0.2s; color: var(--magenta); font-weight: bold; border: 1px solid transparent; }
+.room-item:hover { background: var(--soft-pink); }
+.room-item.active { background: var(--magenta); color: white; }
 
 /* MAIN CHAT AREA */
-.chat-container { flex: 1; display: flex; flex-direction: column; background: var(--chat-bg); }
-.chat-header { padding: 15px 20px; background: var(--chat-bg); border-bottom: 1px solid #202225; font-weight: bold; font-size: 1.1rem; }
-#chat-display { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+.chat-container { flex: 1; display: flex; flex-direction: column; background: var(--panel); }
+.chat-header { padding: 15px 20px; background: white; border-bottom: 2px solid var(--soft-pink); font-weight: bold; font-size: 1.2rem; color: var(--magenta); }
+#chat-display { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; background: var(--bg); }
 
-/* MESSAGES */
-.message { display: flex; gap: 15px; align-items: flex-start; }
-.msg-pfp { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid transparent; }
+/* MESSAGES - ANTAR STYLE */
+.message { display: flex; gap: 12px; align-items: flex-start; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+.msg-pfp { width: 45px; height: 45px; border-radius: 12px; object-fit: cover; border: 2px solid var(--soft-pink); background: white; }
 .msg-content { flex: 1; }
-.msg-author { font-weight: bold; font-size: 0.95rem; margin-bottom: 3px; display: flex; align-items: center; gap: 8px; }
-.msg-time { font-size: 0.7rem; color: #72767d; font-weight: normal; }
-.msg-text { color: #dcddde; line-height: 1.4; white-space: pre-wrap; }
+.msg-author { font-weight: bold; font-size: 0.9rem; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+.msg-time { font-size: 0.7rem; color: #999; font-weight: normal; }
+.msg-text { background: white; padding: 12px 15px; border-radius: 0 15px 15px 15px; border: 1px solid var(--soft-pink); line-height: 1.5; color: #333; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
 
-/* INPUT AREA - PROXY PICKER */
-.input-area { padding: 20px; background: var(--chat-bg); }
-.proxy-bar { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; background: #2f3136; padding: 8px; border-radius: 8px; }
-#proxy-select { background: transparent; border: none; color: white; font-weight: bold; cursor: pointer; }
-.chat-box-wrapper { display: flex; gap: 10px; background: #40444b; border-radius: 8px; padding: 10px; }
-#msg-input { flex: 1; background: transparent; border: none; color: white; outline: none; font-size: 1rem; resize: none; }
+/* INPUT AREA - FIXED READABILITY */
+.input-area { padding: 20px; background: white; border-top: 2px solid var(--soft-pink); }
+.proxy-bar { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; background: var(--bg); padding: 10px; border-radius: 12px; border: 1px solid var(--soft-pink); }
+.proxy-label { font-size: 0.8rem; font-weight: bold; color: var(--magenta); text-transform: uppercase; }
 
-.nav-back { color: var(--magenta); text-decoration: none; font-size: 0.8rem; margin-bottom: 10px; display: inline-block; }
-.btn-small { background: var(--magenta); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
+/* Fix for unreadable dropdown */
+#proxy-select { 
+    background: white; 
+    border: 1px solid var(--magenta); 
+    color: var(--magenta); 
+    font-weight: bold; 
+    border-radius: 8px; 
+    padding: 5px 10px;
+    cursor: pointer;
+    outline: none;
+}
+
+.chat-box-wrapper { display: flex; gap: 10px; }
+#msg-input { 
+    flex: 1; 
+    background: var(--bg); 
+    border: 1px solid var(--soft-pink); 
+    border-radius: 15px; 
+    padding: 12px 18px; 
+    outline: none; 
+    font-size: 1rem; 
+    resize: none; 
+    color: #333;
+}
+#msg-input:focus { border-color: var(--magenta); }
+
+.main-btn { background: var(--magenta); color: white; border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+.main-btn:hover { transform: scale(1.03); opacity: 0.9; }
+.nav-back { color: var(--magenta); text-decoration: none; font-weight: bold; font-size: 0.9rem; margin-bottom: 15px; display: inline-block; padding: 5px 10px; background: var(--soft-pink); border-radius: 8px; }
 </style>
 </head>
 <body>
 
 <div class="sidebar">
     <div class="sidebar-header">
-        <span>Inner World</span>
-        <button class="btn-small" onclick="addRoom()">+</button>
+        <span>System Chat</span>
+        <button style="background:var(--magenta); color:white; border:none; border-radius:50%; width:25px; height:25px; cursor:pointer;" onclick="addRoom()">+</button>
     </div>
-    <div class="room-list" id="room-list">
-        </div>
-    <div style="padding: 15px;">
-        <a href="index.html" class="nav-back">← Back to Dashboard</a>
+    <div class="room-list" id="room-list"></div>
+    <div style="padding: 15px; border-top: 1px solid var(--soft-pink);">
+        <a href="index.html" class="nav-back">🏠 Back to Dashboard</a>
     </div>
 </div>
 
@@ -71,14 +95,14 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; heig
     
     <div class="input-area">
         <div class="proxy-bar">
-            <span>Proxy as:</span>
+            <span class="proxy-label">Proxying as:</span>
             <select id="proxy-select">
                 <option value="system">System</option>
             </select>
         </div>
         <div class="chat-box-wrapper">
-            <textarea id="msg-input" placeholder="Message #general" rows="1"></textarea>
-            <button class="btn-small" onclick="sendInternalMessage()">Send</button>
+            <textarea id="msg-input" placeholder="Type a message..." rows="1"></textarea>
+            <button class="main-btn" onclick="sendInternalMessage()">Send</button>
         </div>
     </div>
 </div>
@@ -88,11 +112,7 @@ const SB_URL = 'https://ctrbkrwiwpojbzfpsxwl.supabase.co';
 const SB_KEY = 'sb_publishable_uK-ihohO48o6BPRW8rmDqQ_LbJnfTI7';
 const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
-let systemData = { 
-    members: [], 
-    internalRooms: { "general": [] },
-    activeRoom: "general"
-};
+let systemData = { members: [], internalRooms: { "general": [] }, activeRoom: "general" };
 
 async function loadData() {
     const { data: { user } } = await _supabase.auth.getUser();
@@ -101,7 +121,6 @@ async function loadData() {
     const { data } = await _supabase.from('profiles').select('system_data').eq('user_id', user.id).single();
     if (data?.system_data) {
         systemData = data.system_data;
-        // Ensure internalRooms exists
         if (!systemData.internalRooms) systemData.internalRooms = { "general": [] };
         if (!systemData.activeRoom) systemData.activeRoom = "general";
     }
@@ -112,7 +131,7 @@ async function loadData() {
 
 function renderProxies() {
     const select = document.getElementById('proxy-select');
-    select.innerHTML = '<option value="system">System</option>';
+    select.innerHTML = '<option value="system">System Default</option>';
     systemData.members.forEach(m => {
         select.innerHTML += `<option value="${m.id}">${m.name}</option>`;
     });
@@ -133,13 +152,12 @@ function renderRooms() {
 function switchRoom(room) {
     systemData.activeRoom = room;
     document.getElementById('current-room-name').innerText = `# ${room}`;
-    document.getElementById('msg-input').placeholder = `Message #${room}`;
     renderRooms();
     renderMessages();
 }
 
 function addRoom() {
-    const name = prompt("Enter room name (e.g. vent-room, front-chat):");
+    const name = prompt("New Group/Room Name:");
     if (name) {
         const slug = name.toLowerCase().replace(/\s+/g, '-');
         if (!systemData.internalRooms[slug]) {
@@ -158,15 +176,14 @@ function renderMessages() {
     messages.forEach(msg => {
         display.innerHTML += `
             <div class="message">
-                <img src="${msg.pfp}" class="msg-pfp" style="border-color:${msg.color}">
+                <img src="${msg.pfp}" class="msg-pfp" style="border-color:${msg.color || '#ff00ff'}">
                 <div class="msg-content">
-                    <div class="msg-author" style="color:${msg.color}">
+                    <div class="msg-author" style="color:${msg.color || '#ff00ff'}">
                         ${msg.name} <span class="msg-time">${msg.time}</span>
                     </div>
                     <div class="msg-text">${msg.text}</div>
                 </div>
-            </div>
-        `;
+            </div>`;
     });
     display.scrollTop = display.scrollHeight;
 }
@@ -178,7 +195,7 @@ async function sendInternalMessage() {
 
     let speaker;
     if (proxyId === "system") {
-        speaker = { name: "System", color: "#8e9297", pfp: "https://via.placeholder.com/40" };
+        speaker = { name: "System", color: "#ff00ff", pfp: "https://via.placeholder.com/150" };
     } else {
         speaker = systemData.members.find(m => m.id == proxyId);
     }
@@ -202,7 +219,6 @@ async function sync() {
     await _supabase.from('profiles').update({ system_data: systemData }).eq('user_id', user.id);
 }
 
-// Allow Enter to send, Shift+Enter for new line
 document.getElementById('msg-input').addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();

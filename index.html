@@ -22,16 +22,8 @@ section, .card { background: var(--panel); padding: 20px; border-radius: 20px; b
 input, textarea, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid var(--soft-pink); border-radius: 10px; }
 .main-btn { background: var(--magenta); color: white !important; border: none; padding: 12px; border-radius: 10px; cursor: pointer; width: 100%; font-size: 1rem; font-weight: bold; }
 
-/* HISTORY CHART STYLES */
-.history-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; }
-.history-table th { text-align: left; border-bottom: 2px solid var(--soft-pink); padding: 10px; }
-.history-table td { padding: 10px; border-bottom: 1px solid var(--soft-pink); vertical-align: middle; }
-.history-names { display: flex; gap: 5px; flex-wrap: wrap; }
-.name-tag { padding: 2px 8px; border-radius: 5px; color: white; font-weight: bold; font-size: 0.8rem; }
-.status-text { font-style: italic; font-size: 0.8rem; opacity: 0.8; display: block; }
-
-/* Existing UI Styles */
 .directory-card { border-left: 10px solid; display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; }
+
 .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
 .profile-card { border-top: 10px solid; position: relative; display: flex; flex-direction: column; }
 .pfp-img { width: 120px; height: 120px; border-radius: 15px; object-fit: cover; border: 3px solid var(--soft-pink); align-self: center; margin-bottom: 15px; }
@@ -43,7 +35,20 @@ input, textarea, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px
 .front-card-mini { background: white; padding: 10px 15px; border-radius: 15px; border: 2px solid; display: flex; align-items: center; gap: 12px; position: relative; }
 .remove-front-btn { position: absolute; top: -8px; right: -8px; background: white; border: 2px solid; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; }
 
-#toast { visibility: hidden; min-width: 250px; background-color: var(--magenta); color: #fff; text-align: center; border-radius: 50px; padding: 16px; position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 10002; }
+/* HISTORY CHART STYLES */
+.history-container { max-height: 300px; overflow-y: auto; background: #fff; border-radius: 15px; border: 2px solid var(--soft-pink); }
+.history-table { width: 100%; border-collapse: collapse; }
+.history-table th { background: var(--soft-pink); padding: 10px; text-align: left; font-size: 0.8rem; }
+.history-table td { padding: 12px 10px; border-bottom: 1px solid var(--soft-pink); font-size: 0.9rem; }
+.history-tag { display: inline-block; background: var(--bg); padding: 2px 8px; border-radius: 5px; margin-right: 5px; font-weight: bold; font-size: 0.8rem; border: 1px solid var(--soft-pink); }
+.status-note { font-style: italic; opacity: 0.7; font-size: 0.8rem; }
+
+#profile-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 240, 246, 0.98); z-index: 9999; overflow-y: auto; padding: 20px; }
+.overlay-content { max-width: 1000px; margin: 40px auto; background: white; padding: 30px; border-radius: 30px; border: 3px solid var(--magenta); position: relative; }
+.close-overlay { position: absolute; top: 20px; right: 25px; font-size: 40px; cursor: pointer; }
+.floating-chat-link { position: fixed; bottom: 30px; right: 30px; background: var(--magenta); color: white !important; padding: 15px 25px; border-radius: 50px; text-decoration: none; font-weight: bold; box-shadow: 0 10px 20px rgba(255, 0, 255, 0.3); z-index: 10001; }
+
+#toast { visibility: hidden; min-width: 250px; background-color: var(--magenta); color: #fff; text-align: center; border-radius: 50px; padding: 16px; position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); }
 #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
 @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
 @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
@@ -52,6 +57,14 @@ input, textarea, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px
 <body>
 
 <div id="toast">Synced to Cloud! ✨</div>
+
+<div id="profile-overlay">
+    <div class="overlay-content">
+        <span class="close-overlay" onclick="closeOverlay()">&times;</span>
+        <div id="overlay-body"></div>
+        <a href="chat.html" class="floating-chat-link">💬 Open Global Chat</a>
+    </div>
+</div>
 
 <div id="auth-screen">
     <section class="card" style="max-width: 400px; margin: 100px auto; text-align: center;">
@@ -64,9 +77,9 @@ input, textarea, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px
 
 <div id="dashboard">
     <nav>
-        <button class="tab-btn active" onclick="showTab('overview')">Overview</button>
-        <button class="tab-btn" onclick="showTab('profiles')">Profiles</button>
-        <button class="tab-btn" onclick="showTab('sidekicks')">Sidekicks</button>
+        <button class="tab-btn active" id="btn-overview" onclick="showTab('overview')">Overview</button>
+        <button class="tab-btn" id="btn-profiles" onclick="showTab('profiles')">Profiles</button>
+        <button class="tab-btn" id="btn-sidekicks" onclick="showTab('sidekicks')">Sidekicks</button>
         <a href="internal.html" class="nav-link">🏠 Internal Chat</a>
         <button class="tab-btn" style="border-color: #aaa; color: #aaa;" onclick="logout()">Logout</button>
     </nav>
@@ -75,6 +88,11 @@ input, textarea, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px
         <section>
             <h1 id="view-sys-name">System Name</h1>
             <p id="view-sys-bio">Bio loading...</p>
+            <div style="display: flex; gap: 10px; margin-top:15px;">
+                <input type="text" id="edit-sys-name" placeholder="System Name" style="flex:1">
+                <input type="text" id="edit-sys-bio" placeholder="System Bio" style="flex:2">
+                <button class="mini-btn" onclick="updateSystemInfo()" style="width: 80px;">Save</button>
+            </div>
         </section>
 
         <div class="fronting-box">
@@ -84,20 +102,19 @@ input, textarea, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px
 
         <section>
             <h3>Front History Chart</h3>
-            <div style="overflow-x: auto;">
+            <div class="history-container">
                 <table class="history-table">
                     <thead>
                         <tr>
+                            <th>Time</th>
                             <th>Alters</th>
-                            <th>Started</th>
-                            <th>Ended</th>
-                            <th>Duration</th>
+                            <th>Status/Note</th>
                         </tr>
                     </thead>
-                    <tbody id="history-chart-body"></tbody>
+                    <tbody id="front-history-rows"></tbody>
                 </table>
             </div>
-            <button class="mini-btn" style="margin-top:10px; width: auto;" onclick="clearHistory()">Clear Chart</button>
+            <button class="mini-btn" style="margin-top:10px; border-color:#ff00ff55" onclick="clearHistory()">Clear Logs</button>
         </section>
 
         <h3>System Directory</h3>
@@ -121,8 +138,23 @@ input, textarea, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px
                 <input type="file" id="pfp" accept="image/*" style="grid-column: span 2;">
             </div>
             <button class="main-btn" onclick="saveAlter()">Save Alter</button>
+            <button class="mini-btn" id="cancel-edit" style="display:none;" onclick="clearForm()">Cancel Edit</button>
         </section>
         <div id="detailed-profiles-list" class="grid-container"></div>
+    </div>
+
+    <div id="sidekicks" class="view-section">
+        <div style="display:grid; grid-template-columns: 1fr 2fr; gap:20px;">
+            <section>
+                <h3>Add Buddy</h3>
+                <input type="text" id="sidekick-search" placeholder="Username...">
+                <button class="main-btn" onclick="addSidekick()">Add Sidekick</button>
+            </section>
+            <section>
+                <h3>My Sidekicks</h3>
+                <div id="sidekicks-list"></div>
+            </section>
+        </div>
     </div>
 </div>
 
@@ -131,8 +163,7 @@ const SB_URL = 'https://ctrbkrwiwpojbzfpsxwl.supabase.co';
 const SB_KEY = 'sb_publishable_uK-ihohO48o6BPRW8rmDqQ_LbJnfTI7';
 const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
-let systemData = { name: "System Name", bio: "Bio...", members: [], history: [] };
-let activeSession = null;
+let systemData = { name: "System Name", bio: "Bio...", members: [], front_history: [] };
 
 async function handleAuth() {
     const email = document.getElementById('email-input').value;
@@ -147,9 +178,10 @@ async function loadData() {
     if (!user) return;
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('dashboard').style.display = 'block';
+    
     const { data } = await _supabase.from('profiles').select('*').eq('user_id', user.id).single();
     if (data?.system_data) systemData = data.system_data;
-    if (!systemData.history) systemData.history = [];
+    if (!systemData.front_history) systemData.front_history = [];
     refreshUI();
 }
 
@@ -159,76 +191,70 @@ async function sync() {
     showToast();
 }
 
+function updateSystemInfo() {
+    systemData.name = document.getElementById('edit-sys-name').value || systemData.name;
+    systemData.bio = document.getElementById('edit-sys-bio').value || systemData.bio;
+    refreshUI(); sync();
+}
+
 function toggleFront(id) {
     const m = systemData.members.find(m => m.id == id);
-    const now = new Date();
-
-    if (!m.isFronting) {
-        const status = prompt(`Enter custom status for ${m.name} (optional):`, "Fronting");
-        m.isFronting = true;
-        m.frontStart = now.toISOString();
-        m.currentStatus = status || "Fronting";
-    } else {
-        // Ending front - Create history entry
-        const start = new Date(m.frontStart);
-        const duration = calculateDuration(start, now);
+    m.isFronting = !m.isFronting;
+    
+    if (m.isFronting) {
+        const status = prompt(`Custom status for ${m.name}? (Leave blank for none)`, "Fronting");
+        const now = new Date();
+        const timeStr = now.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
         
-        // Grouping logic: check if others are fronting to group entries
-        const entry = {
-            names: [{name: m.name, color: m.color, status: m.currentStatus}],
-            start: start.toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}),
-            end: now.toLocaleString([], {hour:'2-digit', minute:'2-digit'}),
-            duration: duration,
-            rawStart: start.getTime()
-        };
+        // Grouping logic: check if last entry was within 2 minutes
+        const lastEntry = systemData.front_history[0];
+        const isRecent = lastEntry && (now - new Date(lastEntry.rawDate) < 120000);
 
-        // If others are currently fronting, we group them into the same timeframe
-        const othersFronting = systemData.members.filter(alt => alt.isFronting && alt.id !== m.id);
-        othersFronting.forEach(alt => {
-            entry.names.push({name: alt.name, color: alt.color, status: alt.currentStatus});
-        });
-
-        systemData.history.unshift(entry);
-        if(systemData.history.length > 30) systemData.history.pop();
-
-        m.isFronting = false;
-        m.frontStart = null;
-        m.currentStatus = null;
+        if (isRecent) {
+            if (!lastEntry.names.includes(m.name)) {
+                lastEntry.names.push(m.name);
+                if(status && status !== "Fronting") lastEntry.note += ` / ${status}`;
+            }
+        } else {
+            systemData.front_history.unshift({
+                names: [m.name],
+                time: timeStr,
+                note: status || "Fronting",
+                rawDate: now.toISOString()
+            });
+        }
+        if (systemData.front_history.length > 40) systemData.front_history.pop();
     }
     
     refreshUI(); sync();
 }
 
-function calculateDuration(start, end) {
-    const diff = Math.abs(end - start);
-    const mins = Math.floor(diff / 60000);
-    const hrs = Math.floor(mins / 60);
-    return hrs > 0 ? `${hrs}h ${mins % 60}m` : `${mins}m`;
+function clearHistory() {
+    if(confirm("Wipe all front logs?")) {
+        systemData.front_history = [];
+        refreshUI(); sync();
+    }
 }
 
 function refreshUI() {
     document.getElementById('view-sys-name').innerText = systemData.name;
+    document.getElementById('view-sys-bio').innerText = systemData.bio;
+    
     const frontDisplay = document.getElementById('fronting-display');
     const overviewList = document.getElementById('overview-list');
-    const historyBody = document.getElementById('history-chart-body');
     const detailedList = document.getElementById('detailed-profiles-list');
+    const historyRows = document.getElementById('front-history-rows');
+    
+    frontDisplay.innerHTML = ''; overviewList.innerHTML = ''; detailedList.innerHTML = ''; historyRows.innerHTML = '';
 
-    frontDisplay.innerHTML = ''; overviewList.innerHTML = ''; historyBody.innerHTML = ''; detailedList.innerHTML = '';
-
-    // Render History Chart
-    systemData.history.forEach(item => {
-        const nameTags = item.names.map(n => 
-            `<div style="margin-bottom:5px">
-                <span class="name-tag" style="background:${n.color}">${n.name}</span>
-                <span class="status-text">${n.status}</span>
-            </div>`).join('');
-            
-        historyBody.innerHTML += `
+    // Render Table Rows
+    systemData.front_history.forEach(entry => {
+        const namesHtml = entry.names.map(n => `<span class="history-tag">${n}</span>`).join('');
+        historyRows.innerHTML += `
             <tr>
-                <td><div class="history-names">${nameTags}</div></td>
-                <td>${item.start}</td>
-                <td>${item.end}</td>
-                <td><b>${item.duration}</b></td>
+                <td>${entry.time}</td>
+                <td>${namesHtml}</td>
+                <td class="status-note">${entry.note}</td>
             </tr>`;
     });
 
@@ -236,61 +262,128 @@ function refreshUI() {
         if(m.isFronting) {
             frontDisplay.innerHTML += `
                 <div class="front-card-mini" style="border-color:${m.color}; color:${m.color}">
-                    <img src="${m.pfp}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;">
-                    <div style="text-align:left">
-                        <b>${m.name}</b><br><small>${m.currentStatus}</small>
-                    </div>
-                    <button class="remove-front-btn" onclick="toggleFront(${m.id})">×</button>
+                    <img src="${m.pfp}" style="width:45px;height:45px;border-radius:10px;object-fit:cover;">
+                    <b>${m.name}</b>
+                    <button class="remove-front-btn" style="border-color:${m.color}; color:${m.color}" onclick="toggleFront(${m.id})">×</button>
                 </div>`;
         }
-
+        
         overviewList.innerHTML += `
             <div class="card directory-card" style="border-color:${m.color}">
-                <div>
-                    <strong style="color:${m.color}">${m.name}</strong> 
-                    <small>${m.isFronting ? ' • ' + m.currentStatus : ''}</small>
+                <div style="display:flex; align-items:center; gap:15px;">
+                    <div style="width:12px;height:12px;border-radius:50%;background:${m.isFronting ? '#00ff00' : '#ccc'}"></div>
+                    <strong style="color:${m.color}">${m.name}</strong> <small>— ${m.role}</small>
                 </div>
-                <button class="mini-btn" style="width:100px" onclick="toggleFront(${m.id})">
-                    ${m.isFronting ? 'Exit' : 'Front'}
-                </button>
+                <button class="mini-btn" style="width:100px; margin:0;" onclick="toggleFront(${m.id})">${m.isFronting ? 'Exit' : 'Front'}</button>
             </div>`;
 
         detailedList.innerHTML += `
             <div class="card profile-card" style="border-color:${m.color}">
                 <img src="${m.pfp}" class="pfp-img" style="border-color:${m.color}">
-                <h2 style="text-align:center; color:${m.color} !important;">${m.name}</h2>
-                <button class="mini-btn" onclick="toggleFront(${m.id})">${m.isFronting ? 'Exit Front' : 'Front'}</button>
+                <h2 style="text-align:center; margin:0; color:${m.color} !important;">${m.name}</h2>
+                <span class="detail-label">Role</span><p class="detail-text">${m.role}</p>
+                <span class="detail-label">Bio</span><p class="detail-text">${m.bio}</p>
+                <div style="margin-top:auto; padding-top:15px; display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
+                    <button class="mini-btn" onclick="toggleFront(${m.id})">${m.isFronting ? 'Leave' : 'Front'}</button>
+                    <button class="mini-btn" onclick="editAlter(${m.id})">Edit</button>
+                    <button class="mini-btn" style="grid-column:span 2; color:red; border-color:red" onclick="deleteAlter(${m.id})">Delete</button>
+                </div>
             </div>`;
     });
 }
 
-function clearHistory() {
-    if(confirm("Clear all history entries?")) {
-        systemData.history = [];
-        refreshUI(); sync();
+function saveAlter() {
+    const id = document.getElementById('edit-id').value;
+    const finalize = (img) => {
+        const member = {
+            id: id ? parseInt(id) : Date.now(),
+            name: document.getElementById('name').value || "Unnamed",
+            pronouns: document.getElementById('pronouns').value,
+            role: document.getElementById('role').value,
+            fandoms: document.getElementById('fandoms').value,
+            color: document.getElementById('color').value,
+            bio: document.getElementById('bio').value,
+            pfp: img || (id ? systemData.members.find(m => m.id == id).pfp : "https://via.placeholder.com/150"),
+            isFronting: id ? systemData.members.find(m => m.id == id).isFronting : false
+        };
+        if (id) systemData.members[systemData.members.findIndex(m => m.id == id)] = member;
+        else systemData.members.push(member);
+        sync(); refreshUI(); clearForm();
+    };
+    const file = document.getElementById('pfp').files[0];
+    if (file) {
+        const reader = new FileReader(); reader.readAsDataURL(file);
+        reader.onload = () => finalize(reader.result);
+    } else finalize();
+}
+
+function deleteAlter(id) {
+    if(confirm("Delete this alter permanently?")) {
+        systemData.members = systemData.members.filter(m => m.id !== id);
+        sync(); refreshUI();
     }
 }
 
-// Reuse existing save/auth/nav functions from original code
+function editAlter(id) {
+    const m = systemData.members.find(m => m.id == id);
+    document.getElementById('edit-id').value = m.id;
+    document.getElementById('name').value = m.name;
+    document.getElementById('pronouns').value = m.pronouns;
+    document.getElementById('role').value = m.role;
+    document.getElementById('fandoms').value = m.fandoms;
+    document.getElementById('color').value = m.color;
+    document.getElementById('bio').value = m.bio;
+    document.getElementById('form-title').innerText = "Editing: " + m.name;
+    document.getElementById('cancel-edit').style.display = 'block';
+    showTab('profiles');
+}
+
+function clearForm() {
+    document.getElementById('edit-id').value = '';
+    document.getElementById('form-title').innerText = "Manage Alters";
+    document.getElementById('cancel-edit').style.display = 'none';
+    document.querySelectorAll('#profiles input, #profiles textarea').forEach(i => i.value = '');
+}
+
+async function addSidekick() {
+    const target = document.getElementById('sidekick-search').value;
+    const { data: friend } = await _supabase.from('profiles').select('user_id').eq('username', target).single();
+    if(!friend) return alert("System not found!");
+    const { data: { user } } = await _supabase.auth.getUser();
+    await _supabase.from('connections').insert([{ user_id: user.id, friend_id: friend.user_id }]);
+    loadSidekicks();
+}
+
+async function loadSidekicks() {
+    const list = document.getElementById('sidekicks-list');
+    const { data: { user } } = await _supabase.auth.getUser();
+    const { data: connections } = await _supabase.from('connections').select('friend_id').eq('user_id', user.id);
+    if (!connections?.length) return list.innerHTML = "No sidekicks added.";
+    const { data: profiles } = await _supabase.from('profiles').select('username, system_data').in('user_id', connections.map(c => c.friend_id));
+    list.innerHTML = '';
+    profiles.forEach(buddy => {
+        const fronting = (buddy.system_data?.members || []).filter(m => m.isFronting);
+        list.innerHTML += `<div class="card" style="cursor:pointer" onclick='openOverlay(${JSON.stringify(buddy)})'><strong>${buddy.username}</strong> — ${fronting.length ? 'Fronting: ' + fronting.map(m=>m.name).join(', ') : 'Internal'}</div>`;
+    });
+}
+
+function openOverlay(buddy) {
+    const bData = buddy.system_data || {};
+    const members = bData.members || [];
+    document.getElementById('overlay-body').innerHTML = `<h1>${bData.name || buddy.username}</h1><p>${bData.bio || 'No bio.'}</p><div class="grid-container">${members.map(m => `<div class="card profile-card" style="border-color:${m.color}"><img src="${m.pfp}" class="pfp-img" style="border-color:${m.color}"><h2 style="color:${m.color} !important">${m.name} ${m.isFronting ? '⭕' : ''}</h2><span class="detail-label">Role</span><p class="detail-text">${m.role}</p><span class="detail-label">Bio</span><p class="detail-text">${m.bio}</p></div>`).join('')}</div>`;
+    document.getElementById('profile-overlay').style.display = 'block';
+}
+
+function closeOverlay() { document.getElementById('profile-overlay').style.display = 'none'; }
 function showTab(id) {
     document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.getElementById(id).classList.add('active');
+    document.getElementById('btn-'+id).classList.add('active');
+    if(id === 'sidekicks') loadSidekicks();
 }
 function showToast() { const t = document.getElementById('toast'); t.className = 'show'; setTimeout(() => t.className = '', 3000); }
 function logout() { _supabase.auth.signOut(); location.reload(); }
-
-function saveAlter() {
-    const member = {
-        id: Date.now(),
-        name: document.getElementById('name').value || "Unnamed",
-        color: document.getElementById('color').value,
-        bio: document.getElementById('bio').value,
-        pfp: "https://via.placeholder.com/150",
-        isFronting: false
-    };
-    systemData.members.push(member);
-    sync(); refreshUI();
-}
 
 window.onload = loadData;
 </script>

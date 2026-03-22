@@ -309,15 +309,38 @@
         async function syncToCloud() {
             const { data: { user } } = await _supabase.auth.getUser();
             if (!user) return;
-            await _supabase.from('profiles').upsert({ user_id: user.id, system_data: systemData }, { onConflict: 'user_id' });
-            showToast();
+
+            // Updated for specific table structure and Primary Key user_id
+            const { error } = await _supabase
+                .from('profiles')
+                .upsert({ 
+                    user_id: user.id, 
+                    system_data: systemData 
+                });
+
+            if (error) {
+                console.error("Cloud Sync Error:", error.message);
+            } else {
+                showToast();
+            }
         }
 
         async function loadSystemData() {
             const { data: { user } } = await _supabase.auth.getUser();
             if (!user) return;
-            const { data } = await _supabase.from('profiles').select('system_data').eq('user_id', user.id).single();
-            if (data) systemData = data.system_data;
+            
+            // Explicitly selecting from column system_data
+            const { data, error } = await _supabase
+                .from('profiles')
+                .select('system_data')
+                .eq('user_id', user.id)
+                .single();
+
+            if (error) {
+                console.log("Load Notice:", error.message);
+                return;
+            }
+            if (data && data.system_data) systemData = data.system_data;
         }
 
         function showToast() {

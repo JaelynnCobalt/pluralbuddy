@@ -27,9 +27,6 @@ input, textarea, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px
 .history-group { border: 2px solid var(--magenta); border-radius: 15px; margin-bottom: 15px; overflow: hidden; background: white; }
 .history-label { font-weight: bold; min-width: 100px; }
 
-/* OVERVIEW DIRECTORY STYLES */
-.directory-card { border-left: 10px solid; display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; }
-
 /* PROFILE GRID */
 .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
 .profile-card { border-top: 10px solid; position: relative; display: flex; flex-direction: column; }
@@ -68,6 +65,7 @@ input, textarea, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px
         <button class="tab-btn" id="btn-profiles" onclick="showTab('profiles')">Profiles</button>
         <button class="tab-btn" id="btn-history" onclick="showTab('history')">Front History</button>
         <button class="tab-btn" id="btn-sidekicks" onclick="showTab('sidekicks')">Sidekicks</button>
+        <a href="internal.html" class="nav-link">🏠 Internal Chat</a>
         <button class="tab-btn" style="border-color: #aaa; color: #aaa;" onclick="logout()">Logout</button>
     </nav>
 
@@ -141,7 +139,6 @@ const SB_URL = 'https://ctrbkrwiwpojbzfpsxwl.supabase.co';
 const SB_KEY = 'sb_publishable_uK-ihohO48o6BPRW8rmDqQ_LbJnfTI7';
 const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
-// Added "history" to systemData structure
 let systemData = { name: "System Name", bio: "Bio...", members: [], history: [] };
 
 async function handleAuth() {
@@ -161,7 +158,7 @@ async function loadData() {
     const { data } = await _supabase.from('profiles').select('*').eq('user_id', user.id).single();
     if (data?.system_data) {
         systemData = data.system_data;
-        if (!systemData.history) systemData.history = []; // Migration for old data
+        if (!systemData.history) systemData.history = [];
     }
     refreshUI();
 }
@@ -183,13 +180,11 @@ function toggleFront(id) {
     const now = new Date();
 
     if (!m.isFronting) {
-        // Entering Front
-        const status = prompt(`What is ${m.name}'s current status? (e.g. "teen beach movie")`, "");
+        const status = prompt(`What is ${m.name}'s current status?`, "");
         m.isFronting = true;
         m.startTime = now.getTime();
         m.currentStatus = status || "No status";
     } else {
-        // Leaving Front
         const durationMs = now.getTime() - m.startTime;
         const durationMins = Math.round(durationMs / 60000);
         
@@ -202,7 +197,7 @@ function toggleFront(id) {
             timestamp: now.getTime()
         };
 
-        systemData.history.unshift(logEntry); // Add to start of history
+        systemData.history.unshift(logEntry);
         m.isFronting = false;
         m.startTime = null;
         m.currentStatus = null;
@@ -221,13 +216,12 @@ function refreshUI() {
     
     frontDisplay.innerHTML = ''; overviewList.innerHTML = ''; detailedList.innerHTML = ''; historyContainer.innerHTML = '';
 
-    // Render Members
     systemData.members.forEach(m => {
         if(m.isFronting) {
             frontDisplay.innerHTML += `
                 <div class="front-card-mini" style="border-color:${m.color}; color:${m.color}">
                     <img src="${m.pfp}" style="width:45px;height:45px;border-radius:10px;object-fit:cover;">
-                    <div><b>${m.name}</b><br><small style="color:gray italic">${m.currentStatus}</small></div>
+                    <div><b>${m.name}</b><br><small style="color:gray; font-style:italic;">${m.currentStatus}</small></div>
                     <button class="remove-front-btn" style="border-color:${m.color}; color:${m.color}" onclick="toggleFront(${m.id})">×</button>
                 </div>`;
         }
@@ -255,7 +249,6 @@ function refreshUI() {
             </div>`;
     });
 
-    // Render History with Grouping Logic
     let currentGroupHtml = "";
     systemData.history.forEach((entry, index) => {
         const nextEntry = systemData.history[index + 1];
@@ -268,7 +261,6 @@ function refreshUI() {
         
         currentGroupHtml += html;
 
-        // Grouping Check: If next entry is more than 3 minutes away (180000ms), or doesn't exist, close group
         if (!nextEntry || (entry.timestamp - nextEntry.timestamp > 180000)) {
             historyContainer.innerHTML += `<div class="history-group">${currentGroupHtml}</div>`;
             currentGroupHtml = "";
@@ -283,7 +275,6 @@ function clearHistory() {
     }
 }
 
-// Rest of your existing functions (Save/Edit/Sidekicks)
 function saveAlter() {
     const id = document.getElementById('edit-id').value;
     const finalize = (img) => {

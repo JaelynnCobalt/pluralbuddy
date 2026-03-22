@@ -108,7 +108,7 @@
             grid-template-columns: repeat(4, 1fr); 
             gap: 15px; 
         }
-        .profile-card, .sk-card { display: flex; flex-direction: column; padding: 20px; }
+        .profile-card, .sidekick-card { display: flex; flex-direction: column; padding: 20px; }
         .pfp-img { width: 100px; height: 100px; border-radius: 15px; object-fit: cover; border: 3px solid var(--soft-pink); align-self: center; margin-bottom: 10px; }
         .detail-label { font-weight: bold; font-size: 0.65rem; text-transform: uppercase; margin-top: 8px; display: block; opacity: 0.8; }
         .detail-text { font-size: 0.85rem; margin: 0; word-wrap: break-word; font-weight: bold; white-space: pre-wrap; }
@@ -118,6 +118,10 @@
         .front-card-mini { background: white; padding: 10px; border-radius: 15px; border: 2px solid var(--magenta); display: flex; align-items: center; gap: 10px; position: relative; margin: 5px;}
         .front-pfp { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid currentColor; }
         .remove-front-btn { background: white; border: 1px solid currentColor; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; position: absolute; top: -5px; right: -5px;}
+
+        /* Sidekick Fronter Mini Style */
+        .sk-fronter-row { display: flex; align-items: center; gap: 10px; background: var(--bg); padding: 8px; border-radius: 10px; margin-top: 5px; border: 1px solid var(--soft-pink); }
+        .sk-pfp-sm { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
 
         .chat-interface { display: flex; height: 550px; border: 1px solid var(--soft-pink); border-radius: 15px; overflow: hidden; background: white; }
         .chat-sidebar { width: 220px; background: var(--bg); border-right: 1px solid var(--soft-pink); display: flex; flex-direction: column; padding: 10px; }
@@ -184,20 +188,20 @@
 
         <div id="sidekicks" class="view-section">
             <section class="sync-card">
-                <h3>Your Live System ID</h3>
-                <p style="font-size: 0.8rem;">Create a unique ID name (e.g., your-system-123) and share it with friends!</p>
-                <input type="text" id="sync-id-input" placeholder="Create your sync ID...">
-                <button class="main-btn" style="width: auto; padding: 10px 25px;" onclick="broadcastFront()">📡 Broadcast Live Status</button>
+                <h3>System ID & Syncing</h3>
+                <p style="font-size: 0.8rem; margin-bottom: 10px;">Create a Sync Channel Name (like your username) and give it to friends!</p>
+                <input type="text" id="my-sync-channel" placeholder="Your Sync Channel Name..." style="text-align: center;">
+                <button class="main-btn" style="width: auto; padding: 10px 25px;" onclick="copySystemID()">📡 Broadcast & Copy ID</button>
             </section>
 
             <section>
                 <h3>Add a Sidekick</h3>
-                <input type="text" id="add-friend-id" placeholder="Paste friend's Sync ID...">
-                <button class="main-btn" onclick="addFriend()">Add Friend</button>
+                <input type="text" id="friend-channel-input" placeholder="Paste friend's Sync Channel Name...">
+                <button class="main-btn" onclick="addSidekick()">Add Sidekick</button>
             </section>
 
-            <h3>Sidekick Gallery</h3>
-            <div id="sidekick-gallery" class="grid-container"></div>
+            <h2>Sidekick Gallery</h2>
+            <div id="sidekick-list" class="grid-container"></div>
         </div>
 
         <div id="profiles" class="view-section">
@@ -259,6 +263,7 @@
     </div>
 
     <script>
+        // Init PubNub for Live Sync
         const pubnub = new PubNub({
             publishKey: 'pub-c-49033f92-c286-4f40-848e-ef86903366c8',
             subscribeKey: 'sub-c-10336714-386d-4950-9d04-1c6670a48530',
@@ -268,10 +273,11 @@
         let isReg = false; let pendingImg = "";
         let sys = JSON.parse(localStorage.getItem('fullSystemStorage')) || {
             name: "System Name", bio: "Bio...", members: [], history: [],
-            channels: { "general": [] }, activeChannel: "general", syncID: ""
+            channels: { "general": [] }, activeChannel: "general", syncChannel: ""
         };
-        let friends = JSON.parse(localStorage.getItem('system_friends')) || [];
+        let sidekicks = JSON.parse(localStorage.getItem('sidekickList')) || [];
 
+        // --- AUTH LOGIC ---
         function toggleAuthMode() { isReg = !isReg; document.getElementById('switch-auth').innerText = isReg ? "Login" : "Register"; }
         function handleAuth() { 
             const p = document.getElementById('passcode-input').value;
@@ -281,64 +287,64 @@
         function login() { document.getElementById('auth-screen').style.display='none'; document.getElementById('dashboard').style.display='block'; refresh(); }
         function logout() { location.reload(); }
 
-        // --- LIVE SYNC LOGIC ---
-        function broadcastFront() {
-            const id = document.getElementById('sync-id-input').value.trim();
-            if(!id) return alert("Please enter a Sync ID first!");
-            sys.syncID = id;
-            localStorage.setItem('fullSystemStorage', JSON.stringify(sys));
-
-            const payload = {
+        // --- SIDEKICK SYNC LOGIC ---
+        function copySystemID() {
+            sys.syncChannel = document.getElementById('my-sync-channel').value.trim();
+            if(!sys.syncChannel) { alert("Please enter a Sync Channel Name first!"); return; }
+            
+            const activeData = {
                 name: sys.name,
-                fronters: sys.members.filter(m => m.isFronting).map(m => ({n: m.name, p: m.pfp, s: m.frontStatus, c: m.color}))
+                fronters: sys.members.filter(m => m.isFronting).map(m => ({ n: m.name, p: m.pfp, s: m.frontStatus })),
+                updated: new Date().toLocaleTimeString()
             };
-            pubnub.publish({ channel: id, message: payload });
-            alert("📡 Live status broadcasted!");
+
+            // Broadcast to the cloud
+            pubnub.publish({ channel: sys.syncChannel, message: activeData });
+
+            // Copy ID to clipboard
+            const systemID = btoa(JSON.stringify({ channel: sys.syncChannel }));
+            navigator.clipboard.writeText(systemID).then(() => {
+                alert("✨ Broadcast Live! System ID copied for friends.");
+                refresh();
+            });
         }
 
-        function addFriend() {
-            const id = document.getElementById('add-friend-id').value.trim();
-            if(id && !friends.includes(id)) {
-                friends.push(id);
-                localStorage.setItem('system_friends', JSON.stringify(friends));
-                document.getElementById('add-friend-id').value = "";
+        function addSidekick() {
+            const input = document.getElementById('friend-channel-input').value.trim();
+            if(!input) return;
+            let chan = input;
+            try { chan = JSON.parse(atob(input)).channel; } catch(e) {}
+            
+            if(!sidekicks.find(s => s.channel === chan)) {
+                sidekicks.push({ channel: chan, name: "Loading...", fronters: [] });
+                localStorage.setItem('sidekickList', JSON.stringify(sidekicks));
+                document.getElementById('friend-channel-input').value = "";
                 refresh();
             }
         }
 
-        function refreshFriend(id) {
-            pubnub.history({ channel: id, count: 1 }, (status, response) => {
-                if (response && response.messages.length) {
+        function refreshSidekick(chan, index) {
+            pubnub.history({ channel: chan, count: 1 }, (status, response) => {
+                if (response.messages.length) {
                     const data = response.messages[0].entry;
-                    const container = document.getElementById(`friend-${id}`);
-                    if(container) {
-                        let frontersHtml = data.fronters.map(f => `
-                            <div style="display:flex; align-items:center; gap:10px; margin-top:10px; background:#f9f9f9; padding:5px; border-radius:10px; border-left:4px solid ${f.c}">
-                                <img src="${f.p}" style="width:30px; height:30px; border-radius:50%; object-fit:cover;">
-                                <div style="font-size:0.8rem;"><b style="color:${f.c}">${f.n}</b><br><small style="color:${f.c}">${f.s}</small></div>
-                            </div>
-                        `).join('') || '<p style="font-size:0.7rem; opacity:0.5;">No one at front</p>';
-                        
-                        container.innerHTML = `
-                            <h4 style="margin:0;">${data.name}</h4>
-                            ${frontersHtml}
-                            <button class="mini-btn" onclick="refreshFriend('${id}')">🔄 Refresh</button>
-                            <button class="mini-btn" style="color:red" onclick="removeFriend('${id}')">Remove</button>
-                        `;
-                    }
-                } else {
-                    alert("Friend hasn't broadcasted yet!");
-                }
+                    sidekicks[index].name = data.name;
+                    sidekicks[index].fronters = data.fronters;
+                    sidekicks[index].lastSync = data.updated;
+                    localStorage.setItem('sidekickList', JSON.stringify(sidekicks));
+                    refresh();
+                } else { alert("No live data found for this sidekick yet!"); }
             });
         }
 
-        function removeFriend(id) {
-            friends = friends.filter(f => f !== id);
-            localStorage.setItem('system_friends', JSON.stringify(friends));
-            refresh();
+        function removeSidekick(index) {
+            if(confirm("Remove this sidekick?")) {
+                sidekicks.splice(index, 1);
+                localStorage.setItem('sidekickList', JSON.stringify(sidekicks));
+                refresh();
+            }
         }
 
-        // --- CORE UI ---
+        // --- UI & TABS ---
         function showTab(t) {
             document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -353,6 +359,7 @@
             refresh();
         }
 
+        // --- CORE FUNCTIONS ---
         function compress(file, cb) {
             const r = new FileReader(); r.readAsDataURL(file);
             r.onload = (e) => {
@@ -442,14 +449,22 @@
             const txt = document.getElementById('chat-input').value.trim();
             if(!txt && !pendingImg) return;
             let spk = sid==="system" ? {name:"System", color:"#ff00ff", pfp:"https://via.placeholder.com/35"} : sys.members.find(x=>x.id==sid);
+            
             if(!sys.channels[sys.activeChannel]) sys.channels[sys.activeChannel] = [];
+            
             sys.channels[sys.activeChannel].push({ 
-                name: spk.name, color: spk.color, pfp: spk.pfp, text: txt, image: pendingImg, 
+                name: spk.name, 
+                color: spk.color, 
+                pfp: spk.pfp, 
+                text: txt, 
+                image: pendingImg, 
                 time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) 
             });
+            
             document.getElementById('chat-input').value=''; 
             document.getElementById('chat-img').value='';
-            pendingImg=""; document.getElementById('img-lab').style.display='none';
+            pendingImg=""; 
+            document.getElementById('img-lab').style.display='none';
             refresh(); scroll();
         }
 
@@ -460,7 +475,7 @@
             document.getElementById('view-sys-name').innerText = sys.name;
             document.getElementById('view-sys-bio').innerText = sys.bio;
             document.getElementById('current-channel-title').innerText = `#${sys.activeChannel}`;
-            document.getElementById('sync-id-input').value = sys.syncID || "";
+            document.getElementById('my-sync-channel').value = sys.syncChannel || "";
 
             const frontD = document.getElementById('fronting-display');
             const overL = document.getElementById('overview-list');
@@ -469,9 +484,9 @@
             const chatD = document.getElementById('chat-display');
             const chanL = document.getElementById('channel-list');
             const spkS = document.getElementById('chat-speaker');
-            const skGal = document.getElementById('sidekick-gallery');
+            const skList = document.getElementById('sidekick-list');
 
-            frontD.innerHTML=''; overL.innerHTML=''; profL.innerHTML=''; histL.innerHTML=''; chatD.innerHTML=''; chanL.innerHTML=''; skGal.innerHTML='';
+            frontD.innerHTML=''; overL.innerHTML=''; profL.innerHTML=''; histL.innerHTML=''; chatD.innerHTML=''; chanL.innerHTML=''; skList.innerHTML='';
             const curSpk = spkS.value; spkS.innerHTML = '<option value="system">System</option>';
 
             sys.members.forEach(m => {
@@ -491,58 +506,85 @@
                     <h2 style="color:${m.color} !important; text-align:center; margin:5px 0;">${m.name}</h2>
                     <span class="detail-label" style="color:${m.color}">Pronouns</span><p class="detail-text" style="color:${m.color}">${m.pronouns || '—'}</p>
                     <span class="detail-label" style="color:${m.color}">Role</span><p class="detail-text" style="color:${m.color}">${m.role || '—'}</p>
+                    <span class="detail-label" style="color:${m.color}">Bio</span><p class="detail-text" style="color:${m.color}">${m.bio || '—'}</p>
                     <div style="margin-top:auto; padding-top:10px;">
                         <button class="mini-btn" style="color:${m.color}; border-color:${m.color}" onclick="toggleFront(${m.id})">${m.isFronting ? 'Leave Front' : 'Front'}</button>
                         <button class="mini-btn" style="color:${m.color}; border-color:${m.color}" onclick="editAlter(${m.id})">Edit</button>
+                        <button class="mini-btn" style="color:#ff4444; border-color:#ff4444; margin-top:10px;" onclick="delAlter(${m.id})">Delete</button>
                     </div>
                 </div>`;
             });
 
-            friends.forEach(fID => {
-                skGal.innerHTML += `<div class="card sk-card" id="friend-${fID}">
-                    <p style="font-size:0.8rem;">Sync ID: ${fID}</p>
-                    <button class="mini-btn" onclick="refreshFriend('${fID}')">🔄 Load Status</button>
-                    <button class="mini-btn" style="color:red" onclick="removeFriend('${fID}')">Remove</button>
+            // Render Sidekicks
+            sidekicks.forEach((sk, i) => {
+                let skFronters = sk.fronters.map(f => `
+                    <div class="sk-fronter-row">
+                        <img src="${f.p}" class="sk-pfp-sm">
+                        <span><b>${f.n}</b><br><small>${f.s}</small></span>
+                    </div>
+                `).join('');
+                skList.innerHTML += `<div class="card sidekick-card">
+                    <h3>${sk.name}</h3>
+                    <small>Sync: ${sk.channel}</small><br>
+                    <small style="opacity:0.6;">Last: ${sk.lastSync || 'Never'}</small>
+                    <div style="margin:10px 0;">${skFronters || 'No data yet.'}</div>
+                    <button class="mini-btn" onclick="refreshSidekick('${sk.channel}', ${i})">🔄 Refresh</button>
+                    <button class="mini-btn" style="color:red; border-color:red;" onclick="removeSidekick(${i})">Remove</button>
                 </div>`;
-                refreshFriend(fID);
             });
 
             Object.keys(sys.channels).forEach(c => {
+                const isDef = (c === 'general');
                 chanL.innerHTML += `<div class="channel-item ${sys.activeChannel===c?'active':''}" onclick="switchChannel('${c}')">
-                    #${c}${(c!=='general')?`<span class="del-chan" onclick="event.stopPropagation(); delChannel('${c}')">×</span>`:''}
+                    #${c}${!isDef ? `<span class="del-chan" onclick="event.stopPropagation(); delChannel('${c}')">×</span>`:''}
                 </div>`;
             });
 
-            (sys.channels[sys.activeChannel] || []).forEach(msg => {
-                chatD.innerHTML += `<div class="chat-msg" style="border-color:${msg.color}">
-                    <img src="${msg.pfp}" class="chat-pfp-sm" style="border-color:${msg.color}">
-                    <div style="flex:1;">
-                        <div style="display:flex; justify-content:space-between;">
-                            <b style="color:${msg.color}; font-size:0.85rem;">${msg.name}</b>
-                            <small style="color:#aaa;">${msg.time}</small>
+            const currentMsgs = sys.channels[sys.activeChannel] || [];
+            currentMsgs.forEach(msg => {
+                const msgHtml = `
+                    <div class="chat-msg" style="border-color:${msg.color}">
+                        <img src="${msg.pfp}" class="chat-pfp-sm" style="border-color:${msg.color}">
+                        <div style="flex:1;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                                <b style="color:${msg.color}; font-size:0.85rem;">${msg.name}</b>
+                                <small style="color:#aaa; font-size:0.7rem;">${msg.time}</small>
+                            </div>
+                            <div style="color:${msg.color}; font-size:0.9rem; word-wrap:break-word; white-space:pre-wrap;">${msg.text}</div>
+                            ${msg.image ? `<img src="${msg.image}" class="chat-img-attached" style="border-color:${msg.color}">` : ''}
                         </div>
-                        <div style="color:${msg.color}; font-size:0.9rem;">${msg.text}</div>
-                        ${msg.image ? `<img src="${msg.image}" class="chat-img-attached">` : ''}
-                    </div>
-                </div>`;
+                    </div>`;
+                chatD.innerHTML += msgHtml;
             });
 
             sys.history.forEach(h => {
-                histL.innerHTML += `<tr><td style="color:${h.color}">${h.name}</td><td>${h.status}</td><td>${h.start}</td><td>${h.end}</td><td>${h.total}</td></tr>`;
+                histL.innerHTML += `<tr>
+                    <td style="color:${h.color}"><b>${h.name}</b></td>
+                    <td style="color:${h.color}">${h.status}</td>
+                    <td style="color:${h.color}">${h.start}</td>
+                    <td style="color:${h.color}">${h.end}</td>
+                    <td style="color:${h.color}"><b>${h.total}</b></td>
+                </tr>`;
             });
             spkS.value = curSpk || "system";
             if(!frontD.innerHTML) frontD.innerHTML = '<p style="font-size:0.9rem; opacity:0.6;">No one is currently fronting.</p>';
         }
 
         function switchChannel(s) { sys.activeChannel=s; refresh(); scroll(); }
-        function clearHist() { if(confirm("Clear history?")) { sys.history=[]; refresh(); } }
+        function clearHist() { if(confirm("Clear all fronting history?")) { sys.history=[]; refresh(); } }
         function editAlter(id) { 
             const m = sys.members.find(x=>x.id==id);
-            document.getElementById('edit-id').value=m.id; document.getElementById('name').value=m.name;
-            document.getElementById('pronouns').value=m.pronouns; document.getElementById('role').value=m.role;
-            document.getElementById('color').value=m.color; document.getElementById('bio').value=m.bio;
-            document.getElementById('fandoms').value=m.fandoms; document.getElementById('form-title').innerText="Editing: " + m.name;
-            document.getElementById('cancel-edit').style.display='block'; showTab('profiles');
+            document.getElementById('edit-id').value=m.id; 
+            document.getElementById('name').value=m.name;
+            document.getElementById('pronouns').value=m.pronouns; 
+            document.getElementById('role').value=m.role;
+            document.getElementById('color').value=m.color; 
+            document.getElementById('bio').value=m.bio;
+            document.getElementById('fandoms').value=m.fandoms; 
+            document.getElementById('form-title').innerText="Editing: " + m.name;
+            document.getElementById('cancel-edit').style.display='block'; 
+            showTab('profiles');
+            window.scrollTo(0,0);
         }
     </script>
 </body>

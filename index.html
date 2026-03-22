@@ -13,178 +13,95 @@
             --front-gold: #fff9c4;
         }
 
-        * {
-            font-family: 'Georgia', serif;
-            box-sizing: border-box;
-            color: var(--magenta);
-        }
+        * { font-family: 'Georgia', serif; box-sizing: border-box; color: var(--magenta); }
 
         body {
             background-color: var(--bg);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            margin: 0; padding: 20px;
+            display: flex; flex-direction: column; align-items: center;
             min-height: 100vh;
         }
 
-        h1, h2, h3, h4, th { 
-            color: var(--magenta) !important; 
-        }
+        h1, h2, h3, h4 { color: var(--magenta) !important; }
 
-        #auth-screen {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 80vh;
-            width: 100%;
-        }
+        #dashboard { width: 100%; max-width: 1300px; }
 
-        .auth-card {
-            background: white;
-            padding: 40px;
-            border-radius: 30px;
-            border: 3px solid var(--magenta);
-            text-align: center;
-            max-width: 400px;
-            width: 100%;
-        }
-
-        #dashboard { display: none; width: 100%; max-width: 1300px; }
-
-        nav {
-            margin-bottom: 30px;
-            display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
-        }
+        nav { margin-bottom: 30px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
 
         .tab-btn {
-            padding: 10px 20px;
-            border: 2px solid var(--magenta);
-            background: white;
-            cursor: pointer;
-            border-radius: 50px;
-            font-weight: bold;
+            padding: 10px 20px; border: 2px solid var(--magenta);
+            background: white; cursor: pointer; border-radius: 50px; font-weight: bold;
         }
 
-        .tab-btn.active {
-            background: var(--magenta);
-            color: white !important;
-        }
+        .tab-btn.active { background: var(--magenta); color: white !important; }
 
         .view-section { display: none; width: 100%; }
         .view-section.active { display: block; }
 
         section, .card {
-            background: var(--panel);
-            padding: 20px;
-            border-radius: 20px;
-            border: 2px solid var(--soft-pink);
-            margin-bottom: 20px;
+            background: var(--panel); padding: 20px; border-radius: 20px;
+            border: 2px solid var(--soft-pink); margin-bottom: 20px;
         }
 
         input, textarea, select {
-            width: 100%; 
-            padding: 10px; 
-            margin: 8px 0;
-            border: 1px solid var(--soft-pink); 
-            border-radius: 10px;
+            width: 100%; padding: 10px; margin: 8px 0;
+            border: 1px solid var(--soft-pink); border-radius: 10px;
         }
 
         .main-btn {
-            background: var(--magenta); 
-            color: white !important; 
-            border: none;
-            padding: 12px; 
-            border-radius: 10px; 
-            cursor: pointer;
-            width: 100%; 
+            background: var(--magenta); color: white !important; border: none;
+            padding: 12px; border-radius: 10px; cursor: pointer; width: 100%; 
         }
 
-        .grid-container { 
-            display: grid; 
-            grid-template-columns: repeat(4, 1fr); 
-            gap: 15px; 
-        }
-        .profile-card { display: flex; flex-direction: column; padding: 20px; }
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
+
+        /* Profile & Sidekick Cards */
+        .profile-card, .sidekick-card { display: flex; flex-direction: column; padding: 20px; }
         .pfp-img { width: 100px; height: 100px; border-radius: 15px; object-fit: cover; border: 3px solid var(--soft-pink); align-self: center; margin-bottom: 10px; }
-        .detail-label { font-weight: bold; font-size: 0.65rem; text-transform: uppercase; margin-top: 8px; display: block; opacity: 0.8; }
-        .detail-text { font-size: 0.85rem; margin: 0; word-wrap: break-word; font-weight: bold; white-space: pre-wrap; }
-        .mini-btn { width: 100%; padding: 6px; border-radius: 8px; border: 1px solid var(--soft-pink); cursor: pointer; background: white; font-size: 0.75rem; margin-top: 5px;}
+        .mini-btn { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--soft-pink); cursor: pointer; background: white; font-size: 0.75rem; margin-top: 5px; font-weight: bold;}
 
+        /* Sidekick Styles */
+        .sidekick-fronter { display: flex; align-items: center; gap: 10px; background: var(--bg); padding: 8px; border-radius: 12px; margin-top: 8px; border: 1px solid var(--soft-pink); }
+        .sk-pfp { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid white; }
+        .sync-btn { background: #e3f2fd; color: #1976d2 !important; border: 1px solid #1976d2; }
+
+        /* Fronting Styles */
         .fronting-box { background: var(--front-gold); border: 2px dashed var(--magenta); padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 20px; }
-        .front-card-mini { background: white; padding: 10px; border-radius: 15px; border: 2px solid var(--magenta); display: flex; align-items: center; gap: 10px; position: relative; margin: 5px;}
-        .front-pfp { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid currentColor; }
-        .remove-front-btn { background: white; border: 1px solid currentColor; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; position: absolute; top: -5px; right: -5px;}
-
-        .chat-interface { display: flex; height: 550px; border: 1px solid var(--soft-pink); border-radius: 15px; overflow: hidden; background: white; }
-        .chat-sidebar { width: 220px; background: var(--bg); border-right: 1px solid var(--soft-pink); display: flex; flex-direction: column; padding: 10px; }
-        .channel-list { flex: 1; overflow-y: auto; }
-        .channel-item { padding: 8px 12px; margin-bottom: 5px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; border: 1px solid transparent; }
-        .channel-item.active { background: var(--magenta); color: white !important; }
-        .del-chan { font-size: 16px; opacity: 0.6; cursor: pointer; }
-        
-        .chat-main { flex: 1; display: flex; flex-direction: column; padding: 15px; background: #fffafa; }
-        #chat-display { flex: 1; overflow-y: auto; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px; padding: 5px; }
-        .chat-msg { display: flex; gap: 10px; align-items: flex-start; padding: 10px; border-radius: 12px; background: white; border: 1px solid var(--soft-pink); }
-        .chat-pfp-sm { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 2px solid currentColor; flex-shrink: 0; }
-        .chat-img-attached { max-width: 250px; max-height: 200px; border-radius: 10px; margin-top: 8px; display: block; border: 1px solid #eee; }
-
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; }
-        th { background: var(--soft-pink); padding: 12px; text-align: left; border-bottom: 2px solid var(--magenta); }
-        td { padding: 12px; border-bottom: 1px solid var(--soft-pink); }
-
-        /* Sync Box Style */
-        .sync-card { background: #fdf2f8; border: 2px solid var(--magenta); border-style: dotted; text-align: center; }
-
-        @media (max-width: 1100px) { .grid-container { grid-template-columns: repeat(3, 1fr); } }
-        @media (max-width: 800px) { .grid-container { grid-template-columns: repeat(2, 1fr); } }
+        .front-card-mini { background: white; padding: 10px; border-radius: 15px; border: 2px solid var(--magenta); display: flex; align-items: center; gap: 10px; margin: 5px;}
+        .front-pfp { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
     </style>
 </head>
 <body>
-
-    <div id="auth-screen">
-        <div class="auth-card">
-            <h1>System Entry</h1>
-            <input type="password" id="passcode-input" placeholder="Passcode...">
-            <button class="main-btn" onclick="handleAuth()">Login</button>
-            <p id="switch-auth" style="font-size: 0.8rem; margin-top: 15px; cursor: pointer;" onclick="toggleAuthMode()">Register</p>
-        </div>
-    </div>
 
     <div id="dashboard">
         <nav>
             <button class="tab-btn active" id="btn-overview" onclick="showTab('overview')">Overview</button>
             <button class="tab-btn" id="btn-profiles" onclick="showTab('profiles')">Profiles</button>
-            <button class="tab-btn" id="btn-chat" onclick="showTab('chat')">Chat Rooms</button>
+            <button class="tab-btn" id="btn-sidekicks" onclick="showTab('sidekicks')">Sidekicks</button>
             <button class="tab-btn" id="btn-history" onclick="showTab('history')">History</button>
-            <button class="tab-btn" onclick="logout()">Logout</button>
         </nav>
 
         <div id="overview" class="view-section active">
             <section>
                 <h1 id="view-sys-name">System Name</h1>
-                <p id="view-sys-bio">Description...</p>
-                <div style="display: flex; gap: 10px;">
-                    <input type="text" id="edit-sys-name" placeholder="Name">
-                    <input type="text" id="edit-sys-bio" placeholder="Bio">
-                    <button class="main-btn" onclick="updateSystemInfo()" style="width: 100px;">Save</button>
-                </div>
-            </section>
-
-            <section class="sync-card">
-                <h3>System ID Sharing</h3>
-                <p style="font-size: 0.8rem; margin-bottom: 10px;">Copy your ID to share your current fronting status with friends!</p>
-                <button class="main-btn" style="width: auto; padding: 10px 25px;" onclick="copySystemID()">📋 Copy My System ID</button>
+                <p id="view-sys-bio">System Description...</p>
+                <button class="main-btn" style="width: auto;" onclick="copySystemID()">📋 Copy My System ID (For Friends)</button>
             </section>
 
             <div class="fronting-box">
                 <h3>Currently Fronting</h3>
-                <div id="fronting-display" style="display:flex; flex-wrap:wrap; justify-content:center; gap:10px;">No one is fronting.</div>
+                <div id="fronting-display" style="display:flex; flex-wrap:wrap; justify-content:center;"></div>
             </div>
-            <h3>Directory</h3>
-            <div id="overview-list"></div>
+        </div>
+
+        <div id="sidekicks" class="view-section">
+            <section>
+                <h3>📥 Add New Sidekick</h3>
+                <textarea id="new-friend-input" placeholder="Paste your friend's ID code here..."></textarea>
+                <button class="main-btn" onclick="addFriend()">Add to Gallery</button>
+            </section>
+
+            <div id="sidekick-gallery" class="grid-container"></div>
         </div>
 
         <div id="profiles" class="view-section">
@@ -193,316 +110,143 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                     <input type="hidden" id="edit-id">
                     <input type="text" id="name" placeholder="Name">
-                    <input type="text" id="pronouns" placeholder="Pronouns">
                     <input type="text" id="role" placeholder="Role">
-                    <div><label style="font-size: 0.7rem;">Theme Color:</label><input type="color" id="color" value="#ff00ff"></div>
-                    <input type="text" id="fandoms" placeholder="Fandoms">
-                    <textarea id="bio" placeholder="Bio..." style="grid-column: span 2; height: 80px;"></textarea>
-                    <input type="file" id="pfp" accept="image/*" style="grid-column: span 2;">
+                    <input type="color" id="color" value="#ff00ff">
+                    <input type="file" id="pfp" accept="image/*">
                 </div>
                 <button class="main-btn" onclick="saveAlter()" style="margin-top:10px;">Save Alter</button>
-                <button class="mini-btn" id="cancel-edit" style="display:none;" onclick="clearForm()">Cancel Edit</button>
             </section>
             <div id="detailed-profiles-list" class="grid-container"></div>
-        </div>
-
-        <div id="chat" class="view-section">
-            <section style="padding:15px;">
-                <h2 id="current-channel-title">Chat</h2>
-                <div class="chat-interface">
-                    <div class="chat-sidebar">
-                        <div id="channel-list" class="channel-list"></div>
-                        <button class="mini-btn" onclick="addChannel()">+ New Room</button>
-                    </div>
-                    <div class="chat-main">
-                        <div id="chat-display"></div>
-                        <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px;">
-                            <select id="chat-speaker" style="width: 140px; margin:0;"></select>
-                            <button class="mini-btn" style="width:auto; margin:0;" onclick="document.getElementById('chat-img').click()">□ Image</button>
-                            <span id="img-lab" style="display:none; font-size:0.75rem; color:green; font-weight:bold;">✔ Ready</span>
-                            <input type="file" id="chat-img" accept="image/*" style="display:none;" onchange="prepImg()">
-                        </div>
-                        <div style="display:flex; gap:10px;">
-                            <textarea id="chat-input" placeholder="Type a message..." style="height:50px; margin:0;" onkeydown="handleKey(event)"></textarea>
-                            <button class="main-btn" onclick="sendMsg()" style="width:80px; height:50px;">Send</button>
-                        </div>
-                    </div>
-                </div>
-            </section>
         </div>
 
         <div id="history" class="view-section">
             <section>
                 <h2>Fronting History</h2>
-                <div style="overflow-x: auto;">
-                    <table>
-                        <thead><tr><th>Name</th><th>Status</th><th>Started</th><th>Ended</th><th>Total</th></tr></thead>
-                        <tbody id="history-log"></tbody>
-                    </table>
-                </div>
-                <button class="mini-btn" style="width:auto; margin-top:20px;" onclick="clearHist()">Clear History</button>
+                <div id="history-log"></div>
             </section>
         </div>
     </div>
 
     <script>
-        let isReg = false; let pendingImg = "";
-        let sys = JSON.parse(localStorage.getItem('fullSystemStorage')) || {
-            name: "System Name", bio: "Bio...", members: [], history: [],
-            channels: { "general": [] }, activeChannel: "general"
-        };
+        let sys = JSON.parse(localStorage.getItem('fullSystemStorage')) || { name: "System Name", bio: "Bio...", members: [], history: [] };
+        let sidekicks = JSON.parse(localStorage.getItem('savedSidekicks')) || [];
 
-        // --- AUTH LOGIC ---
-        function toggleAuthMode() { isReg = !isReg; document.getElementById('switch-auth').innerText = isReg ? "Login" : "Register"; }
-        function handleAuth() { 
-            const p = document.getElementById('passcode-input').value;
-            if(isReg) { localStorage.setItem('system_passcode', p); login(); }
-            else if(p === localStorage.getItem('system_passcode')) login(); else alert("Access Denied");
-        }
-        function login() { document.getElementById('auth-screen').style.display='none'; document.getElementById('dashboard').style.display='block'; refresh(); }
-        function logout() { location.reload(); }
+        window.onload = refresh;
 
-        // --- SYSTEM ID LOGIC ---
-        function copySystemID() {
-            const activeFronters = sys.members
-                .filter(m => m.isFronting)
-                .map(m => m.name);
-
-            const idData = {
-                n: sys.name,
-                f: activeFronters,
-                t: Date.now()
-            };
-
-            // Convert to Base64 String
-            const systemID = btoa(JSON.stringify(idData));
-            
-            navigator.clipboard.writeText(systemID).then(() => {
-                alert("✨ System ID Copied! Send this to your friend.");
-            });
-        }
-
-        // --- UI & TABS ---
         function showTab(t) {
             document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(t).classList.add('active');
             document.getElementById('btn-' + t).classList.add('active');
-            if(t==='chat') scroll();
         }
 
-        function updateSystemInfo() {
-            sys.name = document.getElementById('edit-sys-name').value || sys.name;
-            sys.bio = document.getElementById('edit-sys-bio').value || sys.bio;
-            refresh();
-        }
-
-        // --- CORE FUNCTIONS ---
-        function compress(file, cb) {
-            const r = new FileReader(); r.readAsDataURL(file);
-            r.onload = (e) => {
-                const i = new Image(); i.src = e.target.result;
-                i.onload = () => {
-                    const c = document.createElement('canvas');
-                    let w = i.width, h = i.height;
-                    const max = 500;
-                    if(w>h){ if(w>max){h*=max/w; w=max;} } else { if(h>max){w*=max/h; h=max;} }
-                    c.width=w; c.height=h;
-                    c.getContext('2d').drawImage(i,0,0,w,h);
-                    cb(c.toDataURL('image/jpeg', 0.7));
-                };
+        // --- SIDEKICK SYNC LOGIC ---
+        function copySystemID() {
+            const data = {
+                name: sys.name,
+                fronters: sys.members.filter(m => m.isFronting).map(m => ({ n: m.name, s: m.frontStatus, p: m.pfp })),
+                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
             };
+            navigator.clipboard.writeText(btoa(JSON.stringify(data)));
+            alert("✨ ID Copied! Send it to your friend.");
         }
 
-        function saveAlter() {
-            const id = document.getElementById('edit-id').value;
-            const pfpF = document.getElementById('pfp').files[0];
-            const fin = (img) => {
-                const m = {
-                    id: id ? parseInt(id) : Date.now(),
-                    name: document.getElementById('name').value || "Unnamed",
-                    pronouns: document.getElementById('pronouns').value || "",
-                    role: document.getElementById('role').value || "",
-                    color: document.getElementById('color').value,
-                    bio: document.getElementById('bio').value || "",
-                    fandoms: document.getElementById('fandoms').value || "",
-                    pfp: img || (id ? sys.members.find(x=>x.id==id).pfp : "https://via.placeholder.com/150"),
-                    isFronting: id ? sys.members.find(x=>x.id==id).isFronting : false,
-                    frontStatus: id ? sys.members.find(x=>x.id==id).frontStatus : "",
-                    startTime: id ? sys.members.find(x=>x.id==id).startTime : null
-                };
-                if(id) { sys.members[sys.members.findIndex(x=>x.id==id)] = m; } else sys.members.push(m);
-                refresh(); clearForm();
-            };
-            if(pfpF) compress(pfpF, fin); else fin();
-        }
-
-        function delAlter(id) {
-            if(confirm("Delete this alter permanently?")) {
-                sys.members = sys.members.filter(m => m.id !== id);
+        function addFriend() {
+            const val = document.getElementById('new-friend-input').value.trim();
+            if (processID(val)) {
+                document.getElementById('new-friend-input').value = "";
                 refresh();
             }
         }
 
-        function clearForm() {
-            document.getElementById('edit-id').value=''; document.getElementById('name').value='';
-            document.getElementById('pronouns').value=''; document.getElementById('role').value='';
-            document.getElementById('bio').value=''; document.getElementById('fandoms').value='';
-            document.getElementById('form-title').innerText="Manage Alters"; document.getElementById('cancel-edit').style.display='none';
-            document.getElementById('pfp').value = '';
-        }
-
-        function toggleFront(id) {
-            const m = sys.members.find(x=>x.id==id); const now = new Date();
-            if(!m.isFronting) {
-                const s = prompt("Fronting status/activity?", "Fronting");
-                if(s) { m.isFronting=true; m.frontStatus=s; m.startTime=now.getTime(); }
-            } else {
-                const d = now.getTime() - m.startTime;
-                sys.history.unshift({ name: m.name, status: m.frontStatus, start: new Date(m.startTime).toLocaleString(), end: now.toLocaleString(), total: `${Math.floor(d/60000)}m`, color: m.color });
-                m.isFronting=false; m.frontStatus=""; m.startTime=null;
+        function syncFriend(index) {
+            const val = prompt("Paste your friend's NEW ID code here to refresh their status:");
+            if (val && processID(val)) {
+                refresh();
             }
-            refresh();
         }
 
-        function addChannel() {
-            const n = prompt("Room Name:");
-            if(n) { const s = n.toLowerCase().replace(/\s+/g,'-'); if(!sys.channels[s]) sys.channels[s]=[]; sys.activeChannel=s; refresh(); }
+        function processID(code) {
+            try {
+                const data = JSON.parse(atob(code));
+                const idx = sidekicks.findIndex(s => s.name === data.name);
+                if (idx > -1) sidekicks[idx] = data;
+                else sidekicks.push(data);
+                localStorage.setItem('savedSidekicks', JSON.stringify(sidekicks));
+                return true;
+            } catch (e) { alert("Invalid Code!"); return false; }
         }
 
-        function delChannel(s) {
-            if(s==='general') return;
-            if(confirm(`Delete room #${s}?`)) { delete sys.channels[s]; sys.activeChannel='general'; refresh(); }
-        }
-
-        function prepImg() { 
-            const f = document.getElementById('chat-img').files[0];
-            if(f) compress(f, (d)=>{ pendingImg=d; document.getElementById('img-lab').style.display='inline'; }); 
-        }
-        
-        function handleKey(e) { if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); sendMsg(); } }
-
-        function sendMsg() {
-            const sid = document.getElementById('chat-speaker').value;
-            const txt = document.getElementById('chat-input').value.trim();
-            if(!txt && !pendingImg) return;
-            let spk = sid==="system" ? {name:"System", color:"#ff00ff", pfp:"https://via.placeholder.com/35"} : sys.members.find(x=>x.id==sid);
-            
-            if(!sys.channels[sys.activeChannel]) sys.channels[sys.activeChannel] = [];
-            
-            sys.channels[sys.activeChannel].push({ 
-                name: spk.name, 
-                color: spk.color, 
-                pfp: spk.pfp, 
-                text: txt, 
-                image: pendingImg, 
-                time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) 
-            });
-            
-            document.getElementById('chat-input').value=''; 
-            document.getElementById('chat-img').value='';
-            pendingImg=""; 
-            document.getElementById('img-lab').style.display='none';
-            refresh(); scroll();
-        }
-
-        function scroll() { const d=document.getElementById('chat-display'); d.scrollTop = d.scrollHeight; }
-
+        // --- REFRESH UI ---
         function refresh() {
             localStorage.setItem('fullSystemStorage', JSON.stringify(sys));
             document.getElementById('view-sys-name').innerText = sys.name;
-            document.getElementById('view-sys-bio').innerText = sys.bio;
-            document.getElementById('current-channel-title').innerText = `#${sys.activeChannel}`;
 
             const frontD = document.getElementById('fronting-display');
-            const overL = document.getElementById('overview-list');
             const profL = document.getElementById('detailed-profiles-list');
-            const histL = document.getElementById('history-log');
-            const chatD = document.getElementById('chat-display');
-            const chanL = document.getElementById('channel-list');
-            const spkS = document.getElementById('chat-speaker');
+            const skGal = document.getElementById('sidekick-gallery');
 
-            frontD.innerHTML=''; overL.innerHTML=''; profL.innerHTML=''; histL.innerHTML=''; chatD.innerHTML=''; chanL.innerHTML='';
-            const curSpk = spkS.value; spkS.innerHTML = '<option value="system">System</option>';
+            frontD.innerHTML = ''; profL.innerHTML = ''; skGal.innerHTML = '';
 
+            // Members
             sys.members.forEach(m => {
-                spkS.innerHTML += `<option value="${m.id}">${m.name}</option>`;
                 if(m.isFronting) {
                     frontD.innerHTML += `<div class="front-card-mini" style="border-color:${m.color}; color:${m.color}">
-                        <img src="${m.pfp}" class="front-pfp" style="border-color:${m.color}">
-                        <div style="text-align:left;"><b style="color:${m.color}">${m.name}</b><br><small style="color:${m.color}">${m.frontStatus}</small></div>
-                        <button class="remove-front-btn" style="color:${m.color}" onclick="toggleFront(${m.id})">×</button>
+                        <img src="${m.pfp}" class="front-pfp">
+                        <b>${m.name}</b>
                     </div>`;
                 }
-                overL.innerHTML += `<div class="card" style="border-left: 10px solid ${m.color}; color:${m.color}">
-                    <strong style="color:${m.color}">${m.name}</strong> — <span style="color:${m.color}">${m.role || 'No Role'}</span>
+                profL.innerHTML += `<div class="card profile-card" style="border-top: 5px solid ${m.color}">
+                    <img src="${m.pfp}" class="pfp-img">
+                    <h3>${m.name}</h3>
+                    <button class="mini-btn" onclick="toggleFront(${m.id})">${m.isFronting ? 'Leave Front' : 'Front'}</button>
                 </div>`;
-                profL.innerHTML += `<div class="card profile-card" style="border-top: 8px solid ${m.color}; border-color:${m.color}">
-                    <img src="${m.pfp}" class="pfp-img" style="border-color:${m.color}">
-                    <h2 style="color:${m.color} !important; text-align:center; margin:5px 0;">${m.name}</h2>
-                    <span class="detail-label" style="color:${m.color}">Pronouns</span><p class="detail-text" style="color:${m.color}">${m.pronouns || '—'}</p>
-                    <span class="detail-label" style="color:${m.color}">Role</span><p class="detail-text" style="color:${m.color}">${m.role || '—'}</p>
-                    <span class="detail-label" style="color:${m.color}">Bio</span><p class="detail-text" style="color:${m.color}">${m.bio || '—'}</p>
-                    <div style="margin-top:auto; padding-top:10px;">
-                        <button class="mini-btn" style="color:${m.color}; border-color:${m.color}" onclick="toggleFront(${m.id})">${m.isFronting ? 'Leave Front' : 'Front'}</button>
-                        <button class="mini-btn" style="color:${m.color}; border-color:${m.color}" onclick="editAlter(${m.id})">Edit</button>
-                        <button class="mini-btn" style="color:#ff4444; border-color:#ff4444; margin-top:10px;" onclick="delAlter(${m.id})">Delete</button>
+            });
+
+            // Sidekicks
+            sidekicks.forEach((sk, i) => {
+                let skFronters = sk.fronters.map(f => `
+                    <div class="sidekick-fronter">
+                        <img src="${f.p}" class="sk-pfp">
+                        <div><b>${f.n}</b><br><small>${f.s}</small></div>
                     </div>
+                `).join('');
+                skGal.innerHTML += `<div class="card sidekick-card">
+                    <h3 style="margin:0;">${sk.name}</h3>
+                    <small style="opacity:0.5;">Last Update: ${sk.time}</small>
+                    <div style="margin: 10px 0;">${skFronters || 'No one fronting'}</div>
+                    <button class="mini-btn sync-btn" onclick="syncFriend(${i})">🔄 Sync Update</button>
+                    <button class="mini-btn" style="color:red; border-color:red;" onclick="deleteFriend(${i})">Remove</button>
                 </div>`;
             });
-
-            Object.keys(sys.channels).forEach(c => {
-                const isDef = (c === 'general');
-                chanL.innerHTML += `<div class="channel-item ${sys.activeChannel===c?'active':''}" onclick="switchChannel('${c}')">
-                    #${c}${!isDef ? `<span class="del-chan" onclick="event.stopPropagation(); delChannel('${c}')">×</span>`:''}
-                </div>`;
-            });
-
-            const currentMsgs = sys.channels[sys.activeChannel] || [];
-            currentMsgs.forEach(msg => {
-                const msgHtml = `
-                    <div class="chat-msg" style="border-color:${msg.color}">
-                        <img src="${msg.pfp}" class="chat-pfp-sm" style="border-color:${msg.color}">
-                        <div style="flex:1;">
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                                <b style="color:${msg.color}; font-size:0.85rem;">${msg.name}</b>
-                                <small style="color:#aaa; font-size:0.7rem;">${msg.time}</small>
-                            </div>
-                            <div style="color:${msg.color}; font-size:0.9rem; word-wrap:break-word; white-space:pre-wrap;">${msg.text}</div>
-                            ${msg.image ? `<img src="${msg.image}" class="chat-img-attached" style="border-color:${msg.color}">` : ''}
-                        </div>
-                    </div>`;
-                chatD.innerHTML += msgHtml;
-            });
-
-            sys.history.forEach(h => {
-                histL.innerHTML += `<tr>
-                    <td style="color:${h.color}"><b>${h.name}</b></td>
-                    <td style="color:${h.color}">${h.status}</td>
-                    <td style="color:${h.color}">${h.start}</td>
-                    <td style="color:${h.color}">${h.end}</td>
-                    <td style="color:${h.color}"><b>${h.total}</b></td>
-                </tr>`;
-            });
-            spkS.value = curSpk || "system";
-            if(!frontD.innerHTML) frontD.innerHTML = '<p style="font-size:0.9rem; opacity:0.6;">No one is currently fronting.</p>';
         }
 
-        function switchChannel(s) { sys.activeChannel=s; refresh(); scroll(); }
-        function clearHist() { if(confirm("Clear all fronting history?")) { sys.history=[]; refresh(); } }
-        function editAlter(id) { 
+        function deleteFriend(i) { if(confirm("Remove?")) { sidekicks.splice(i, 1); localStorage.setItem('savedSidekicks', JSON.stringify(sidekicks)); refresh(); } }
+
+        function toggleFront(id) {
             const m = sys.members.find(x=>x.id==id);
-            document.getElementById('edit-id').value=m.id; 
-            document.getElementById('name').value=m.name;
-            document.getElementById('pronouns').value=m.pronouns; 
-            document.getElementById('role').value=m.role;
-            document.getElementById('color').value=m.color; 
-            document.getElementById('bio').value=m.bio;
-            document.getElementById('fandoms').value=m.fandoms; 
-            document.getElementById('form-title').innerText="Editing: " + m.name;
-            document.getElementById('cancel-edit').style.display='block'; 
-            showTab('profiles');
-            window.scrollTo(0,0);
+            if(!m.isFronting) {
+                const s = prompt("Status?", "Fronting");
+                if(s) { m.isFronting=true; m.frontStatus=s; }
+            } else { m.isFronting=false; }
+            refresh();
+        }
+
+        function saveAlter() {
+            const pfpF = document.getElementById('pfp').files[0];
+            const reader = new FileReader();
+            const name = document.getElementById('name').value || "Unnamed";
+            const color = document.getElementById('color').value;
+
+            const pushAlter = (img) => {
+                sys.members.push({ id: Date.now(), name, color, pfp: img || "https://via.placeholder.com/100", isFronting: false });
+                refresh();
+            };
+
+            if(pfpF) {
+                reader.readAsDataURL(pfpF);
+                reader.onload = () => pushAlter(reader.result);
+            } else pushAlter();
         }
     </script>
 </body>

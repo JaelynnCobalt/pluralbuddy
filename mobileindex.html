@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>System Mobile Pro</title>
+<title>Sidekick Mobile</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root { --bg: #fff0f6; --panel: #ffffff; --soft-pink: #ffdeeb; --magenta: #ff00ff; --front-gold: #fff9c4; --nav-height: 70px; }
@@ -11,32 +11,35 @@
 
 body { background-color: var(--bg); margin: 0; padding: 20px 15px calc(var(--nav-height) + 30px) 15px; min-height: 100vh; }
 
-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-top: env(safe-area-inset-top); }
-.logout-btn { font-size: 0.8rem; border: 1px solid #ccc; padding: 5px 10px; border-radius: 8px; background: white; color: #888; }
-
-/* BOTTOM NAV */
-.bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: var(--nav-height); background: white; display: flex; justify-content: space-around; align-items: center; border-top: 2px solid var(--soft-pink); box-shadow: 0 -5px 15px rgba(0,0,0,0.05); z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
-.nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; background: none; border: none; color: #888; font-size: 0.7rem; font-weight: bold; flex: 1; }
+/* NAVIGATION */
+.bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: var(--nav-height); background: white; display: flex; justify-content: space-around; border-top: 2px solid var(--soft-pink); z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
+.nav-item { display: flex; flex-direction: column; align-items: center; background: none; border: none; color: #888; font-size: 0.7rem; font-weight: bold; flex: 1; padding-top: 10px; text-decoration: none; }
 .nav-item.active { color: var(--magenta); }
-.nav-item span { font-size: 1.4rem; margin-bottom: 2px; }
+.nav-item span { font-size: 1.4rem; }
 
-/* UI */
+/* UI ELEMENTS */
 .view-section { display: none; }
 .view-section.active { display: block; }
 section, .card { background: var(--panel); padding: 15px; border-radius: 20px; border: 2px solid var(--soft-pink); margin-bottom: 15px; }
-.main-btn { background: var(--magenta); color: white; border: none; padding: 15px; border-radius: 15px; width: 100%; font-weight: bold; font-size: 1rem; margin-top: 10px; }
-input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid var(--soft-pink); border-radius: 12px; font-size: 16px; background: var(--bg); }
+.main-btn { background: var(--magenta); color: white; border: none; padding: 12px; border-radius: 12px; width: 100%; font-weight: bold; font-size: 1rem; margin-top: 5px; }
+.secondary-btn { background: var(--soft-pink); color: var(--magenta); border: none; padding: 10px; border-radius: 10px; width: 100%; font-weight: bold; margin-top: 5px; }
+input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid var(--soft-pink); border-radius: 12px; font-size: 16px; background: #fafafa; }
 
 /* FRONTING */
 .fronting-container { background: var(--front-gold); padding: 15px; border-radius: 20px; border: 2px dashed var(--magenta); margin-bottom: 20px; text-align: center; }
 .front-bubble { display: inline-flex; flex-direction: column; align-items: center; margin: 5px; position: relative; }
-.mini-pfp { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 3px solid var(--magenta); }
-.remove-front-dot { position: absolute; top: -5px; right: -5px; background: red; color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; border: none; font-weight: bold; }
-.status-text { font-size: 0.7rem; color: #666; font-style: italic; margin-top: 4px; max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mini-pfp { width: 55px; height: 55px; border-radius: 50%; object-fit: cover; border: 3px solid var(--magenta); background: white; }
+.remove-front-dot { position: absolute; top: -2px; right: -2px; background: red; color: white; border-radius: 50%; width: 22px; height: 22px; border: 2px solid white; font-weight: bold; font-size: 14px; display: flex; align-items: center; justify-content: center; }
 
-.history-item { font-size: 0.85rem; padding: 8px 0; border-bottom: 1px solid var(--soft-pink); display: flex; justify-content: space-between; }
+/* FRIEND CARDS */
+.friend-card { border-left: 8px solid var(--soft-pink); }
+.friend-front-row { display: flex; align-items: center; gap: 12px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee; }
 
-#toast { visibility: hidden; background: var(--magenta); color: white; padding: 12px 25px; border-radius: 50px; position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); z-index: 10001; }
+/* OVERLAY */
+.overlay { display: none; position: fixed; inset: 0; background: white; z-index: 2000; padding: 20px; overflow-y: auto; padding-top: env(safe-area-inset-top); }
+.close-overlay { background: var(--bg); border: none; padding: 10px 20px; border-radius: 10px; font-weight: bold; margin-bottom: 20px; color: var(--magenta); }
+
+#toast { visibility: hidden; background: var(--magenta); color: white; padding: 12px 25px; border-radius: 50px; position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); z-index: 3000; }
 #toast.show { visibility: visible; }
 </style>
 </head>
@@ -44,9 +47,14 @@ input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid var(--soft-
 
 <div id="toast">Synced ✨</div>
 
+<div id="alter-overlay" class="overlay">
+    <button class="close-overlay" onclick="closeOverlay()">← Back</button>
+    <div id="alter-editor-content"></div>
+</div>
+
 <div id="auth-screen">
     <section style="text-align: center; margin-top: 80px;">
-        <h1 style="color:var(--magenta)">System Mobile</h1>
+        <h1 style="color:var(--magenta)">Sidekick</h1>
         <input type="email" id="email-input" placeholder="Email">
         <input type="password" id="passcode-input" placeholder="Password">
         <button class="main-btn" onclick="handleAuth()">Login</button>
@@ -54,9 +62,9 @@ input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid var(--soft-
 </div>
 
 <div id="dashboard" style="display:none;">
-    <header>
+    <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
         <h2 id="view-sys-name" style="margin:0; font-size: 1.2rem;">System</h2>
-        <button class="logout-btn" onclick="logout()">Logout</button>
+        <button onclick="logout()" style="background:none; border:1px solid #ccc; padding:5px; border-radius:8px; color:#888;">Logout</button>
     </header>
 
     <div id="overview" class="view-section active">
@@ -65,28 +73,16 @@ input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid var(--soft-
             <div id="fronting-display" style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap;"></div>
         </div>
         <div id="overview-list"></div>
-        <section>
-            <h3 style="margin-top:0">Front History</h3>
-            <div id="front-history-list"></div>
-        </section>
     </div>
 
     <div id="profiles" class="view-section">
-        <section>
-            <h3 style="margin-top:0">Add New Alter</h3>
-            <input type="text" id="add-name" placeholder="Name">
-            <input type="text" id="add-role" placeholder="Role">
-            <input type="text" id="add-pfp" placeholder="PFP URL">
-            <input type="color" id="add-color" value="#ff00ff" style="height: 40px; width: 100%; border: none; background: none;">
-            <button class="main-btn" onclick="addAlter()">Add Alter</button>
-        </section>
+        <button class="main-btn" style="margin-bottom:15px;" onclick="openAlterEditor()">+ New Alter</button>
         <div id="detailed-profiles-list"></div>
     </div>
 
     <div id="sidekicks" class="view-section">
         <section>
-            <h3 style="margin-top:0">Friends</h3>
-            <input type="text" id="friend-search" placeholder="Enter username...">
+            <input type="text" id="friend-search" placeholder="Username...">
             <button class="main-btn" onclick="addFriend()">Add Friend</button>
         </section>
         <div id="friends-list-container"></div>
@@ -105,7 +101,7 @@ input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid var(--soft-
 const SB_URL = 'https://ctrbkrwiwpojbzfpsxwl.supabase.co';
 const SB_KEY = 'sb_publishable_uK-ihohO48o6BPRW8rmDqQ_LbJnfTI7';
 const _supabase = supabase.createClient(SB_URL, SB_KEY);
-let systemData = { members: [], history: [] };
+let systemData = { members: [] };
 let currentUser = null;
 
 async function handleAuth() {
@@ -124,125 +120,175 @@ async function loadData() {
     
     const { data } = await _supabase.from('profiles').select('*').eq('user_id', user.id).single();
     if (data?.system_data) systemData = data.system_data;
-    if (!systemData.history) systemData.history = [];
     
     refreshUI();
-    loadFriends();
+    loadFriendsLive();
 }
 
 function refreshUI() {
-    document.getElementById('view-sys-name').innerText = systemData.name || "System Dashboard";
+    document.getElementById('view-sys-name').innerText = systemData.name || "System";
     
+    // Fronting Display
     const fDisp = document.getElementById('fronting-display');
     const oList = document.getElementById('overview-list');
-    const hList = document.getElementById('front-history-list');
-    
-    fDisp.innerHTML = ''; oList.innerHTML = ''; hList.innerHTML = '';
+    fDisp.innerHTML = ''; oList.innerHTML = '';
 
-    (systemData.members || []).forEach(m => {
+    systemData.members.forEach(m => {
         if(m.isFronting) {
             fDisp.innerHTML += `
                 <div class="front-bubble">
                     <button class="remove-front-dot" onclick="toggleFront(${m.id})">×</button>
                     <img src="${m.pfp}" class="mini-pfp" style="border-color:${m.color}">
-                    <span class="status-text">${m.status || ''}</span>
+                    <div style="font-size:0.6rem; font-weight:bold; margin-top:2px;">${m.name}</div>
                 </div>`;
         }
         oList.innerHTML += `
-            <div class="card" style="display:flex; justify-content:space-between; align-items:center; border-left: 10px solid ${m.color}">
-                <div>
-                    <strong>${m.name}</strong><br>
-                    <span style="font-size:0.75rem; color:#888;">${m.role || 'Member'}</span>
-                </div>
-                <button class="logout-btn" style="color:var(--magenta); border-color:var(--magenta)" onclick="toggleFront(${m.id})">
+            <div class="card" style="display:flex; justify-content:space-between; align-items:center; border-left: 8px solid ${m.color}">
+                <strong>${m.name}</strong>
+                <button class="main-btn" style="width:auto; padding:8px 12px; margin:0;" onclick="toggleFront(${m.id})">
                     ${m.isFronting ? 'Leave' : 'Front'}
                 </button>
             </div>`;
     });
 
-    (systemData.history || []).slice(-5).reverse().forEach(entry => {
-        hList.innerHTML += `<div class="history-item"><span>${entry.name}</span><span style="color:#888;">${entry.time}</span></div>`;
-    });
-
+    // Detailed List
     const pList = document.getElementById('detailed-profiles-list');
     pList.innerHTML = '';
-    (systemData.members || []).forEach(m => {
+    systemData.members.forEach(m => {
         pList.innerHTML += `
-            <section style="border-top: 4px solid ${m.color}">
-                <div style="display:flex; gap:15px; align-items:center;">
-                    <img src="${m.pfp}" style="width:50px; height:50px; border-radius:12px; object-fit:cover;">
-                    <div style="flex:1">
-                        <h3 style="margin:0">${m.name}</h3>
-                        <p style="margin:2px 0; font-size:0.8rem; color:#666;">${m.role}</p>
-                    </div>
-                    <button class="logout-btn" style="color:red; border-color:red" onclick="removeAlter(${m.id})">Del</button>
+            <div class="card" onclick="openAlterEditor(${m.id})" style="display:flex; align-items:center; gap:15px; border-left: 8px solid ${m.color}">
+                <img src="${m.pfp}" style="width:50px; height:50px; border-radius:10px; object-fit:cover;">
+                <div style="flex:1">
+                    <div style="font-weight:bold;">${m.name}</div>
+                    <div style="font-size:0.8rem; color:#888;">${m.role || 'Member'}</div>
                 </div>
-            </section>`;
+                <span style="color:var(--magenta)">Edit ›</span>
+            </div>`;
+    });
+}
+
+// ALTER EDITOR & PHOTO UPLOAD
+function openAlterEditor(id = null) {
+    const m = id ? systemData.members.find(x => x.id === id) : { id: Date.now(), name: '', role: '', pronouns: '', pfp: '', color: '#ff00ff', bio: '', isNew: true };
+    const overlay = document.getElementById('alter-overlay');
+    const content = document.getElementById('alter-editor-content');
+    
+    overlay.style.display = 'block';
+    content.innerHTML = `
+        <h2 style="color:var(--magenta)">${m.isNew ? 'Create Alter' : 'Edit Profile'}</h2>
+        
+        <div style="text-align:center; margin-bottom:15px;">
+            <img src="${m.pfp || 'https://via.placeholder.com/150'}" id="preview-pfp" style="width:140px; height:140px; border-radius:25px; object-fit:cover; border:4px solid ${m.color}">
+            <input type="file" id="file-upload" accept="image/*" style="display:none" onchange="handleFileUpload(this)">
+            <button class="secondary-btn" onclick="document.getElementById('file-upload').click()">📷 Upload from Phone</button>
+        </div>
+
+        <label>Name</label><input type="text" id="edit-name" value="${m.name}">
+        <label>PFP URL (Optional)</label><input type="text" id="edit-pfp" value="${m.pfp}" onchange="document.getElementById('preview-pfp').src=this.value">
+        <label>Role</label><input type="text" id="edit-role" value="${m.role || ''}">
+        <label>Pronouns</label><input type="text" id="edit-pronouns" value="${m.pronouns || ''}">
+        <label>Theme Color</label><input type="color" id="edit-color" value="${m.color || '#ff00ff'}" style="height:50px;">
+        <label>Bio</label><textarea id="edit-bio" rows="3">${m.bio || ''}</textarea>
+        
+        <button class="main-btn" onclick="saveAlter(${m.id}, ${m.isNew || false})">Save Alter</button>
+        ${!m.isNew ? `<button class="main-btn" style="background:none; color:red; border:1px solid red; margin-top:20px;" onclick="deleteAlter(${m.id})">Delete Alter</button>` : ''}
+    `;
+}
+
+function handleFileUpload(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const base64 = e.target.result;
+        document.getElementById('preview-pfp').src = base64;
+        document.getElementById('edit-pfp').value = base64; // Store base64 in the URL field
+    };
+    reader.readAsDataURL(file);
+}
+
+function saveAlter(id, isNew) {
+    const data = {
+        id: id,
+        name: document.getElementById('edit-name').value,
+        pfp: document.getElementById('edit-pfp').value || 'https://via.placeholder.com/150',
+        role: document.getElementById('edit-role').value,
+        pronouns: document.getElementById('edit-pronouns').value,
+        color: document.getElementById('edit-color').value,
+        bio: document.getElementById('edit-bio').value,
+        isFronting: false
+    };
+    if(isNew) systemData.members.push(data);
+    else {
+        const idx = systemData.members.findIndex(x => x.id === id);
+        systemData.members[idx] = {...systemData.members[idx], ...data};
+    }
+    sync(); refreshUI(); closeOverlay();
+}
+
+// FRIENDS TAB - LIVE DATA
+async function loadFriendsLive() {
+    const { data: connections } = await _supabase.from('connections').select('friend_id').eq('user_id', currentUser.id);
+    const friendIds = connections?.map(c => c.friend_id) || [];
+    const { data: profiles } = await _supabase.from('profiles').select('username, system_data').in('user_id', friendIds);
+    
+    const container = document.getElementById('friends-list-container');
+    container.innerHTML = '';
+    
+    profiles?.forEach(p => {
+        const fronts = (p.system_data?.members || []).filter(m => m.isFronting);
+        let frontHtml = fronts.length > 0 ? '' : '<div style="font-size:0.8rem; color:#999; margin-top:5px;">Currently Offline</div>';
+        
+        fronts.forEach(f => {
+            frontHtml += `
+                <div class="friend-front-row">
+                    <img src="${f.pfp}" style="width:45px; height:45px; border-radius:50%; border:2px solid ${f.color}">
+                    <div>
+                        <div style="font-size:0.9rem; font-weight:bold;">${f.name}</div>
+                        <div style="font-size:0.75rem; color:#666;">${f.status || 'Fronting'}</div>
+                    </div>
+                </div>`;
+        });
+
+        container.innerHTML += `
+            <div class="card friend-card">
+                <div style="font-weight:bold; color:var(--magenta); display:flex; justify-content:space-between;">
+                    @${p.username} <span>✨</span>
+                </div>
+                ${frontHtml}
+            </div>`;
     });
 }
 
 function toggleFront(id) {
     const m = systemData.members.find(m => m.id == id);
     m.isFronting = !m.isFronting;
-    
     if(m.isFronting) {
-        const status = prompt(`Enter status for ${m.name} (optional):`);
-        m.status = status || "";
-        systemData.history.push({
-            name: m.name,
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        });
-    } else {
-        m.status = "";
+        const s = prompt(`Status for ${m.name}?`);
+        m.status = s || "";
     }
     sync(); refreshUI();
-}
-
-async function loadFriends() {
-    const { data: connections } = await _supabase.from('connections').select('friend_id').eq('user_id', currentUser.id);
-    const friendIds = connections?.map(c => c.friend_id) || [];
-    const { data: profiles } = await _supabase.from('profiles').select('username').in('user_id', friendIds);
-    
-    const container = document.getElementById('friends-list-container');
-    container.innerHTML = '';
-    profiles?.forEach(p => {
-        container.innerHTML += `<div class="card"><strong>@${p.username}</strong></div>`;
-    });
 }
 
 async function addFriend() {
-    const username = document.getElementById('friend-search').value.replace('@', '');
-    const { data: friend } = await _supabase.from('profiles').select('user_id').eq('username', username).single();
-    if (friend) {
-        await _supabase.from('connections').insert([{ user_id: currentUser.id, friend_id: friend.user_id }]);
-        document.getElementById('friend-search').value = '';
-        loadFriends();
-        showToast();
-    } else {
-        alert("System not found!");
+    const user = document.getElementById('friend-search').value.replace('@','');
+    const { data } = await _supabase.from('profiles').select('user_id').eq('username', user).single();
+    if(data) {
+        await _supabase.from('connections').insert([{ user_id: currentUser.id, friend_id: data.user_id }]);
+        loadFriendsLive();
+        showToast("Friend Added!");
     }
 }
 
-function addAlter() {
-    const newMember = {
-        id: Date.now(),
-        name: document.getElementById('add-name').value,
-        role: document.getElementById('add-role').value,
-        pfp: document.getElementById('add-pfp').value || 'https://via.placeholder.com/150',
-        color: document.getElementById('add-color').value,
-        isFronting: false,
-        status: ""
-    };
-    if(!newMember.name) return;
-    systemData.members.push(newMember);
-    sync(); refreshUI();
+async function sync() {
+    await _supabase.from('profiles').update({ system_data: systemData }).eq('user_id', currentUser.id);
+    showToast("Changes Saved!");
 }
 
-function removeAlter(id) {
-    if(confirm('Delete this alter?')) {
-        systemData.members = systemData.members.filter(m => m.id != id);
-        sync(); refreshUI();
-    }
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.innerText = msg; t.className = 'show'; 
+    setTimeout(() => t.className = '', 2000);
 }
 
 function showTab(id) {
@@ -252,17 +298,7 @@ function showTab(id) {
     document.getElementById('tab-'+id).classList.add('active');
 }
 
-async function sync() {
-    await _supabase.from('profiles').update({ system_data: systemData }).eq('user_id', currentUser.id);
-    showToast();
-}
-
-function showToast() {
-    const t = document.getElementById('toast');
-    t.className = 'show';
-    setTimeout(() => t.className = '', 2000);
-}
-
+function closeOverlay() { document.getElementById('alter-overlay').style.display = 'none'; }
 function logout() { _supabase.auth.signOut(); location.reload(); }
 window.onload = loadData;
 </script>

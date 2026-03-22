@@ -1,527 +1,361 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>System Master Dashboard</title>
-    <style>
-        :root {
-            --bg: #fff0f6;
-            --panel: #ffffff;
-            --soft-pink: #ffdeeb;
-            --magenta: #ff00ff;
-            --front-gold: #fff9c4;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Master Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root { --bg: #fff0f6; --panel: #ffffff; --soft-pink: #ffdeeb; --magenta: #ff00ff; --front-gold: #fff9c4; }
+* { font-family: 'Georgia', serif; box-sizing: border-box; color: var(--magenta); }
+body { background-color: var(--bg); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+h1, h2, h3 { color: var(--magenta) !important; }
 
-        * {
-            font-family: 'Georgia', serif;
-            box-sizing: border-box;
-            color: var(--magenta);
-        }
+#dashboard { display: none; width: 100%; max-width: 1100px; }
+nav { margin-bottom: 30px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.tab-btn, .nav-link { padding: 10px 20px; border: 2px solid var(--magenta); background: white; cursor: pointer; border-radius: 50px; font-weight: bold; transition: 0.3s; text-decoration: none; font-size: 0.9rem; }
+.tab-btn.active { background: var(--magenta); color: white !important; }
 
-        body {
-            background-color: var(--bg);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-        }
+.view-section { display: none; width: 100%; }
+.view-section.active { display: block; }
+section, .card { background: var(--panel); padding: 20px; border-radius: 20px; border: 2px solid var(--soft-pink); box-shadow: 0 10px 25px rgba(255, 0, 255, 0.05); margin-bottom: 20px; }
+input, textarea, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid var(--soft-pink); border-radius: 10px; }
+.main-btn { background: var(--magenta); color: white !important; border: none; padding: 12px; border-radius: 10px; cursor: pointer; width: 100%; font-size: 1rem; font-weight: bold; }
 
-        h1, h2, h3, h4, th { 
-            color: var(--magenta) !important; 
-        }
+/* OVERVIEW DIRECTORY STYLES */
+.directory-card { border-left: 10px solid; display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; }
 
-        #auth-screen {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 80vh;
-            width: 100%;
-        }
+/* PROFILE GRID */
+.grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+.profile-card { border-top: 10px solid; position: relative; display: flex; flex-direction: column; }
+.pfp-img { width: 120px; height: 120px; border-radius: 15px; object-fit: cover; border: 3px solid var(--soft-pink); align-self: center; margin-bottom: 15px; }
+.detail-label { font-weight: bold; font-size: 0.7rem; text-transform: uppercase; margin-top: 10px; opacity: 0.7; }
+.detail-text { font-size: 0.95rem; font-weight: bold; white-space: pre-wrap; margin: 0; }
+.mini-btn { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--soft-pink); cursor: pointer; background: white; font-size: 0.8rem; margin-top: 5px; font-weight: bold; }
 
-        .auth-card {
-            background: white;
-            padding: 40px;
-            border-radius: 30px;
-            border: 3px solid var(--magenta);
-            text-align: center;
-            max-width: 400px;
-            width: 100%;
-        }
+/* FRONTING */
+.fronting-box { background: var(--front-gold); border: 2px dashed var(--magenta); padding: 25px; border-radius: 20px; text-align: center; margin-bottom: 20px; }
+.front-card-mini { background: white; padding: 10px 15px; border-radius: 15px; border: 2px solid; display: flex; align-items: center; gap: 12px; position: relative; }
+.remove-front-btn { position: absolute; top: -8px; right: -8px; background: white; border: 2px solid; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; }
 
-        #dashboard { display: none; width: 100%; max-width: 1300px; }
+/* HISTORY STYLES */
+.history-container { max-height: 200px; overflow-y: auto; background: #fff; padding: 10px; border-radius: 15px; border: 1px solid var(--soft-pink); }
+.history-item { font-size: 0.85rem; padding: 5px 0; border-bottom: 1px solid #fff0f6; display: flex; justify-content: space-between; }
 
-        nav {
-            margin-bottom: 30px;
-            display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
-        }
+/* OVERLAY */
+#profile-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 240, 246, 0.98); z-index: 9999; overflow-y: auto; padding: 20px; }
+.overlay-content { max-width: 1000px; margin: 40px auto; background: white; padding: 30px; border-radius: 30px; border: 3px solid var(--magenta); position: relative; }
+.close-overlay { position: absolute; top: 20px; right: 25px; font-size: 40px; cursor: pointer; }
+.floating-chat-link { position: fixed; bottom: 30px; right: 30px; background: var(--magenta); color: white !important; padding: 15px 25px; border-radius: 50px; text-decoration: none; font-weight: bold; box-shadow: 0 10px 20px rgba(255, 0, 255, 0.3); z-index: 10001; }
 
-        .tab-btn {
-            padding: 10px 20px;
-            border: 2px solid var(--magenta);
-            background: white;
-            cursor: pointer;
-            border-radius: 50px;
-            font-weight: bold;
-        }
-
-        .tab-btn.active {
-            background: var(--magenta);
-            color: white !important;
-        }
-
-        .view-section { display: none; width: 100%; }
-        .view-section.active { display: block; }
-
-        section, .card {
-            background: var(--panel);
-            padding: 20px;
-            border-radius: 20px;
-            border: 2px solid var(--soft-pink);
-            margin-bottom: 20px;
-        }
-
-        input, textarea, select {
-            width: 100%; 
-            padding: 10px; 
-            margin: 8px 0;
-            border: 1px solid var(--soft-pink); 
-            border-radius: 10px;
-        }
-
-        .main-btn {
-            background: var(--magenta); 
-            color: white !important; 
-            border: none;
-            padding: 12px; 
-            border-radius: 10px; 
-            cursor: pointer;
-            width: 100%; 
-        }
-
-        .grid-container { 
-            display: grid; 
-            grid-template-columns: repeat(4, 1fr); 
-            gap: 15px; 
-        }
-        .profile-card { display: flex; flex-direction: column; padding: 20px; position: relative;}
-        .pfp-img { width: 100px; height: 100px; border-radius: 15px; object-fit: cover; border: 3px solid var(--soft-pink); align-self: center; margin-bottom: 10px; }
-        .detail-label { font-weight: bold; font-size: 0.65rem; text-transform: uppercase; margin-top: 8px; display: block; opacity: 0.8; }
-        .detail-text { font-size: 0.85rem; margin: 0; word-wrap: break-word; font-weight: bold; white-space: pre-wrap; }
-        .mini-btn { width: 100%; padding: 6px; border-radius: 8px; border: 1px solid var(--soft-pink); cursor: pointer; background: white; font-size: 0.75rem; margin-top: 5px;}
-
-        /* Tucked Away History Style */
-        .profile-history-preview {
-            margin-top: 15px;
-            padding: 10px;
-            background: #fffafa;
-            border-radius: 10px;
-            border: 1px dashed var(--soft-pink);
-            font-size: 0.7rem;
-        }
-        .history-item-mini {
-            border-bottom: 1px solid #eee;
-            padding: 4px 0;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .fronting-box { background: var(--front-gold); border: 2px dashed var(--magenta); padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 20px; }
-        .front-card-mini { background: white; padding: 10px; border-radius: 15px; border: 2px solid var(--magenta); display: flex; align-items: center; gap: 10px; position: relative; margin: 5px;}
-        .front-pfp { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid currentColor; }
-        .remove-front-btn { background: white; border: 1px solid currentColor; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; position: absolute; top: -5px; right: -5px;}
-
-        .chat-interface { display: flex; height: 550px; border: 1px solid var(--soft-pink); border-radius: 15px; overflow: hidden; background: white; }
-        .chat-sidebar { width: 220px; background: var(--bg); border-right: 1px solid var(--soft-pink); display: flex; flex-direction: column; padding: 10px; }
-        .channel-list { flex: 1; overflow-y: auto; }
-        .channel-item { padding: 8px 12px; margin-bottom: 5px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; border: 1px solid transparent; }
-        .channel-item.active { background: var(--magenta); color: white !important; }
-        .del-chan { font-size: 16px; opacity: 0.6; cursor: pointer; }
-        
-        .chat-main { flex: 1; display: flex; flex-direction: column; padding: 15px; background: #fffafa; }
-        #chat-display { flex: 1; overflow-y: auto; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px; padding: 5px; }
-        .chat-msg { display: flex; gap: 10px; align-items: flex-start; padding: 10px; border-radius: 12px; background: white; border: 1px solid var(--soft-pink); }
-        .chat-pfp-sm { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 2px solid currentColor; flex-shrink: 0; }
-        .chat-img-attached { max-width: 250px; max-height: 200px; border-radius: 10px; margin-top: 8px; display: block; border: 1px solid #eee; }
-
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; }
-        th { background: var(--soft-pink); padding: 12px; text-align: left; border-bottom: 2px solid var(--magenta); }
-        td { padding: 12px; border-bottom: 1px solid var(--soft-pink); }
-
-        .sync-card { background: #fdf2f8; border: 2px solid var(--magenta); border-style: dotted; text-align: center; }
-
-        @media (max-width: 1100px) { .grid-container { grid-template-columns: repeat(3, 1fr); } }
-        @media (max-width: 800px) { .grid-container { grid-template-columns: repeat(2, 1fr); } }
-    </style>
+#toast { visibility: hidden; min-width: 250px; background-color: var(--magenta); color: #fff; text-align: center; border-radius: 50px; padding: 16px; position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); }
+#toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
+@keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
+@keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+</style>
 </head>
 <body>
 
-    <div id="auth-screen">
-        <div class="auth-card">
-            <h1>System Entry</h1>
-            <input type="password" id="passcode-input" placeholder="Passcode...">
-            <button class="main-btn" onclick="handleAuth()">Login</button>
-            <p id="switch-auth" style="font-size: 0.8rem; margin-top: 15px; cursor: pointer;" onclick="toggleAuthMode()">Register</p>
-        </div>
+<div id="toast">Synced to Cloud! ✨</div>
+
+<div id="profile-overlay">
+    <div class="overlay-content">
+        <span class="close-overlay" onclick="closeOverlay()">&times;</span>
+        <div id="overlay-body"></div>
+        <a href="chat.html" class="floating-chat-link">💬 Open Global Chat</a>
     </div>
+</div>
 
-    <div id="dashboard">
-        <nav>
-            <button class="tab-btn active" id="btn-overview" onclick="showTab('overview')">Overview</button>
-            <button class="tab-btn" id="btn-profiles" onclick="showTab('profiles')">Profiles</button>
-            <button class="tab-btn" id="btn-chat" onclick="showTab('chat')">Chat Rooms</button>
-            <button class="tab-btn" id="btn-history" onclick="showTab('history')">History</button>
-            <button class="tab-btn" onclick="logout()">Logout</button>
-        </nav>
+<div id="auth-screen">
+    <section class="card" style="max-width: 400px; margin: 100px auto; text-align: center;">
+        <h1>System Entry</h1>
+        <input type="email" id="email-input" placeholder="Email">
+        <input type="password" id="passcode-input" placeholder="Password">
+        <button class="main-btn" onclick="handleAuth()">Login / Register</button>
+    </section>
+</div>
 
-        <div id="overview" class="view-section active">
-            <section>
-                <h1 id="view-sys-name">System Name</h1>
-                <p id="view-sys-bio">Description...</p>
-                <div style="display: flex; gap: 10px;">
-                    <input type="text" id="edit-sys-name" placeholder="Name">
-                    <input type="text" id="edit-sys-bio" placeholder="Bio">
-                    <button class="main-btn" onclick="updateSystemInfo()" style="width: 100px;">Save</button>
-                </div>
-            </section>
+<div id="dashboard">
+    <nav>
+        <button class="tab-btn active" id="btn-overview" onclick="showTab('overview')">Overview</button>
+        <button class="tab-btn" id="btn-profiles" onclick="showTab('profiles')">Profiles</button>
+        <button class="tab-btn" id="btn-sidekicks" onclick="showTab('sidekicks')">Sidekicks</button>
+        <a href="internal.html" class="nav-link">🏠 Internal Chat</a>
+        <button class="tab-btn" style="border-color: #aaa; color: #aaa;" onclick="logout()">Logout</button>
+    </nav>
 
-            <section class="sync-card">
-                <h3>System ID Sharing</h3>
-                <p style="font-size: 0.8rem; margin-bottom: 10px;">Copy your ID to share your current fronting status with friends!</p>
-                <button class="main-btn" style="width: auto; padding: 10px 25px;" onclick="copySystemID()">□ Copy My System ID</button>
-            </section>
-
-            <div class="fronting-box">
-                <h3>Currently Fronting</h3>
-                <div id="fronting-display" style="display:flex; flex-wrap:wrap; justify-content:center; gap:10px;">No one is fronting.</div>
+    <div id="overview" class="view-section active">
+        <section>
+            <h1 id="view-sys-name">System Name</h1>
+            <p id="view-sys-bio">Bio loading...</p>
+            <div style="display: flex; gap: 10px; margin-top:15px;">
+                <input type="text" id="edit-sys-name" placeholder="System Name" style="flex:1">
+                <input type="text" id="edit-sys-bio" placeholder="System Bio" style="flex:2">
+                <button class="mini-btn" onclick="updateSystemInfo()" style="width: 80px;">Save</button>
             </div>
-            <h3>Directory</h3>
-            <div id="overview-list"></div>
+        </section>
+
+        <div class="fronting-box">
+            <h3 style="margin-top:0">Currently Fronting</h3>
+            <div id="fronting-display" style="display:flex; flex-wrap:wrap; justify-content:center; gap:15px;"></div>
         </div>
 
-        <div id="profiles" class="view-section">
+        <section>
+            <h3>Front History</h3>
+            <div id="front-history-list" class="history-container">
+                <p style="text-align:center; opacity:0.5;">No history recorded yet.</p>
+            </div>
+            <button class="mini-btn" style="margin-top:10px; color:gray;" onclick="clearHistory()">Clear History</button>
+        </section>
+
+        <h3>System Directory</h3>
+        <div id="overview-list"></div>
+    </div>
+
+    <div id="profiles" class="view-section">
+        <section>
+            <h2 id="form-title">Manage Alters</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <input type="hidden" id="edit-id">
+                <input type="text" id="name" placeholder="Name">
+                <input type="text" id="pronouns" placeholder="Pronouns">
+                <input type="text" id="role" placeholder="Role">
+                <input type="text" id="fandoms" placeholder="Fandoms">
+                <div style="grid-column: span 2;">
+                    <label style="font-size: 0.7rem; font-weight:bold;">Theme Color:</label>
+                    <input type="color" id="color" value="#ff00ff">
+                </div>
+                <textarea id="bio" placeholder="Bio..." style="grid-column: span 2; height: 100px;"></textarea>
+                <input type="file" id="pfp" accept="image/*" style="grid-column: span 2;">
+            </div>
+            <button class="main-btn" onclick="saveAlter()">Save Alter</button>
+            <button class="mini-btn" id="cancel-edit" style="display:none;" onclick="clearForm()">Cancel Edit</button>
+        </section>
+        <div id="detailed-profiles-list" class="grid-container"></div>
+    </div>
+
+    <div id="sidekicks" class="view-section">
+        <div style="display:grid; grid-template-columns: 1fr 2fr; gap:20px;">
             <section>
-                <h2 id="form-title">Manage Alters</h2>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <input type="hidden" id="edit-id">
-                    <input type="text" id="name" placeholder="Name">
-                    <input type="text" id="pronouns" placeholder="Pronouns">
-                    <input type="text" id="role" placeholder="Role">
-                    <div><label style="font-size: 0.7rem;">Theme Color:</label><input type="color" id="color" value="#ff00ff"></div>
-                    <input type="text" id="fandoms" placeholder="Fandoms">
-                    <textarea id="bio" placeholder="Bio..." style="grid-column: span 2; height: 80px;"></textarea>
-                    <input type="file" id="pfp" accept="image/*" style="grid-column: span 2;">
-                </div>
-                <button class="main-btn" onclick="saveAlter()" style="margin-top:10px;">Save Alter</button>
-                <button class="mini-btn" id="cancel-edit" style="display:none;" onclick="clearForm()">Cancel Edit</button>
+                <h3>Add Buddy</h3>
+                <input type="text" id="sidekick-search" placeholder="Username...">
+                <button class="main-btn" onclick="addSidekick()">Add Sidekick</button>
             </section>
-            <div id="detailed-profiles-list" class="grid-container"></div>
-        </div>
-
-        <div id="chat" class="view-section">
-            <section style="padding:15px;">
-                <h2 id="current-channel-title">Chat</h2>
-                <div class="chat-interface">
-                    <div class="chat-sidebar">
-                        <div id="channel-list" class="channel-list"></div>
-                        <button class="mini-btn" onclick="addChannel()">+ New Room</button>
-                    </div>
-                    <div class="chat-main">
-                        <div id="chat-display"></div>
-                        <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px;">
-                            <select id="chat-speaker" style="width: 140px; margin:0;"></select>
-                            <button class="mini-btn" style="width:auto; margin:0;" onclick="document.getElementById('chat-img').click()">□ Image</button>
-                            <span id="img-lab" style="display:none; font-size:0.75rem; color:green; font-weight:bold;">✔ Ready</span>
-                            <input type="file" id="chat-img" accept="image/*" style="display:none;" onchange="prepImg()">
-                        </div>
-                        <div style="display:flex; gap:10px;">
-                            <textarea id="chat-input" placeholder="Type a message..." style="height:50px; margin:0;" onkeydown="handleKey(event)"></textarea>
-                            <button class="main-btn" onclick="sendMsg()" style="width:80px; height:50px;">Send</button>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </div>
-
-        <div id="history" class="view-section">
             <section>
-                <h2>Full Fronting History</h2>
-                <div style="overflow-x: auto;">
-                    <table>
-                        <thead><tr><th>Name</th><th>Status</th><th>Started</th><th>Ended</th><th>Total</th></tr></thead>
-                        <tbody id="history-log"></tbody>
-                    </table>
-                </div>
-                <button class="mini-btn" style="width:auto; margin-top:20px;" onclick="clearHist()">Clear All History</button>
+                <h3>My Sidekicks</h3>
+                <div id="sidekicks-list"></div>
             </section>
         </div>
     </div>
+</div>
 
-    <script>
-        let isReg = false; let pendingImg = "";
-        let sys = JSON.parse(localStorage.getItem('fullSystemStorage')) || {
-            name: "System Name", bio: "Bio...", members: [], history: [],
-            channels: { "general": [] }, activeChannel: "general"
+<script>
+const SB_URL = 'https://ctrbkrwiwpojbzfpsxwl.supabase.co';
+const SB_KEY = 'sb_publishable_uK-ihohO48o6BPRW8rmDqQ_LbJnfTI7';
+const _supabase = supabase.createClient(SB_URL, SB_KEY);
+
+// Added front_history to the data object
+let systemData = { name: "System Name", bio: "Bio...", members: [], front_history: [] };
+
+async function handleAuth() {
+    const email = document.getElementById('email-input').value;
+    const password = document.getElementById('passcode-input').value;
+    const { error } = await _supabase.auth.signInWithPassword({ email, password });
+    if (error) await _supabase.auth.signUp({ email, password });
+    location.reload();
+}
+
+async function loadData() {
+    const { data: { user } } = await _supabase.auth.getUser();
+    if (!user) return;
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    
+    const { data } = await _supabase.from('profiles').select('*').eq('user_id', user.id).single();
+    if (data?.system_data) systemData = data.system_data;
+    if (!systemData.front_history) systemData.front_history = []; // Migration for old data
+    refreshUI();
+}
+
+async function sync() {
+    const { data: { user } } = await _supabase.auth.getUser();
+    await _supabase.from('profiles').upsert({ user_id: user.id, system_data: systemData });
+    showToast();
+}
+
+function updateSystemInfo() {
+    systemData.name = document.getElementById('edit-sys-name').value || systemData.name;
+    systemData.bio = document.getElementById('edit-sys-bio').value || systemData.bio;
+    refreshUI(); sync();
+}
+
+// LOGIC UPDATED TO TRACK HISTORY
+function toggleFront(id) {
+    const m = systemData.members.find(m => m.id == id);
+    m.isFronting = !m.isFronting;
+    
+    if (m.isFronting) {
+        const entry = {
+            name: m.name,
+            time: new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
         };
+        systemData.front_history.unshift(entry); // Add to top of list
+        if (systemData.front_history.length > 50) systemData.front_history.pop(); // Keep last 50
+    }
+    
+    refreshUI(); sync();
+}
 
-        // --- AUTH LOGIC ---
-        function toggleAuthMode() { isReg = !isReg; document.getElementById('switch-auth').innerText = isReg ? "Login" : "Register"; }
-        function handleAuth() { 
-            const p = document.getElementById('passcode-input').value;
-            if(isReg) { localStorage.setItem('system_passcode', p); login(); }
-            else if(p === localStorage.getItem('system_passcode')) login(); else alert("Access Denied");
-        }
-        function login() { document.getElementById('auth-screen').style.display='none'; document.getElementById('dashboard').style.display='block'; refresh(); }
-        function logout() { location.reload(); }
+function clearHistory() {
+    if(confirm("Clear front history?")) {
+        systemData.front_history = [];
+        refreshUI(); sync();
+    }
+}
 
-        // --- SYSTEM ID LOGIC ---
-        function copySystemID() {
-            const activeFronters = sys.members.filter(m => m.isFronting).map(m => m.name);
-            const idData = { n: sys.name, f: activeFronters, t: Date.now() };
-            const systemID = btoa(JSON.stringify(idData));
-            navigator.clipboard.writeText(systemID).then(() => { alert("✨ System ID Copied!"); });
-        }
+function refreshUI() {
+    document.getElementById('view-sys-name').innerText = systemData.name;
+    document.getElementById('view-sys-bio').innerText = systemData.bio;
+    
+    const frontDisplay = document.getElementById('fronting-display');
+    const overviewList = document.getElementById('overview-list');
+    const detailedList = document.getElementById('detailed-profiles-list');
+    const historyList = document.getElementById('front-history-list');
+    
+    frontDisplay.innerHTML = ''; overviewList.innerHTML = ''; detailedList.innerHTML = ''; historyList.innerHTML = '';
 
-        // --- UI & TABS ---
-        function showTab(t) {
-            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(t).classList.add('active');
-            document.getElementById('btn-' + t).classList.add('active');
-            if(t==='chat') scroll();
-        }
+    // Render History
+    if (systemData.front_history.length === 0) {
+        historyList.innerHTML = `<p style="text-align:center; opacity:0.5; font-size:0.8rem;">No history recorded yet.</p>`;
+    } else {
+        systemData.front_history.forEach(entry => {
+            historyList.innerHTML += `<div class="history-item"><b>${entry.name}</b> <span>${entry.time}</span></div>`;
+        });
+    }
 
-        function updateSystemInfo() {
-            sys.name = document.getElementById('edit-sys-name').value || sys.name;
-            sys.bio = document.getElementById('edit-sys-bio').value || sys.bio;
-            refresh();
-        }
-
-        // --- CORE FUNCTIONS ---
-        function compress(file, cb) {
-            const r = new FileReader(); r.readAsDataURL(file);
-            r.onload = (e) => {
-                const i = new Image(); i.src = e.target.result;
-                i.onload = () => {
-                    const c = document.createElement('canvas');
-                    let w = i.width, h = i.height;
-                    const max = 500;
-                    if(w>h){ if(w>max){h*=max/w; w=max;} } else { if(h>max){w*=max/h; h=max;} }
-                    c.width=w; c.height=h;
-                    c.getContext('2d').drawImage(i,0,0,w,h);
-                    cb(c.toDataURL('image/jpeg', 0.7));
-                };
-            };
-        }
-
-        function saveAlter() {
-            const id = document.getElementById('edit-id').value;
-            const pfpF = document.getElementById('pfp').files[0];
-            const fin = (img) => {
-                const m = {
-                    id: id ? parseInt(id) : Date.now(),
-                    name: document.getElementById('name').value || "Unnamed",
-                    pronouns: document.getElementById('pronouns').value || "",
-                    role: document.getElementById('role').value || "",
-                    color: document.getElementById('color').value,
-                    bio: document.getElementById('bio').value || "",
-                    fandoms: document.getElementById('fandoms').value || "",
-                    pfp: img || (id ? sys.members.find(x=>x.id==id).pfp : "https://via.placeholder.com/150"),
-                    isFronting: id ? sys.members.find(x=>x.id==id).isFronting : false,
-                    frontStatus: id ? sys.members.find(x=>x.id==id).frontStatus : "",
-                    startTime: id ? sys.members.find(x=>x.id==id).startTime : null
-                };
-                if(id) { sys.members[sys.members.findIndex(x=>x.id==id)] = m; } else sys.members.push(m);
-                refresh(); clearForm();
-            };
-            if(pfpF) compress(pfpF, fin); else fin();
-        }
-
-        function delAlter(id) {
-            if(confirm("Delete this alter permanently?")) {
-                sys.members = sys.members.filter(m => m.id !== id);
-                refresh();
-            }
-        }
-
-        function clearForm() {
-            document.getElementById('edit-id').value=''; document.getElementById('name').value='';
-            document.getElementById('pronouns').value=''; document.getElementById('role').value='';
-            document.getElementById('bio').value=''; document.getElementById('fandoms').value='';
-            document.getElementById('form-title').innerText="Manage Alters"; document.getElementById('cancel-edit').style.display='none';
-            document.getElementById('pfp').value = '';
-        }
-
-        function toggleFront(id) {
-            const m = sys.members.find(x=>x.id==id); const now = new Date();
-            if(!m.isFronting) {
-                const s = prompt("Fronting status/activity?", "Fronting");
-                if(s) { m.isFronting=true; m.frontStatus=s; m.startTime=now.getTime(); }
-            } else {
-                const d = now.getTime() - m.startTime;
-                sys.history.unshift({ 
-                    name: m.name, 
-                    status: m.frontStatus, 
-                    start: new Date(m.startTime).toLocaleString(), 
-                    end: now.toLocaleString(), 
-                    total: `${Math.floor(d/60000)}m`, 
-                    color: m.color 
-                });
-                m.isFronting=false; m.frontStatus=""; m.startTime=null;
-            }
-            refresh();
-        }
-
-        function addChannel() {
-            const n = prompt("Room Name:");
-            if(n) { const s = n.toLowerCase().replace(/\s+/g,'-'); if(!sys.channels[s]) sys.channels[s]=[]; sys.activeChannel=s; refresh(); }
-        }
-
-        function delChannel(s) {
-            if(s==='general') return;
-            if(confirm(`Delete room #${s}?`)) { delete sys.channels[s]; sys.activeChannel='general'; refresh(); }
-        }
-
-        function prepImg() { 
-            const f = document.getElementById('chat-img').files[0];
-            if(f) compress(f, (d)=>{ pendingImg=d; document.getElementById('img-lab').style.display='inline'; }); 
+    systemData.members.forEach(m => {
+        if(m.isFronting) {
+            frontDisplay.innerHTML += `
+                <div class="front-card-mini" style="border-color:${m.color}; color:${m.color}">
+                    <img src="${m.pfp}" style="width:45px;height:45px;border-radius:10px;object-fit:cover;">
+                    <b>${m.name}</b>
+                    <button class="remove-front-btn" style="border-color:${m.color}; color:${m.color}" onclick="toggleFront(${m.id})">×</button>
+                </div>`;
         }
         
-        function handleKey(e) { if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); sendMsg(); } }
+        overviewList.innerHTML += `
+            <div class="card directory-card" style="border-color:${m.color}">
+                <div style="display:flex; align-items:center; gap:15px;">
+                    <div style="width:12px;height:12px;border-radius:50%;background:${m.isFronting ? '#00ff00' : '#ccc'}"></div>
+                    <strong style="color:${m.color}">${m.name}</strong> <small>— ${m.role}</small>
+                </div>
+                <button class="mini-btn" style="width:100px; margin:0;" onclick="toggleFront(${m.id})">${m.isFronting ? 'Exit Front' : 'Front'}</button>
+            </div>`;
 
-        function sendMsg() {
-            const sid = document.getElementById('chat-speaker').value;
-            const txt = document.getElementById('chat-input').value.trim();
-            if(!txt && !pendingImg) return;
-            let spk = sid==="system" ? {name:"System", color:"#ff00ff", pfp:"https://via.placeholder.com/35"} : sys.members.find(x=>x.id==sid);
-            if(!sys.channels[sys.activeChannel]) sys.channels[sys.activeChannel] = [];
-            sys.channels[sys.activeChannel].push({ 
-                name: spk.name, color: spk.color, pfp: spk.pfp, text: txt, image: pendingImg, 
-                time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) 
-            });
-            document.getElementById('chat-input').value=''; document.getElementById('chat-img').value='';
-            pendingImg=""; document.getElementById('img-lab').style.display='none';
-            refresh(); scroll();
-        }
+        detailedList.innerHTML += `
+            <div class="card profile-card" style="border-color:${m.color}">
+                <img src="${m.pfp}" class="pfp-img" style="border-color:${m.color}">
+                <h2 style="text-align:center; margin:0; color:${m.color} !important;">${m.name}</h2>
+                <span class="detail-label">Role</span><p class="detail-text">${m.role}</p>
+                <span class="detail-label">Fandoms</span><p class="detail-text">${m.fandoms}</p>
+                <span class="detail-label">Bio</span><p class="detail-text">${m.bio}</p>
+                <div style="margin-top:auto; padding-top:15px; display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
+                    <button class="mini-btn" onclick="toggleFront(${m.id})">${m.isFronting ? 'Leave Front' : 'Front'}</button>
+                    <button class="mini-btn" onclick="editAlter(${m.id})">Edit</button>
+                    <button class="mini-btn" style="grid-column:span 2; color:red; border-color:red" onclick="deleteAlter(${m.id})">Delete Alter</button>
+                </div>
+            </div>`;
+    });
+}
 
-        function scroll() { const d=document.getElementById('chat-display'); d.scrollTop = d.scrollHeight; }
+// ... include existing functions (saveAlter, deleteAlter, editAlter, clearForm, addSidekick, loadSidekicks, openOverlay, closeOverlay, showTab, showToast, logout) ...
+function saveAlter() {
+    const id = document.getElementById('edit-id').value;
+    const finalize = (img) => {
+        const member = {
+            id: id ? parseInt(id) : Date.now(),
+            name: document.getElementById('name').value || "Unnamed",
+            pronouns: document.getElementById('pronouns').value,
+            role: document.getElementById('role').value,
+            fandoms: document.getElementById('fandoms').value,
+            color: document.getElementById('color').value,
+            bio: document.getElementById('bio').value,
+            pfp: img || (id ? systemData.members.find(m => m.id == id).pfp : "https://via.placeholder.com/150"),
+            isFronting: id ? systemData.members.find(m => m.id == id).isFronting : false
+        };
+        if (id) systemData.members[systemData.members.findIndex(m => m.id == id)] = member;
+        else systemData.members.push(member);
+        sync(); refreshUI(); clearForm();
+    };
+    const file = document.getElementById('pfp').files[0];
+    if (file) {
+        const reader = new FileReader(); reader.readAsDataURL(file);
+        reader.onload = () => finalize(reader.result);
+    } else finalize();
+}
+function deleteAlter(id) {
+    if(confirm("Delete this alter permanently?")) {
+        systemData.members = systemData.members.filter(m => m.id !== id);
+        sync(); refreshUI();
+    }
+}
+function editAlter(id) {
+    const m = systemData.members.find(m => m.id == id);
+    document.getElementById('edit-id').value = m.id;
+    document.getElementById('name').value = m.name;
+    document.getElementById('pronouns').value = m.pronouns;
+    document.getElementById('role').value = m.role;
+    document.getElementById('fandoms').value = m.fandoms;
+    document.getElementById('color').value = m.color;
+    document.getElementById('bio').value = m.bio;
+    document.getElementById('form-title').innerText = "Editing: " + m.name;
+    document.getElementById('cancel-edit').style.display = 'block';
+    showTab('profiles');
+}
+function clearForm() {
+    document.getElementById('edit-id').value = '';
+    document.getElementById('form-title').innerText = "Manage Alters";
+    document.getElementById('cancel-edit').style.display = 'none';
+    document.querySelectorAll('#profiles input, #profiles textarea').forEach(i => i.value = '');
+}
+async function addSidekick() {
+    const target = document.getElementById('sidekick-search').value;
+    const { data: friend } = await _supabase.from('profiles').select('user_id').eq('username', target).single();
+    if(!friend) return alert("System not found!");
+    const { data: { user } } = await _supabase.auth.getUser();
+    await _supabase.from('connections').insert([{ user_id: user.id, friend_id: friend.user_id }]);
+    loadSidekicks();
+}
+async function loadSidekicks() {
+    const list = document.getElementById('sidekicks-list');
+    const { data: { user } } = await _supabase.auth.getUser();
+    const { data: connections } = await _supabase.from('connections').select('friend_id').eq('user_id', user.id);
+    if (!connections?.length) return list.innerHTML = "No sidekicks added.";
+    const { data: profiles } = await _supabase.from('profiles').select('username, system_data').in('user_id', connections.map(c => c.friend_id));
+    list.innerHTML = '';
+    profiles.forEach(buddy => {
+        const fronting = (buddy.system_data?.members || []).filter(m => m.isFronting);
+        list.innerHTML += `<div class="card" style="cursor:pointer" onclick='openOverlay(${JSON.stringify(buddy)})'><strong>${buddy.username}</strong> — ${fronting.length ? 'Fronting: ' + fronting.map(m=>m.name).join(', ') : 'Internal'}</div>`;
+    });
+}
+function openOverlay(buddy) {
+    const bData = buddy.system_data || {};
+    const members = bData.members || [];
+    document.getElementById('overlay-body').innerHTML = `<h1>${bData.name || buddy.username}</h1><p>${bData.bio || 'No bio.'}</p><div class="grid-container">${members.map(m => `<div class="card profile-card" style="border-color:${m.color}"><img src="${m.pfp}" class="pfp-img" style="border-color:${m.color}"><h2 style="color:${m.color} !important">${m.name} ${m.isFronting ? '⭕' : ''}</h2><span class="detail-label">Role</span><p class="detail-text">${m.role}</p><span class="detail-label">Bio</span><p class="detail-text">${m.bio}</p></div>`).join('')}</div>`;
+    document.getElementById('profile-overlay').style.display = 'block';
+}
+function closeOverlay() { document.getElementById('profile-overlay').style.display = 'none'; }
+function showTab(id) {
+    document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    document.getElementById('btn-'+id).classList.add('active');
+    if(id === 'sidekicks') loadSidekicks();
+}
+function showToast() { const t = document.getElementById('toast'); t.className = 'show'; setTimeout(() => t.className = '', 3000); }
+function logout() { _supabase.auth.signOut(); location.reload(); }
 
-        function refresh() {
-            localStorage.setItem('fullSystemStorage', JSON.stringify(sys));
-            document.getElementById('view-sys-name').innerText = sys.name;
-            document.getElementById('view-sys-bio').innerText = sys.bio;
-            document.getElementById('current-channel-title').innerText = `#${sys.activeChannel}`;
-
-            const frontD = document.getElementById('fronting-display');
-            const overL = document.getElementById('overview-list');
-            const profL = document.getElementById('detailed-profiles-list');
-            const histL = document.getElementById('history-log');
-            const chatD = document.getElementById('chat-display');
-            const chanL = document.getElementById('channel-list');
-            const spkS = document.getElementById('chat-speaker');
-
-            frontD.innerHTML=''; overL.innerHTML=''; profL.innerHTML=''; histL.innerHTML=''; chatD.innerHTML=''; chanL.innerHTML='';
-            const curSpk = spkS.value; spkS.innerHTML = '<option value="system">System</option>';
-
-            sys.members.forEach(m => {
-                spkS.innerHTML += `<option value="${m.id}">${m.name}</option>`;
-                
-                // Active Fronting Display
-                if(m.isFronting) {
-                    frontD.innerHTML += `<div class="front-card-mini" style="border-color:${m.color}; color:${m.color}">
-                        <img src="${m.pfp}" class="front-pfp" style="border-color:${m.color}">
-                        <div style="text-align:left;"><b style="color:${m.color}">${m.name}</b><br><small style="color:${m.color}">${m.frontStatus}</small></div>
-                        <button class="remove-front-btn" style="color:${m.color}" onclick="toggleFront(${m.id})">×</button>
-                    </div>`;
-                }
-
-                // Overview List
-                overL.innerHTML += `<div class="card" style="border-left: 10px solid ${m.color}; color:${m.color}">
-                    <strong style="color:${m.color}">${m.name}</strong> — <span style="color:${m.color}">${m.role || 'No Role'}</span>
-                </div>`;
-
-                // --- Tucked History Logic ---
-                const personalHistory = sys.history.filter(h => h.name === m.name).slice(0, 3);
-                let histHTML = `<div class="profile-history-preview">
-                                    <b style="font-size: 0.6rem; opacity: 0.7;">RECENT FRONTS</b>`;
-                if(personalHistory.length > 0) {
-                    personalHistory.forEach(h => {
-                        histHTML += `<div class="history-item-mini"><span>${h.start.split(',')[0]}</span> <b>${h.total}</b></div>`;
-                    });
-                } else {
-                    histHTML += `<div style="opacity:0.5; padding:5px 0;">No history yet</div>`;
-                }
-                histHTML += `</div>`;
-
-                // Detailed Profile Card
-                profL.innerHTML += `<div class="card profile-card" style="border-top: 8px solid ${m.color}; border-color:${m.color}">
-                    <img src="${m.pfp}" class="pfp-img" style="border-color:${m.color}">
-                    <h2 style="color:${m.color} !important; text-align:center; margin:5px 0;">${m.name}</h2>
-                    <span class="detail-label" style="color:${m.color}">Pronouns</span><p class="detail-text" style="color:${m.color}">${m.pronouns || '—'}</p>
-                    <span class="detail-label" style="color:${m.color}">Role</span><p class="detail-text" style="color:${m.color}">${m.role || '—'}</p>
-                    <span class="detail-label" style="color:${m.color}">Bio</span><p class="detail-text" style="color:${m.color}">${m.bio || '—'}</p>
-                    
-                    ${histHTML}
-
-                    <div style="margin-top:auto; padding-top:10px;">
-                        <button class="mini-btn" style="color:${m.color}; border-color:${m.color}" onclick="toggleFront(${m.id})">${m.isFronting ? 'Leave Front' : 'Front'}</button>
-                        <button class="mini-btn" style="color:${m.color}; border-color:${m.color}" onclick="editAlter(${m.id})">Edit</button>
-                        <button class="mini-btn" style="background:var(--soft-pink); border:none;" onclick="showTab('history')">View Full History</button>
-                        <button class="mini-btn" style="color:#ff4444; border-color:#ff4444; margin-top:10px;" onclick="delAlter(${m.id})">Delete</button>
-                    </div>
-                </div>`;
-            });
-
-            // Channels and Messages
-            Object.keys(sys.channels).forEach(c => {
-                chanL.innerHTML += `<div class="channel-item ${sys.activeChannel===c?'active':''}" onclick="switchChannel('${c}')">
-                    #${c}${(c!=='general')?`<span class="del-chan" onclick="event.stopPropagation(); delChannel('${c}')">×</span>`:''}
-                </div>`;
-            });
-
-            const currentMsgs = sys.channels[sys.activeChannel] || [];
-            currentMsgs.forEach(msg => {
-                chatD.innerHTML += `<div class="chat-msg" style="border-color:${msg.color}">
-                    <img src="${msg.pfp}" class="chat-pfp-sm" style="border-color:${msg.color}">
-                    <div style="flex:1;">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                            <b style="color:${msg.color}; font-size:0.85rem;">${msg.name}</b>
-                            <small style="color:#aaa; font-size:0.7rem;">${msg.time}</small>
-                        </div>
-                        <div style="color:${msg.color}; font-size:0.9rem; word-wrap:break-word; white-space:pre-wrap;">${msg.text}</div>
-                        ${msg.image ? `<img src="${msg.image}" class="chat-img-attached">` : ''}
-                    </div>
-                </div>`;
-            });
-
-            // Full History Table
-            sys.history.forEach(h => {
-                histL.innerHTML += `<tr>
-                    <td style="color:${h.color}"><b>${h.name}</b></td>
-                    <td style="color:${h.color}">${h.status}</td>
-                    <td style="color:${h.color}">${h.start}</td>
-                    <td style="color:${h.color}">${h.end}</td>
-                    <td style="color:${h.color}"><b>${h.total}</b></td>
-                </tr>`;
-            });
-            spkS.value = curSpk || "system";
-            if(!frontD.innerHTML) frontD.innerHTML = '<p style="font-size:0.9rem; opacity:0.6;">No one is currently fronting.</p>';
-        }
-
-        function switchChannel(s) { sys.activeChannel=s; refresh(); scroll(); }
-        function clearHist() { if(confirm("Clear all fronting history?")) { sys.history=[]; refresh(); } }
-        function editAlter(id) { 
-            const m = sys.members.find(x=>x.id==id);
-            document.getElementById('edit-id').value=m.id; document.getElementById('name').value=m.name;
-            document.getElementById('pronouns').value=m.pronouns; document.getElementById('role').value=m.role;
-            document.getElementById('color').value=m.color; document.getElementById('bio').value=m.bio;
-            document.getElementById('fandoms').value=m.fandoms; document.getElementById('form-title').innerText="Editing: " + m.name;
-            document.getElementById('cancel-edit').style.display='block'; 
-            showTab('profiles'); window.scrollTo(0,0);
-        }
-    </script>
+window.onload = loadData;
+</script>
 </body>
 </html>

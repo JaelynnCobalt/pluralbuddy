@@ -1,1 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>PluralPoint | Detailed History</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --bg: #fff0f6; --panel: #ffffff; --soft-pink: #ffdeeb; --magenta: #ff00ff; --gold: #fff9c4; }
+        * { font-family: 'system-ui', -apple-system, sans-serif; box-sizing: border-box; }
+        
+        body { background-color: var(--bg); margin: 0; padding: 20px 15px; min-height: 100vh; pb: 50px; }
 
+        /* HEADER */
+        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; position: sticky; top: 0; background: var(--bg); z-index: 100; padding: 10px 0; }
+        .back-btn { background: var(--panel); border: 2px solid var(--soft-pink); padding: 8px 15px; border-radius: 12px; text-decoration: none; color: var(--magenta); font-weight: bold; font-size: 0.9rem; }
+
+        /* SESSION CARDS */
+        .session-group { background: var(--panel); border-radius: 20px; border: 2px solid var(--soft-pink); margin-bottom: 15px; overflow: hidden; box-shadow: 0 4px 10px rgba(255, 0, 255, 0.05); }
+        .group-header { background: var(--soft-pink); padding: 8px 15px; font-size: 0.75rem; font-weight: bold; color: var(--magenta); display: flex; justify-content: space-between; }
+        
+        .entry { display: flex; align-items: center; padding: 15px; border-bottom: 1px solid #f0f0f0; gap: 12px; }
+        .entry:last-child { border-bottom: none; }
+        .entry-pfp { width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--magenta); object-fit: cover; }
+        
+        .entry-info { flex: 1; }
+        .entry-name { font-weight: bold; font-size: 1rem; margin-bottom: 2px; }
+        .entry-status { font-size: 0.8rem; color: #666; font-style: italic; }
+        
+        .entry-times { text-align: right; font-size: 0.7rem; color: #888; line-height: 1.4; }
+        .duration-tag { display: inline-block; background: var(--gold); color: #856404; padding: 2px 6px; border-radius: 6px; font-weight: bold; margin-top: 4px; }
+
+        .empty-state { text-align: center; padding: 40px 20px; color: #999; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <a href="mobileindex.html" class="back-btn">← Home</a>
+        <h2 style="margin:0; color:var(--magenta); font-size: 1.2rem;">Full History</h2>
+    </div>
+
+    <div id="history-container">
+        </div>
+
+<script>
+    const SB_URL = 'https://ctrbkrwiwpojbzfpsxwl.supabase.co';
+    const SB_KEY = 'sb_publishable_uK-ihohO48o6BPRW8rmDqQ_LbJnfTI7';
+    const _supabase = supabase.createClient(SB_URL, SB_KEY);
+
+    async function loadFullHistory() {
+        const { data: { user } } = await _supabase.auth.getUser();
+        if (!user) { window.location.href = 'mobileindex.html'; return; }
+
+        const { data } = await _supabase.from('profiles').select('system_data').eq('user_id', user.id).single();
+        const history = data?.system_data?.history || [];
+        renderHistory(history);
+    }
+
+    function renderHistory(history) {
+        const container = document.getElementById('history-container');
+        if (history.length === 0) {
+            container.innerHTML = `<div class="empty-state">No history recorded yet. Start fronting to see logs!</div>`;
+            return;
+        }
+
+        // 1. Sort history newest first
+        const sorted = [...history].reverse();
+        
+        // 2. Grouping Logic (3-minute window)
+        let groups = [];
+        let currentGroup = [];
+
+        sorted.forEach((entry, index) => {
+            if (currentGroup.length === 0) {
+                currentGroup.push(entry);
+            } else {
+                const prevEntry = currentGroup[currentGroup.length - 1];
+                const timeA = new Date(entry.timestamp || entry.startTime);
+                const timeB = new Date(prevEntry.timestamp || prevEntry.startTime);
+                const diff = Math.abs(timeA - timeB) / 60000; // minutes
+
+                if (diff <= 3) {
+                    currentGroup.push(entry);
+                } else {
+                    groups.push(currentGroup);
+                    currentGroup = [entry];
+                }
+            }
+            // Push the final group
+            if (index === sorted.length - 1) groups.push(currentGroup);
+        });
+
+        // 3. Build the HTML
+        container.innerHTML = '';
+        groups.forEach(group => {
+            const firstEntryDate = new Date(group[0].startTime || group[0].timestamp).toLocaleDateString();
+            
+            let groupHtml = `<div class="session-group">
+                <div class="group-header">
+                    <span>${firstEntryDate}</span>
+                    <span>${group.length > 1 ? 'Co-Front / Switch' : 'Session'}</span>
+                </div>`;
+            
+            group.forEach(entry => {
+                const start = entry.startTime ? new Date(entry.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '??:??';
+                const end = entry.endTime ? new Date(entry.endTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Active';
+                const duration = entry.duration ? `${entry.duration}m` : '...';
+
+                groupHtml += `
+                    <div class="entry">
+                        <img src="${entry.pfp}" class="entry-pfp">
+                        <div class="entry-info">
+                            <div class="entry-name">${entry.name}</div>
+                            <div class="entry-status">${entry.status || 'No status set'}</div>
+                        </div>
+                        <div class="entry-times">
+                            <div>${start} - ${end}</div>
+                            <div class="duration-tag">${duration}</div>
+                        </div>
+                    </div>`;
+            });
+
+            groupHtml += `</div>`;
+            container.innerHTML += groupHtml;
+        });
+    }
+
+    loadFullHistory();
+</script>
+</body>
+</html>

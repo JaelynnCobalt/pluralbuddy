@@ -2,118 +2,104 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Chat - Mobile</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Pink Discord</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --bg: #fff0f6; --panel: #ffffff; --soft-pink: #ffdeeb; --magenta: #ff00ff; }
-        * { font-family: 'Georgia', serif; box-box-sizing: border-box; color: var(--magenta); -webkit-tap-highlight-color: transparent; }
-        
-        body { background-color: var(--bg); margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        :root {
+            --bg: #fff0f6;
+            --panel: #ffffff;
+            --magenta: #ff00ff;
+            --soft-pink: #ffdeeb;
+            --discord-dark: #36393f;
+        }
 
-        /* Navigation - Hidden on very small screens to save space */
-        nav { padding: 10px; display: flex; gap: 8px; justify-content: center; background: white; border-bottom: 2px solid var(--magenta); }
-        .nav-link { padding: 6px 15px; border: 2px solid var(--magenta); background: white; border-radius: 50px; text-decoration: none; font-weight: bold; font-size: 0.8rem; }
+        body { 
+            margin: 0; 
+            font-family: 'Georgia', serif; 
+            background: var(--bg); 
+            display: flex; 
+            height: 100vh; 
+        }
 
-        .discord-container { display: flex; flex: 1; overflow: hidden; position: relative; }
-
-        /* Sidebar: Full width on mobile when active */
+        /* SIDEBAR */
         .sidebar { 
-            width: 280px; 
-            background: var(--soft-pink); 
-            border-right: 2px solid var(--magenta); 
+            width: 240px; 
+            background: white; 
+            border-right: 2px solid var(--soft-pink); 
             display: flex; 
             flex-direction: column; 
-            z-index: 10;
-            transition: transform 0.3s ease;
+            padding: 20px;
         }
 
-        /* Chat Area */
-        .chat-area { flex: 1; display: flex; flex-direction: column; background: white; width: 100%; }
-        
-        #chat-header { 
-            padding: 10px 15px; 
-            border-bottom: 2px solid var(--soft-pink); 
+        .nav-back { 
+            color: var(--magenta); 
+            text-decoration: none; 
             font-weight: bold; 
-            display: flex; 
-            align-items: center; 
-            gap: 10px;
-            background: white;
+            font-size: 0.9rem; 
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 25px;
+            padding: 10px;
+            border-radius: 10px;
+            background: var(--bg);
+            transition: 0.3s;
         }
 
-        /* Mobile "Back to Friends" Button */
-        .mobile-back { 
-            display: none; 
-            background: var(--magenta); 
-            color: white; 
-            border: none; 
-            border-radius: 8px; 
-            padding: 5px 10px; 
-            font-weight: bold;
-        }
+        .nav-back:hover { background: var(--soft-pink); }
 
-        #message-list { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
+        .sidebar-title { font-weight: bold; color: var(--magenta); margin-bottom: 15px; text-transform: uppercase; font-size: 0.8rem; }
+
+        /* CHAT AREA */
+        .chat-main { flex: 1; display: flex; flex-direction: column; background: white; }
+        .chat-header { padding: 15px 25px; border-bottom: 2px solid var(--soft-pink); font-weight: bold; color: var(--magenta); }
         
-        /* Message Styling */
-        .msg-row { display: flex; gap: 10px; align-items: flex-start; }
-        .msg-pfp { width: 38px; height: 38px; border-radius: 10px; border: 2px solid; object-fit: cover; flex-shrink: 0; }
-        .proxy-tag { background: var(--magenta); color: white; font-size: 0.55rem; padding: 1px 4px; border-radius: 3px; vertical-align: middle; }
-
-        /* Input Bar - Sticky at bottom */
-        .input-bar { padding: 10px; border-top: 2px solid var(--magenta); display: flex; gap: 8px; background: white; padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
-        select { width: 80px; font-size: 0.8rem; }
-        input { flex: 1; padding: 10px; border: 2px solid var(--soft-pink); border-radius: 12px; font-size: 16px; /* Prevents iOS zoom on focus */ }
-        .send-btn { background: var(--magenta); color: white; border: none; padding: 0 15px; border-radius: 12px; font-weight: bold; }
-
-        /* MOBILE OVERRIDES */
-        @media (max-width: 768px) {
-            .sidebar { 
-                position: absolute; 
-                left: 0; top: 0; bottom: 0; 
-                width: 100%; 
-                transform: translateX(0); 
-            }
-            .sidebar.hidden { transform: translateX(-100%); }
-            .mobile-back { display: block; }
-            
-            /* Make list items bigger for fingers */
-            .friend-item { padding: 18px !important; font-size: 1.1rem; }
+        #messages { 
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px; 
         }
 
-        /* Helper Styles */
-        .friend-item { padding: 12px 15px; cursor: pointer; border-bottom: 1px solid rgba(255,0,255,0.1); display: flex; align-items: center; gap: 10px; }
-        .friend-item.active { background: white; font-weight: bold; }
-        .sidebar-header { padding: 15px; font-weight: bold; background: white; border-bottom: 1px solid var(--magenta); display: flex; justify-content: space-between; }
+        .msg-bubble { display: flex; gap: 12px; max-width: 80%; }
+        .msg-pfp { width: 40px; height: 40px; border-radius: 12px; object-fit: cover; border: 2px solid var(--soft-pink); }
+        .msg-info { display: flex; flex-direction: column; }
+        .msg-name { font-weight: bold; font-size: 0.9rem; color: var(--magenta); }
+        .msg-text { background: var(--bg); padding: 10px 15px; border-radius: 0 15px 15px 15px; color: #444; margin-top: 4px; line-height: 1.4; }
+
+        /* INPUT */
+        .input-box { padding: 20px; border-top: 2px solid var(--soft-pink); display: flex; gap: 10px; }
+        input { flex: 1; padding: 12px; border: 2px solid var(--soft-pink); border-radius: 12px; outline: none; }
+        button { background: var(--magenta); color: white; border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<audio id="notif-sound" src="https://raw.githubusercontent.com/Anisayari/Discord-Alert-Sound/main/discord_notification.mp3" preload="auto"></audio>
-
-<div class="discord-container">
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <span>Conversations</span>
-            <button style="background:var(--magenta); color:white; border:none; border-radius:50%; width:30px; height:30px;" onclick="openModal()">+</button>
-        </div>
-        <div id="dm-list" style="overflow-y:auto;"></div>
-    </div>
-
-    <div class="chat-area">
-        <div id="chat-header">
-            <button class="mobile-back" onclick="toggleSidebar(true)">← Friends</button>
-            <span id="chat-title">Select a chat</span>
-        </div>
+    <div class="sidebar">
+        <a href="index.html" class="nav-back">🏠 Back to Dashboard</a>
         
-        <div id="message-list"></div>
+        <div class="sidebar-title">Channels</div>
+        <div style="color: var(--magenta); font-weight: bold; padding-left: 10px;"># global-lobby</div>
+        
+        <div class="sidebar-title" style="margin-top: 30px;">Online Systems</div>
+        <div id="user-list" style="font-size: 0.85rem; color: #666; padding-left: 10px;">Loading systems...</div>
+    </div>
 
-        <div class="input-bar">
-            <select id="proxy-select"></select>
-            <input type="text" id="msg-input" placeholder="Message..." enterkeyhint="send">
-            <button class="send-btn" onclick="sendProxyMessage()">Send</button>
+    <div class="chat-main">
+        <div class="chat-header"># global-lobby</div>
+        <div id="messages"></div>
+        
+        <div class="input-area">
+            <div style="padding: 0 20px; font-size: 0.75rem; color: #aaa;">Sending as: <span id="current-identity" style="color:var(--magenta); font-weight:bold;">Loading...</span></div>
+            <div class="input-box">
+                <input type="text" id="msg-input" placeholder="Message #global-lobby">
+                <button onclick="sendMessage()">Send</button>
+            </div>
         </div>
     </div>
-</div>
 
 <script>
     const SB_URL = 'https://ctrbkrwiwpojbzfpsxwl.supabase.co';
@@ -121,99 +107,65 @@
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
     let currentUser = null;
-    let currentChatId = null;
-    let myAlters = [];
+    let currentUsername = "Anonymous System";
 
     async function init() {
         const { data: { user } } = await _supabase.auth.getUser();
-        if(!user) return window.location.href = "index.html";
+        if (!user) { window.location.href = 'index.html'; return; }
         currentUser = user;
 
-        const { data: profile } = await _supabase.from('profiles').select('system_data').eq('user_id', user.id).single();
-        myAlters = profile?.system_data?.members || [];
-        const select = document.getElementById('proxy-select');
-        myAlters.forEach(alt => select.innerHTML += `<option value="${alt.id}">${alt.name}</option>`);
+        const { data: profile } = await _supabase.from('profiles').select('username').eq('user_id', user.id).single();
+        currentUsername = profile?.username || "Unnamed System";
+        document.getElementById('current-identity').innerText = currentUsername;
 
-        loadSidebar();
-        setupRealtime();
+        loadMessages();
+        subscribeMessages();
     }
 
-    function toggleSidebar(show) {
-        const sb = document.getElementById('sidebar');
-        if(show) sb.classList.remove('hidden');
-        else sb.classList.add('hidden');
+    async function loadMessages() {
+        const { data } = await _supabase.from('global_chat').select('*').order('created_at', { ascending: true }).limit(50);
+        if (data) data.forEach(appendMessage);
     }
 
-    async function loadSidebar() {
-        const { data: connections } = await _supabase.from('connections').select('friend_id').eq('user_id', currentUser.id);
-        const friendIds = connections?.map(c => c.friend_id) || [];
-        const { data: profiles } = await _supabase.from('profiles').select('user_id, username').in('user_id', friendIds);
-        
-        const list = document.getElementById('dm-list');
-        list.innerHTML = '';
-        profiles?.forEach(f => {
-            const div = document.createElement('div');
-            div.className = 'friend-item';
-            div.innerHTML = `🩷 @${f.username}`;
-            div.onclick = () => {
-                selectChat([currentUser.id, f.user_id].sort().join('_'), `@${f.username}`);
-                if(window.innerWidth <= 768) toggleSidebar(false);
-            };
-            list.appendChild(div);
-        });
+    function subscribeMessages() {
+        _supabase.channel('global_chat').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'global_chat' }, payload => {
+            appendMessage(payload.new);
+        }).subscribe();
     }
 
-    async function selectChat(id, title) {
-        currentChatId = id;
-        document.getElementById('chat-title').innerText = title;
-        const { data: msgs } = await _supabase.from('global_messages').select('*').eq('conversation_id', id).order('created_at', { ascending: true });
-        const list = document.getElementById('message-list');
-        list.innerHTML = '';
-        msgs?.forEach(m => renderMessage(m));
-    }
-
-    function renderMessage(msg) {
-        const list = document.getElementById('message-list');
+    function appendMessage(msg) {
+        const container = document.getElementById('messages');
         const div = document.createElement('div');
-        div.className = 'msg-row';
+        div.className = 'msg-bubble';
         div.innerHTML = `
-            <img src="${msg.sender_pfp}" class="msg-pfp" style="border-color:${msg.sender_color}">
-            <div>
-                <b style="color:${msg.sender_color}; font-size:0.9rem;">${msg.sender_name}</b> <span class="proxy-tag">Proxy</span>
-                <div style="color:#333; margin-top:2px; font-size:0.95rem;">${msg.message_text}</div>
+            <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=${msg.username}" class="msg-pfp">
+            <div class="msg-info">
+                <span class="msg-name">${msg.username}</span>
+                <span class="msg-text">${msg.content}</span>
             </div>
         `;
-        list.appendChild(div);
-        list.scrollTop = list.scrollHeight;
+        container.appendChild(div);
+        container.scrollTop = container.scrollHeight;
     }
 
-    async function sendProxyMessage() {
+    async function sendMessage() {
         const input = document.getElementById('msg-input');
-        if (!input.value || !currentChatId) return;
-        const alter = myAlters.find(a => a.id == document.getElementById('proxy-select').value);
+        const content = input.value.trim();
+        if (!content) return;
 
-        await _supabase.from('global_messages').insert([{
-            conversation_id: currentChatId,
-            sender_name: alter.name,
-            sender_pfp: alter.pfp,
-            sender_color: alter.color,
-            message_text: input.value
+        await _supabase.from('global_chat').insert([{
+            user_id: currentUser.id,
+            username: currentUsername,
+            content: content
         }]);
         input.value = '';
     }
 
-    function setupRealtime() {
-        _supabase.channel('any').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'global_messages' }, payload => {
-            if (payload.new.conversation_id === currentChatId) {
-                renderMessage(payload.new);
-                document.getElementById('notif-sound').play().catch(()=>{});
-            }
-        }).subscribe();
-    }
+    document.getElementById('msg-input').addEventListener('keypress', e => {
+        if (e.key === 'Enter') sendMessage();
+    });
 
-    document.getElementById('msg-input').addEventListener('keypress', e => { if(e.key === 'Enter') sendProxyMessage(); });
-
-    window.onload = init;
+    init();
 </script>
 </body>
 </html>

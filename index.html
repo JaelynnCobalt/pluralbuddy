@@ -12,126 +12,28 @@
             --soft-pink: #ffdeeb;
             --magenta: #ff00ff;
             --front-gold: #fff9c4;
+            --sidekick-blue: #e3f2fd;
         }
 
-        * {
-            font-family: 'Georgia', serif;
-            box-sizing: border-box;
-            color: var(--magenta);
-        }
-
-        body {
-            background-color: var(--bg);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-        }
-
+        /* ... existing styles ... */
+        * { font-family: 'Georgia', serif; box-sizing: border-box; color: var(--magenta); }
+        body { background-color: var(--bg); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
         h1, h2, h3, h4 { color: var(--magenta) !important; }
-
-        #auth-screen {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 80vh;
-            width: 100%;
-        }
-
-        .auth-card {
-            background: white;
-            padding: 40px;
-            border-radius: 30px;
-            border: 3px solid var(--magenta);
-            box-shadow: 0 15px 35px rgba(255, 0, 255, 0.1);
-            text-align: center;
-            max-width: 400px;
-            width: 100%;
-        }
-
+        #auth-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80vh; width: 100%; }
+        .auth-card { background: white; padding: 40px; border-radius: 30px; border: 3px solid var(--magenta); box-shadow: 0 15px 35px rgba(255, 0, 255, 0.1); text-align: center; max-width: 400px; width: 100%; }
         #dashboard { display: none; width: 100%; max-width: 1100px; }
-
-        nav {
-            margin-bottom: 30px;
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .tab-btn {
-            padding: 10px 20px;
-            border: 2px solid var(--magenta);
-            background: white;
-            cursor: pointer;
-            border-radius: 50px;
-            font-weight: bold;
-            transition: 0.3s;
-        }
-
-        .tab-btn.active {
-            background: var(--magenta);
-            color: white !important;
-        }
-
+        nav { margin-bottom: 30px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+        .tab-btn { padding: 10px 20px; border: 2px solid var(--magenta); background: white; cursor: pointer; border-radius: 50px; font-weight: bold; transition: 0.3s; }
+        .tab-btn.active { background: var(--magenta); color: white !important; }
         .view-section { display: none; width: 100%; }
         .view-section.active { display: block; }
-
-        section, .card {
-            background: var(--panel);
-            padding: 20px;
-            border-radius: 20px;
-            border: 2px solid var(--soft-pink);
-            box-shadow: 0 10px 25px rgba(255, 0, 255, 0.05);
-            margin-bottom: 20px;
-        }
-
-        input, textarea, select {
-            width: 100%; 
-            padding: 10px; 
-            margin: 8px 0;
-            border: 1px solid var(--soft-pink); 
-            border-radius: 10px;
-            background: white;
-        }
-
-        .main-btn {
-            background: var(--magenta); 
-            color: white !important; 
-            border: none;
-            padding: 12px; 
-            border-radius: 10px; 
-            cursor: pointer;
-            width: 100%; 
-            font-size: 1rem;
-        }
-
-        #toast {
-            visibility: hidden;
-            min-width: 250px;
-            background-color: var(--magenta);
-            color: #fff;
-            text-align: center;
-            border-radius: 50px;
-            padding: 16px;
-            position: fixed;
-            z-index: 1000;
-            bottom: 30px;
-            font-weight: bold;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-        }
-
-        #toast.show {
-            visibility: visible;
-            animation: fadein 0.5s, fadeout 0.5s 2.5s;
-        }
-
+        section, .card { background: var(--panel); padding: 20px; border-radius: 20px; border: 2px solid var(--soft-pink); box-shadow: 0 10px 25px rgba(255, 0, 255, 0.05); margin-bottom: 20px; }
+        input, textarea, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid var(--soft-pink); border-radius: 10px; background: white; }
+        .main-btn { background: var(--magenta); color: white !important; border: none; padding: 12px; border-radius: 10px; cursor: pointer; width: 100%; font-size: 1rem; }
+        #toast { visibility: hidden; min-width: 250px; background-color: var(--magenta); color: #fff; text-align: center; border-radius: 50px; padding: 16px; position: fixed; z-index: 1000; bottom: 30px; font-weight: bold; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
         @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
         @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
-
         .grid-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
         .profile-card { display: flex; flex-direction: column; padding: 20px; height: 100%; }
         .pfp-img { width: 120px; height: 120px; border-radius: 15px; object-fit: cover; border: 3px solid var(--soft-pink); align-self: center; margin-bottom: 15px; }
@@ -139,11 +41,13 @@
         .detail-text { font-size: 0.95rem; margin: 0; word-wrap: break-word; font-weight: bold; white-space: pre-wrap; }
         .mini-btn { width: 100%; padding: 6px; border-radius: 8px; border: 1px solid var(--soft-pink); cursor: pointer; background: white; font-size: 0.8rem; margin-top: 5px;}
 
-        .fronting-box { background: var(--front-gold); border: 2px dashed var(--magenta); padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 20px; }
-        .front-card-mini { background: white; padding: 10px; border-radius: 15px; border: 2px solid var(--magenta); display: flex; align-items: center; gap: 10px; position: relative;}
-        .front-pfp { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid currentColor; }
-        .remove-front-btn { background: white; border: 1px solid currentColor; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; position: absolute; top: -5px; right: -5px;}
+        /* SIDEKICK STYLES */
+        .sidekick-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
+        .sidekick-card { border: 2px solid var(--soft-pink); border-radius: 15px; padding: 15px; margin-bottom: 10px; background: white; position: relative; }
+        .status-dot { width: 12px; height: 12px; border-radius: 50%; background: #ccc; display: inline-block; margin-right: 8px; border: 2px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
+        .status-dot.active { background: #00ff00; box-shadow: 0 0 8px #00ff00; }
 
+        /* ... existing chat styles ... */
         .chat-interface { display: flex; height: 500px; border: 1px solid var(--soft-pink); border-radius: 15px; overflow: hidden; background: white; }
         .chat-sidebar { width: 220px; background: var(--bg); border-right: 1px solid var(--soft-pink); display: flex; flex-direction: column; padding: 10px; }
         .channel-list { flex: 1; overflow-y: auto; }
@@ -153,13 +57,13 @@
         #chat-display { flex: 1; overflow-y: auto; margin-bottom: 15px; display: flex; flex-direction: column; gap: 10px; padding: 10px; }
         .chat-msg { display: flex; gap: 12px; align-items: flex-start; padding: 10px; border-radius: 12px; background: white; border: 1px solid var(--soft-pink); }
         .chat-pfp { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid currentColor; }
-
+        .fronting-box { background: var(--front-gold); border: 2px dashed var(--magenta); padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 20px; }
+        .front-card-mini { background: white; padding: 10px; border-radius: 15px; border: 2px solid var(--magenta); display: flex; align-items: center; gap: 10px; position: relative;}
+        .front-pfp { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid currentColor; }
+        .remove-front-btn { background: white; border: 1px solid currentColor; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; position: absolute; top: -5px; right: -5px;}
         table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; }
         th { background: var(--soft-pink); padding: 12px; text-align: left; color: var(--magenta) !important; }
         td { padding: 12px; border-bottom: 1px solid var(--soft-pink); }
-
-        @media (max-width: 900px) { .grid-container { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 600px) { .grid-container { grid-template-columns: 1fr; } .chat-interface { flex-direction: column; height: 600px; } .chat-sidebar { width: 100%; height: 150px; } }
     </style>
 </head>
 <body>
@@ -181,6 +85,7 @@
         <nav>
             <button class="tab-btn active" id="btn-overview" onclick="showTab('overview')">Overview</button>
             <button class="tab-btn" id="btn-profiles" onclick="showTab('profiles')">Profiles</button>
+            <button class="tab-btn" id="btn-sidekicks" onclick="showTab('sidekicks')">Sidekicks</button>
             <button class="tab-btn" id="btn-chat" onclick="showTab('chat')">Chat Rooms</button>
             <button class="tab-btn" id="btn-history" onclick="showTab('history')">History</button>
             <button class="tab-btn" style="border-color: #aaa; color: #aaa;" onclick="logout()">Logout</button>
@@ -195,6 +100,13 @@
                     <input type="text" id="edit-sys-bio" placeholder="Update Bio">
                     <button class="main-btn" onclick="updateSystemInfo()" style="width: 120px;">Save</button>
                 </div>
+                <div style="margin-top: 10px;">
+                    <label style="font-size: 0.7rem; font-weight: bold;">YOUR SYSTEM USERNAME (for friends):</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="edit-username" placeholder="Set unique username">
+                        <button class="mini-btn" onclick="updateUsername()" style="width: 100px;">Set</button>
+                    </div>
+                </div>
             </section>
             <div class="fronting-box">
                 <h3 style="margin-top:0">Currently Fronting</h3>
@@ -202,6 +114,20 @@
             </div>
             <h3>Directory</h3>
             <div id="overview-list"></div>
+        </div>
+
+        <div id="sidekicks" class="view-section">
+            <div class="sidekick-grid">
+                <section>
+                    <h3>Add a Buddy</h3>
+                    <input type="text" id="sidekick-search" placeholder="Enter username...">
+                    <button class="main-btn" onclick="addSidekick()">Add Sidekick</button>
+                </section>
+                <section>
+                    <h3>My Sidekicks</h3>
+                    <div id="sidekicks-list">Loading buddies...</div>
+                </section>
+            </div>
         </div>
 
         <div id="profiles" class="view-section">
@@ -260,7 +186,6 @@
     </div>
 
     <script>
-        // --- YOUR SUPABASE KEYS ---
         const SB_URL = 'https://ctrbkrwiwpojbzfpsxwl.supabase.co';
         const SB_KEY = 'sb_publishable_uK-ihohO48o6BPRW8rmDqQ_LbJnfTI7';
         const _supabase = supabase.createClient(SB_URL, SB_KEY);
@@ -302,52 +227,83 @@
             document.getElementById('auth-screen').style.display = 'none'; 
             document.getElementById('dashboard').style.display = 'block'; 
             refreshUI(); 
+            loadSidekicks();
         }
 
         async function logout() { await _supabase.auth.signOut(); location.reload(); }
 
+        // --- CLOUD SYNC ---
         async function syncToCloud() {
             const { data: { user } } = await _supabase.auth.getUser();
             if (!user) return;
-
-            // Updated for specific table structure and Primary Key user_id
-            const { error } = await _supabase
-                .from('profiles')
-                .upsert({ 
-                    user_id: user.id, 
-                    system_data: systemData 
-                });
-
-            if (error) {
-                console.error("Cloud Sync Error:", error.message);
-            } else {
-                showToast();
-            }
+            const { error } = await _supabase.from('profiles').upsert({ user_id: user.id, system_data: systemData });
+            if (error) console.error("Cloud Sync Error:", error.message);
+            else showToast();
         }
 
         async function loadSystemData() {
             const { data: { user } } = await _supabase.auth.getUser();
             if (!user) return;
-            
-            // Explicitly selecting from column system_data
-            const { data, error } = await _supabase
-                .from('profiles')
-                .select('system_data')
-                .eq('user_id', user.id)
-                .single();
-
-            if (error) {
-                console.log("Load Notice:", error.message);
-                return;
-            }
+            const { data, error } = await _supabase.from('profiles').select('system_data, username').eq('user_id', user.id).single();
+            if (error) return;
             if (data && data.system_data) systemData = data.system_data;
+            if (data && data.username) document.getElementById('edit-username').value = data.username;
         }
 
-        function showToast() {
-            const x = document.getElementById("toast");
-            x.className = "show";
-            setTimeout(() => { x.className = x.className.replace("show", ""); }, 3000);
+        async function updateUsername() {
+            const { data: { user } } = await _supabase.auth.getUser();
+            const newName = document.getElementById('edit-username').value;
+            if(!newName) return;
+            const { error } = await _supabase.from('profiles').update({ username: newName }).eq('user_id', user.id);
+            if(error) alert("Username taken or error: " + error.message);
+            else alert("Username set!");
         }
+
+        // --- SIDEKICK LOGIC ---
+        async function addSidekick() {
+            const target = document.getElementById('sidekick-search').value;
+            if(!target) return;
+            const { data: friend, error: fErr } = await _supabase.from('profiles').select('user_id').eq('username', target).single();
+            if(fErr || !friend) return alert("System not found!");
+
+            const { data: { user } } = await _supabase.auth.getUser();
+            const { error: linkErr } = await _supabase.from('connections').insert([{ user_id: user.id, friend_id: friend.user_id }]);
+            
+            if(linkErr) alert("Already buddies or error!");
+            else { alert("Added!"); loadSidekicks(); }
+        }
+
+        async function loadSidekicks() {
+            const { data: { user } } = await _supabase.auth.getUser();
+            const { data, error } = await _supabase.from('connections').select(`friend_id, profiles:friend_id (username, system_data)`).eq('user_id', user.id);
+            if(error) return console.error(error);
+            
+            const list = document.getElementById('sidekicks-list');
+            list.innerHTML = data.length ? '' : 'No sidekicks added yet.';
+            
+            data.forEach(item => {
+                const buddy = item.profiles;
+                const buddyData = buddy.system_data || {};
+                const frontingList = (buddyData.members || []).filter(m => m.isFronting);
+                
+                const card = document.createElement('div');
+                card.className = 'sidekick-card';
+                card.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <strong>${buddy.username}</strong>
+                        <span class="status-dot ${frontingList.length ? 'active' : ''}"></span>
+                    </div>
+                    <small>${buddyData.name || 'Unknown System'}</small>
+                    <div style="font-size: 0.8rem; margin-top:5px; color:#666;">
+                        ${frontingList.length ? `Fronting: ${frontingList.map(m => m.name).join(', ')}` : 'Switching or Internal'}
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        // --- CORE UI & SYSTEM FUNCTIONS ---
+        function showToast() { const x = document.getElementById("toast"); x.className = "show"; setTimeout(() => { x.className = x.className.replace("show", ""); }, 3000); }
 
         function showTab(tabId) {
             document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
@@ -355,6 +311,7 @@
             document.getElementById(tabId).classList.add('active');
             document.getElementById('btn-' + tabId).classList.add('active');
             if(tabId === 'chat') scrollChat();
+            if(tabId === 'sidekicks') loadSidekicks();
         }
 
         function updateSystemInfo() {
@@ -364,14 +321,11 @@
         }
 
         function compressImage(file, callback) {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
+            const reader = new FileReader(); reader.readAsDataURL(file);
             reader.onload = (e) => {
-                const img = new Image();
-                img.src = e.target.result;
+                const img = new Image(); img.src = e.target.result;
                 img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const size = 300;
+                    const canvas = document.createElement('canvas'); const size = 300;
                     let w = img.width, h = img.height;
                     if (w > h) { h *= size/w; w = size; } else { w *= size/h; h = size; }
                     canvas.width = w; canvas.height = h;
@@ -398,10 +352,8 @@
                     frontStatus: id ? systemData.members.find(m => m.id == id).frontStatus : "",
                     startTime: id ? systemData.members.find(m => m.id == id).startTime : null
                 };
-                if(id) {
-                    const idx = systemData.members.findIndex(m => m.id == id);
-                    systemData.members[idx] = member;
-                } else { systemData.members.push(member); }
+                if(id) { const idx = systemData.members.findIndex(m => m.id == id); systemData.members[idx] = member; } 
+                else { systemData.members.push(member); }
                 refreshUI(); clearForm(); syncToCloud();
             };
             if (pfpInput.files[0]) compressImage(pfpInput.files[0], finalize); else finalize();
@@ -424,11 +376,8 @@
             } else {
                 const dur = now.getTime() - m.startTime;
                 systemData.history.unshift({
-                    name: m.name, status: m.frontStatus,
-                    start: new Date(m.startTime).toLocaleString(),
-                    end: now.toLocaleString(),
-                    total: `${Math.floor(dur/3600000)}h ${Math.floor((dur%3600000)/60000)}m`,
-                    color: m.color
+                    name: m.name, status: m.frontStatus, start: new Date(m.startTime).toLocaleString(),
+                    end: now.toLocaleString(), total: `${Math.floor(dur/3600000)}h ${Math.floor((dur%3600000)/60000)}m`, color: m.color
                 });
                 m.isFronting = false; m.frontStatus = ""; m.startTime = null;
             }

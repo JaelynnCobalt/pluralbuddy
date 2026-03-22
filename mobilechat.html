@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Sidekick Chat</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --bg: #fff0f6; --panel: #ffffff; --soft-pink: #ffdeeb; --magenta: #ff00ff; --dark-magenta: #cc00cc; }
+        * { font-family: 'Georgia', serif; box-sizing: border-box; color: var(--magenta); -webkit-tap-highlight-color: transparent; }
+        
+        body { background-color: var(--bg); margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+        /* Mobile Header */
+        .app-header {
+            padding: calc(15px + env(safe-area-inset-top)) 15px 15px 15px;
+            background: white;
+            border-bottom: 2px solid var(--soft-pink);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 1001;
+        }
+
+        /* Container Layout */
+        .discord-container { display: flex; flex: 1; overflow: hidden; position: relative; width: 100%; }
+        
+        /* Sidebar (Conversation List) */
+        .sidebar { 
+            width: 100%; 
+            background: var(--panel); 
+            display: flex; 
+            flex-direction: column;
+            position: absolute;
+            height: 100%;
+            transition: transform 0.3s ease;
+            z-index: 10;
+        }
+        .sidebar.hidden { transform: translateX(-100%); }
+
+        .sidebar-header { padding: 15px; font-weight: bold; border-bottom: 1px solid var(--soft-pink); display: flex; justify-content: space-between; align-items: center; }
+        #friends-list { flex: 1; overflow-y: auto; background: white; }
+        .list-section-label { font-size: 0.7rem; padding: 15px 15px 5px; text-transform: uppercase; opacity: 0.6; letter-spacing: 1px; }
+        .friend-item { padding: 15px; cursor: pointer; border-bottom: 1px solid var(--bg); display: flex; align-items: center; gap: 12px; }
+        .friend-item:active { background: var(--soft-pink); }
+
+        /* Chat Area (Message View) */
+        .chat-area { 
+            width: 100%;
+            display: flex; 
+            flex-direction: column; 
+            background: #fffafa;
+            position: absolute;
+            height: 100%;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            z-index: 20;
+        }
+        .chat-area.active { transform: translateX(0); }
+
+        .chat-header { 
+            padding: 15px; 
+            background: white;
+            border-bottom: 1px solid var(--soft-pink); 
+            font-weight: bold; 
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #message-list { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
+        
+        /* Messages */
+        .msg-row { display: flex; gap: 10px; align-items: flex-start; max-width: 90%; animation: fadeIn 0.2s ease; }
+        .msg-pfp { width: 38px; height: 38px; border-radius: 10px; border: 2px solid; object-fit: cover; flex-shrink: 0; }
+        .msg-content { flex: 1; }
+        .msg-author-row { display: flex; align-items: center; gap: 5px; font-size: 0.85rem; margin-bottom: 3px; }
+        .proxy-tag { background: var(--magenta); color: white; font-size: 0.55rem; padding: 1px 4px; border-radius: 4px; text-transform: uppercase; }
+        .msg-text { background: white; padding: 10px 12px; border-radius: 0 12px 12px 12px; border: 1px solid var(--soft-pink); font-size: 0.95rem; line-height: 1.4; color: #333; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+
+        /* Input Bar */
+        .input-bar { 
+            padding: 10px 10px calc(10px + env(safe-area-inset-bottom)); 
+            border-top: 1px solid var(--soft-pink); 
+            display: flex; 
+            flex-direction: column;
+            gap: 8px; 
+            background: white; 
+        }
+        .input-row { display: flex; gap: 8px; }
+        #proxy-select { width: 100%; padding: 8px; border: 1px solid var(--magenta); border-radius: 8px; font-weight: bold; font-size: 14px; }
+        #msg-input { flex: 1; padding: 10px; border: 1px solid var(--soft-pink); border-radius: 12px; font-size: 16px; outline: none; }
+        .send-btn { background: var(--magenta); color: white; border: none; padding: 0 15px; border-radius: 12px; font-weight: bold; }
+
+        /* Buttons */
+        .back-btn { background: var(--soft-pink); border: none; padding: 5px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .add-group-btn { background: var(--magenta); color: white; border: none; border-radius: 50%; width: 32px; height: 32px; font-size: 20px; }
+
+        /* Modal */
+        #group-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center; padding: 20px; }
+        .modal-content { background: white; padding: 25px; border-radius: 20px; width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 15px; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Desktop Resizing */
+        @media (min-width: 768px) {
+            .sidebar { position: relative; width: 300px; transform: none !important; }
+            .chat-area { position: relative; transform: none !important; }
+            .back-btn { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<audio id="notif-sound" src="https://raw.githubusercontent.com/Anisayari/Discord-Alert-Sound/main/discord_notification.mp3" preload="auto"></audio>
+
+<div id="group-modal">
+    <div class="modal-content">
+        <h3 style="margin-top: 0;">New Group Chat</h3>
+        <input type="text" id="new-group-name" placeholder="Group Name">
+        <div id="modal-friends-list" style="max-height: 200px; overflow-y: auto; margin: 10px 0;"></div>
+        <button class="send-btn" style="padding: 12px;" onclick="createGroup()">Create Group</button>
+        <button onclick="closeModal()" style="background: none; border: none; color: #888; margin-top: 5px;">Cancel</button>
+    </div>
+</div>
+
+<div class="app-header">
+    <a href="index.html" style="text-decoration: none; font-weight: bold; font-size: 0.9rem;">🏠 Dashboard</a>
+    <span style="font-weight: bold; font-size: 1rem;">Sidekick Chat</span>
+    <button class="add-group-btn" onclick="openModal()">+</button>
+</div>
+
+<div class="discord-container">
+    <div class="sidebar" id="sidebar">
+        <div id="friends-list">
+            <div class="list-section-label">Direct Messages</div>
+            <div id="dm-list"></div>
+            <div class="list-section-label">Group Chats</div>
+            <div id="group-list"></div>
+        </div>
+    </div>
+
+    <div class="chat-area" id="chat-view">
+        <div class="chat-header">
+            <button class="back-btn" onclick="closeChat()">←</button>
+            <span id="chat-header-title">Select a conversation</span>
+        </div>
+        <div id="message-list"></div>
+
+        <div class="input-bar">
+            <select id="proxy-select"></select>
+            <div class="input-row">
+                <input type="text" id="msg-input" placeholder="Message..." autocomplete="off">
+                <button class="send-btn" onclick="sendProxyMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const SB_URL = 'https://ctrbkrwiwpojbzfpsxwl.supabase.co';
+    const SB_KEY = 'sb_publishable_uK-ihohO48o6BPRW8rmDqQ_LbJnfTI7';
+    const _supabase = supabase.createClient(SB_URL, SB_KEY);
+
+    let currentUser = null;
+    let currentChatId = null;
+    let myAlters = [];
+    let allFriends = [];
+
+    async function init() {
+        const { data: { user } } = await _supabase.auth.getUser();
+        if(!user) return window.location.href = "index.html";
+        currentUser = user;
+
+        const { data: profile } = await _supabase.from('profiles').select('system_data').eq('user_id', user.id).single();
+        myAlters = profile?.system_data?.members || [];
+        const select = document.getElementById('proxy-select');
+        myAlters.forEach(alt => select.innerHTML += `<option value="${alt.id}">${alt.name}</option>`);
+
+        loadSidebar();
+        
+        _supabase.channel('chat-updates').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'global_messages' }, payload => {
+            if (payload.new.conversation_id === currentChatId) {
+                renderMessage(payload.new);
+                const currentAlterId = document.getElementById('proxy-select').value;
+                const currentAlterName = myAlters.find(a => a.id == currentAlterId)?.name;
+                if (payload.new.sender_name !== currentAlterName) {
+                    document.getElementById('notif-sound').play().catch(()=>{});
+                }
+            }
+        }).subscribe();
+    }
+
+    async function loadSidebar() {
+        const { data: connections } = await _supabase.from('connections').select('friend_id').eq('user_id', currentUser.id);
+        const friendIds = connections?.map(c => c.friend_id) || [];
+        const { data: friendProfiles } = await _supabase.from('profiles').select('user_id, username').in('user_id', friendIds);
+        allFriends = friendProfiles || [];
+
+        const dmList = document.getElementById('dm-list');
+        dmList.innerHTML = '';
+        allFriends.forEach(f => {
+            const div = document.createElement('div');
+            div.className = 'friend-item';
+            div.innerHTML = `<span>👤</span> @${f.username}`;
+            div.onclick = () => selectChat(getDmId(f.user_id), `@${f.username}`);
+            dmList.appendChild(div);
+        });
+
+        const { data: groups } = await _supabase.from('global_messages').select('conversation_id, group_name').eq('is_group', true);
+        const groupList = document.getElementById('group-list');
+        groupList.innerHTML = '';
+        const uniqueGroups = [...new Map(groups?.map(item => [item['conversation_id'], item])).values()];
+        uniqueGroups.forEach(g => {
+            const div = document.createElement('div');
+            div.className = 'friend-item';
+            div.innerHTML = `<span>🏠</span> ${g.group_name}`;
+            div.onclick = () => selectChat(g.conversation_id, g.group_name);
+            groupList.appendChild(div);
+        });
+    }
+
+    function getDmId(fId) { return [currentUser.id, fId].sort().join('_'); }
+
+    async function selectChat(id, title) {
+        currentChatId = id;
+        document.getElementById('chat-header-title').innerText = title;
+        document.getElementById('sidebar').classList.add('hidden');
+        document.getElementById('chat-view').classList.add('active');
+        
+        const { data: msgs } = await _supabase.from('global_messages').select('*').eq('conversation_id', id).order('created_at', { ascending: true });
+        const list = document.getElementById('message-list');
+        list.innerHTML = '';
+        msgs?.forEach(m => renderMessage(m));
+    }
+
+    function closeChat() {
+        document.getElementById('sidebar').classList.remove('hidden');
+        document.getElementById('chat-view').classList.remove('active');
+        currentChatId = null;
+    }
+
+    function renderMessage(msg) {
+        const list = document.getElementById('message-list');
+        const div = document.createElement('div');
+        div.className = 'msg-row';
+        div.innerHTML = `
+            <img src="${msg.sender_pfp}" class="msg-pfp" style="border-color: ${msg.sender_color}">
+            <div class="msg-content">
+                <div class="msg-author-row">
+                    <b style="color: ${msg.sender_color}">${msg.sender_name}</b>
+                    <span class="proxy-tag">Proxy</span>
+                </div>
+                <div class="msg-text">${msg.message_text}</div>
+            </div>`;
+        list.appendChild(div);
+        list.scrollTop = list.scrollHeight;
+    }
+
+    async function sendProxyMessage() {
+        const input = document.getElementById('msg-input');
+        if (!input.value.trim() || !currentChatId) return;
+        const alter = myAlters.find(a => a.id == document.getElementById('proxy-select').value);
+
+        const isGroup = currentChatId.startsWith('group_');
+        const groupName = isGroup ? document.getElementById('chat-header-title').innerText : null;
+
+        await _supabase.from('global_messages').insert([{
+            conversation_id: currentChatId,
+            sender_name: alter.name,
+            sender_pfp: alter.pfp,
+            sender_color: alter.color,
+            message_text: input.value,
+            is_group: isGroup,
+            group_name: groupName
+        }]);
+        input.value = '';
+    }
+
+    // Modal Controls
+    function openModal() {
+        document.getElementById('group-modal').style.display = 'flex';
+        const list = document.getElementById('modal-friends-list');
+        list.innerHTML = '';
+        allFriends.forEach(f => {
+            list.innerHTML += `<div style="padding:8px 0;"><label><input type="checkbox" value="${f.user_id}" class="g-member"> @${f.username}</label></div>`;
+        });
+    }
+    function closeModal() { document.getElementById('group-modal').style.display = 'none'; }
+
+    async function createGroup() {
+        const name = document.getElementById('new-group-name').value;
+        if(!name) return alert("Give your group a name!");
+        const groupId = "group_" + Math.random().toString(36).substr(2, 9);
+        await _supabase.from('global_messages').insert([{
+            conversation_id: groupId,
+            sender_name: "System",
+            sender_pfp: "https://via.placeholder.com/100",
+            sender_color: "#ff00ff",
+            message_text: `Group "${name}" created!`,
+            is_group: true,
+            group_name: name
+        }]);
+        closeModal();
+        loadSidebar();
+    }
+
+    document.getElementById('msg-input').addEventListener('keypress', (e) => {
+        if(e.key === 'Enter') sendProxyMessage();
+    });
+
+    window.onload = init;
+</script>
+</body>
+</html>

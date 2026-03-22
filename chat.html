@@ -1,171 +1,232 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Global Pink Discord</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        :root {
-            --bg: #fff0f6;
-            --panel: #ffffff;
-            --magenta: #ff00ff;
-            --soft-pink: #ffdeeb;
-            --discord-dark: #36393f;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Chat</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+    --bg: #fff0f6;
+    --panel: #ffffff;
+    --soft-pink: #ffdeeb;
+    --magenta: #ff00ff;
+    --text: #444;
+}
 
-        body { 
-            margin: 0; 
-            font-family: 'Georgia', serif; 
-            background: var(--bg); 
-            display: flex; 
-            height: 100vh; 
-        }
+* { box-sizing: border-box; font-family: 'Georgia', serif; }
+body { margin: 0; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
 
-        /* SIDEBAR */
-        .sidebar { 
-            width: 240px; 
-            background: white; 
-            border-right: 2px solid var(--soft-pink); 
-            display: flex; 
-            flex-direction: column; 
-            padding: 20px;
-        }
+/* SIDEBAR - PINK THEME */
+.sidebar { width: 280px; background: var(--panel); display: flex; flex-direction: column; border-right: 2px solid var(--soft-pink); }
+.sidebar-header { padding: 20px; font-weight: bold; border-bottom: 2px solid var(--soft-pink); display: flex; justify-content: space-between; align-items: center; color: var(--magenta); }
+.room-list { flex: 1; overflow-y: auto; padding: 10px; }
+.room-item { padding: 12px; border-radius: 12px; cursor: pointer; margin-bottom: 5px; transition: 0.2s; color: var(--magenta); font-weight: bold; border: 1px solid transparent; }
+.room-item:hover { background: var(--soft-pink); }
+.room-item.active { background: var(--magenta); color: white; }
 
-        .nav-back { 
-            color: var(--magenta); 
-            text-decoration: none; 
-            font-weight: bold; 
-            font-size: 0.9rem; 
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            margin-bottom: 25px;
-            padding: 10px;
-            border-radius: 10px;
-            background: var(--bg);
-            transition: 0.3s;
-        }
+/* MAIN CHAT AREA */
+.chat-container { flex: 1; display: flex; flex-direction: column; background: var(--panel); }
+.chat-header { padding: 15px 20px; background: white; border-bottom: 2px solid var(--soft-pink); font-weight: bold; font-size: 1.2rem; color: var(--magenta); }
+#chat-display { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; background: var(--bg); }
 
-        .nav-back:hover { background: var(--soft-pink); }
+/* MESSAGES - ANTAR STYLE */
+.message { display: flex; gap: 12px; align-items: flex-start; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        .sidebar-title { font-weight: bold; color: var(--magenta); margin-bottom: 15px; text-transform: uppercase; font-size: 0.8rem; }
+.msg-pfp { width: 45px; height: 45px; border-radius: 12px; object-fit: cover; border: 2px solid var(--soft-pink); background: white; }
+.msg-content { flex: 1; }
+.msg-author { font-weight: bold; font-size: 0.9rem; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+.msg-time { font-size: 0.7rem; color: #999; font-weight: normal; }
+.msg-text { background: white; padding: 12px 15px; border-radius: 0 15px 15px 15px; border: 1px solid var(--soft-pink); line-height: 1.5; color: #333; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
 
-        /* CHAT AREA */
-        .chat-main { flex: 1; display: flex; flex-direction: column; background: white; }
-        .chat-header { padding: 15px 25px; border-bottom: 2px solid var(--soft-pink); font-weight: bold; color: var(--magenta); }
-        
-        #messages { 
-            flex: 1; 
-            overflow-y: auto; 
-            padding: 20px; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 15px; 
-        }
+/* INPUT AREA - FIXED READABILITY */
+.input-area { padding: 20px; background: white; border-top: 2px solid var(--soft-pink); }
+.proxy-bar { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; background: var(--bg); padding: 10px; border-radius: 12px; border: 1px solid var(--soft-pink); }
+.proxy-label { font-size: 0.8rem; font-weight: bold; color: var(--magenta); text-transform: uppercase; }
 
-        .msg-bubble { display: flex; gap: 12px; max-width: 80%; }
-        .msg-pfp { width: 40px; height: 40px; border-radius: 12px; object-fit: cover; border: 2px solid var(--soft-pink); }
-        .msg-info { display: flex; flex-direction: column; }
-        .msg-name { font-weight: bold; font-size: 0.9rem; color: var(--magenta); }
-        .msg-text { background: var(--bg); padding: 10px 15px; border-radius: 0 15px 15px 15px; color: #444; margin-top: 4px; line-height: 1.4; }
+/* Fix for unreadable dropdown */
+#proxy-select { 
+    background: white; 
+    border: 1px solid var(--magenta); 
+    color: var(--magenta); 
+    font-weight: bold; 
+    border-radius: 8px; 
+    padding: 5px 10px;
+    cursor: pointer;
+    outline: none;
+}
 
-        /* INPUT */
-        .input-box { padding: 20px; border-top: 2px solid var(--soft-pink); display: flex; gap: 10px; }
-        input { flex: 1; padding: 12px; border: 2px solid var(--soft-pink); border-radius: 12px; outline: none; }
-        button { background: var(--magenta); color: white; border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: bold; }
-    </style>
+.chat-box-wrapper { display: flex; gap: 10px; }
+#msg-input { 
+    flex: 1; 
+    background: var(--bg); 
+    border: 1px solid var(--soft-pink); 
+    border-radius: 15px; 
+    padding: 12px 18px; 
+    outline: none; 
+    font-size: 1rem; 
+    resize: none; 
+    color: #333;
+}
+#msg-input:focus { border-color: var(--magenta); }
+
+.main-btn { background: var(--magenta); color: white; border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+.main-btn:hover { transform: scale(1.03); opacity: 0.9; }
+.nav-back { color: var(--magenta); text-decoration: none; font-weight: bold; font-size: 0.9rem; margin-bottom: 15px; display: inline-block; padding: 5px 10px; background: var(--soft-pink); border-radius: 8px; }
+</style>
 </head>
 <body>
 
-    <div class="sidebar">
-        <a href="index.html" class="nav-back">🏠 Back to Dashboard</a>
-        
-        <div class="sidebar-title">Channels</div>
-        <div style="color: var(--magenta); font-weight: bold; padding-left: 10px;"># global-lobby</div>
-        
-        <div class="sidebar-title" style="margin-top: 30px;">Online Systems</div>
-        <div id="user-list" style="font-size: 0.85rem; color: #666; padding-left: 10px;">Loading systems...</div>
+<div class="sidebar">
+    <div class="sidebar-header">
+        <span>System Chat</span>
+        <button style="background:var(--magenta); color:white; border:none; border-radius:50%; width:25px; height:25px; cursor:pointer;" onclick="addRoom()">+</button>
     </div>
+    <div class="room-list" id="room-list"></div>
+    <div style="padding: 15px; border-top: 1px solid var(--soft-pink);">
+        <a href="index.html" class="nav-back">🏠 Back to Dashboard</a>
+    </div>
+</div>
 
-    <div class="chat-main">
-        <div class="chat-header"># global-lobby</div>
-        <div id="messages"></div>
-        
-        <div class="input-area">
-            <div style="padding: 0 20px; font-size: 0.75rem; color: #aaa;">Sending as: <span id="current-identity" style="color:var(--magenta); font-weight:bold;">Loading...</span></div>
-            <div class="input-box">
-                <input type="text" id="msg-input" placeholder="Message #global-lobby">
-                <button onclick="sendMessage()">Send</button>
-            </div>
+<div class="chat-container">
+    <div class="chat-header" id="current-room-name"># Select a room</div>
+    <div id="chat-display"></div>
+    
+    <div class="input-area">
+        <div class="proxy-bar">
+            <span class="proxy-label">Proxying as:</span>
+            <select id="proxy-select">
+                <option value="system">System</option>
+            </select>
+        </div>
+        <div class="chat-box-wrapper">
+            <textarea id="msg-input" placeholder="Type a message..." rows="1"></textarea>
+            <button class="main-btn" onclick="sendInternalMessage()">Send</button>
         </div>
     </div>
+</div>
 
 <script>
-    const SB_URL = 'https://ctrbkrwiwpojbzfpsxwl.supabase.co';
-    const SB_KEY = 'sb_publishable_uK-ihohO48o6BPRW8rmDqQ_LbJnfTI7';
-    const _supabase = supabase.createClient(SB_URL, SB_KEY);
+const SB_URL = 'https://ctrbkrwiwpojbzfpsxwl.supabase.co';
+const SB_KEY = 'sb_publishable_uK-ihohO48o6BPRW8rmDqQ_LbJnfTI7';
+const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
-    let currentUser = null;
-    let currentUsername = "Anonymous System";
+let systemData = { members: [], internalRooms: { "general": [] }, activeRoom: "general" };
 
-    async function init() {
-        const { data: { user } } = await _supabase.auth.getUser();
-        if (!user) { window.location.href = 'index.html'; return; }
-        currentUser = user;
-
-        const { data: profile } = await _supabase.from('profiles').select('username').eq('user_id', user.id).single();
-        currentUsername = profile?.username || "Unnamed System";
-        document.getElementById('current-identity').innerText = currentUsername;
-
-        loadMessages();
-        subscribeMessages();
+async function loadData() {
+    const { data: { user } } = await _supabase.auth.getUser();
+    if (!user) return window.location.href = 'index.html';
+    
+    const { data } = await _supabase.from('profiles').select('system_data').eq('user_id', user.id).single();
+    if (data?.system_data) {
+        systemData = data.system_data;
+        if (!systemData.internalRooms) systemData.internalRooms = { "general": [] };
+        if (!systemData.activeRoom) systemData.activeRoom = "general";
     }
+    renderRooms();
+    renderProxies();
+    renderMessages();
+}
 
-    async function loadMessages() {
-        const { data } = await _supabase.from('global_chat').select('*').order('created_at', { ascending: true }).limit(50);
-        if (data) data.forEach(appendMessage);
-    }
-
-    function subscribeMessages() {
-        _supabase.channel('global_chat').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'global_chat' }, payload => {
-            appendMessage(payload.new);
-        }).subscribe();
-    }
-
-    function appendMessage(msg) {
-        const container = document.getElementById('messages');
-        const div = document.createElement('div');
-        div.className = 'msg-bubble';
-        div.innerHTML = `
-            <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=${msg.username}" class="msg-pfp">
-            <div class="msg-info">
-                <span class="msg-name">${msg.username}</span>
-                <span class="msg-text">${msg.content}</span>
-            </div>
-        `;
-        container.appendChild(div);
-        container.scrollTop = container.scrollHeight;
-    }
-
-    async function sendMessage() {
-        const input = document.getElementById('msg-input');
-        const content = input.value.trim();
-        if (!content) return;
-
-        await _supabase.from('global_chat').insert([{
-            user_id: currentUser.id,
-            username: currentUsername,
-            content: content
-        }]);
-        input.value = '';
-    }
-
-    document.getElementById('msg-input').addEventListener('keypress', e => {
-        if (e.key === 'Enter') sendMessage();
+function renderProxies() {
+    const select = document.getElementById('proxy-select');
+    select.innerHTML = '<option value="system">System Default</option>';
+    systemData.members.forEach(m => {
+        select.innerHTML += `<option value="${m.id}">${m.name}</option>`;
     });
+}
 
-    init();
+function renderRooms() {
+    const list = document.getElementById('room-list');
+    list.innerHTML = '';
+    Object.keys(systemData.internalRooms).forEach(room => {
+        const div = document.createElement('div');
+        div.className = `room-item ${systemData.activeRoom === room ? 'active' : ''}`;
+        div.innerText = `# ${room}`;
+        div.onclick = () => switchRoom(room);
+        list.appendChild(div);
+    });
+}
+
+function switchRoom(room) {
+    systemData.activeRoom = room;
+    document.getElementById('current-room-name').innerText = `# ${room}`;
+    renderRooms();
+    renderMessages();
+}
+
+function addRoom() {
+    const name = prompt("New Group/Room Name:");
+    if (name) {
+        const slug = name.toLowerCase().replace(/\s+/g, '-');
+        if (!systemData.internalRooms[slug]) {
+            systemData.internalRooms[slug] = [];
+            switchRoom(slug);
+            sync();
+        }
+    }
+}
+
+function renderMessages() {
+    const display = document.getElementById('chat-display');
+    display.innerHTML = '';
+    const messages = systemData.internalRooms[systemData.activeRoom] || [];
+    
+    messages.forEach(msg => {
+        display.innerHTML += `
+            <div class="message">
+                <img src="${msg.pfp}" class="msg-pfp" style="border-color:${msg.color || '#ff00ff'}">
+                <div class="msg-content">
+                    <div class="msg-author" style="color:${msg.color || '#ff00ff'}">
+                        ${msg.name} <span class="msg-time">${msg.time}</span>
+                    </div>
+                    <div class="msg-text">${msg.text}</div>
+                </div>
+            </div>`;
+    });
+    display.scrollTop = display.scrollHeight;
+}
+
+async function sendInternalMessage() {
+    const input = document.getElementById('msg-input');
+    const proxyId = document.getElementById('proxy-select').value;
+    if (!input.value.trim()) return;
+
+    let speaker;
+    if (proxyId === "system") {
+        speaker = { name: "System", color: "#ff00ff", pfp: "https://via.placeholder.com/150" };
+    } else {
+        speaker = systemData.members.find(m => m.id == proxyId);
+    }
+
+    const newMessage = {
+        name: speaker.name,
+        color: speaker.color,
+        pfp: speaker.pfp,
+        text: input.value,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+
+    systemData.internalRooms[systemData.activeRoom].push(newMessage);
+    input.value = '';
+    renderMessages();
+    sync();
+}
+
+async function sync() {
+    const { data: { user } } = await _supabase.auth.getUser();
+    await _supabase.from('profiles').update({ system_data: systemData }).eq('user_id', user.id);
+}
+
+document.getElementById('msg-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendInternalMessage();
+    }
+});
+
+window.onload = loadData;
 </script>
 </body>
 </html>

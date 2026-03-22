@@ -1,150 +1,504 @@
-<script>
-    // --- SUPABASE CONFIGURATION ---
-    // Using your project-specific URL and your Publishable key
-    const SB_URL = 'https://ctrbkrwiwpojbzfpsxwl.supabase.co'; 
-    const SB_KEY = 'sb_publishable_uK-ihohO48o6BPRW8rmDqQ_LbJnfTI7';
-    
-    const _supabase = supabase.createClient(SB_URL, SB_KEY);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Master Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --bg: #fff0f6;
+            --panel: #ffffff;
+            --soft-pink: #ffdeeb;
+            --magenta: #ff00ff;
+            --front-gold: #fff9c4;
+        }
 
-    let isRegisterMode = false;
-    let systemData = {
-        name: "System Name", bio: "Description...", members: [], history: [],
-        channels: { "general": [], "trigger-warning": [], "adult-general": [] }, 
-        activeChannel: "general"
-    };
+        * {
+            font-family: 'Georgia', serif;
+            box-sizing: border-box;
+            color: var(--magenta);
+        }
 
-    function toggleAuthMode() { 
-        isRegisterMode = !isRegisterMode; 
-        document.getElementById('auth-title').innerText = isRegisterMode ? "System Registration" : "System Entry";
-        document.getElementById('auth-desc').innerText = isRegisterMode ? "Create a new multi-device account." : "Please login to access your system.";
-        document.getElementById('auth-btn').innerText = isRegisterMode ? "Register" : "Login";
-        document.getElementById('switch-auth').innerText = isRegisterMode ? "Already have an account? Login" : "No account? Register"; 
-    }
+        body {
+            background-color: var(--bg);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
 
-    async function handleAuth() { 
-        const email = document.getElementById('email-input').value;
-        const pass = document.getElementById('passcode-input').value;
+        h1, h2, h3, h4 { color: var(--magenta) !important; }
 
-        if(!email || !pass) return alert("Please fill in both fields");
+        #auth-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 80vh;
+            width: 100%;
+        }
 
-        if(isRegisterMode) { 
-            const { error } = await _supabase.auth.signUp({ email, password: pass });
-            if(error) alert(error.message);
-            else alert("Success! You can now log in.");
-        } else { 
-            const { error } = await _supabase.auth.signInWithPassword({ email, password: pass });
-            if(error) alert(error.message);
-            else {
-                await loadSystemData();
-                loginSuccess();
+        .auth-card {
+            background: white;
+            padding: 40px;
+            border-radius: 30px;
+            border: 3px solid var(--magenta);
+            box-shadow: 0 15px 35px rgba(255, 0, 255, 0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+
+        #dashboard { display: none; width: 100%; max-width: 1100px; }
+
+        nav {
+            margin-bottom: 30px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .tab-btn {
+            padding: 10px 20px;
+            border: 2px solid var(--magenta);
+            background: white;
+            cursor: pointer;
+            border-radius: 50px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .tab-btn.active {
+            background: var(--magenta);
+            color: white !important;
+        }
+
+        .view-section { display: none; width: 100%; }
+        .view-section.active { display: block; }
+
+        section, .card {
+            background: var(--panel);
+            padding: 20px;
+            border-radius: 20px;
+            border: 2px solid var(--soft-pink);
+            box-shadow: 0 10px 25px rgba(255, 0, 255, 0.05);
+            margin-bottom: 20px;
+        }
+
+        input, textarea, select {
+            width: 100%; 
+            padding: 10px; 
+            margin: 8px 0;
+            border: 1px solid var(--soft-pink); 
+            border-radius: 10px;
+            background: white;
+        }
+
+        .main-btn {
+            background: var(--magenta); 
+            color: white !important; 
+            border: none;
+            padding: 12px; 
+            border-radius: 10px; 
+            cursor: pointer;
+            width: 100%; 
+            font-size: 1rem;
+        }
+
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: var(--magenta);
+            color: #fff;
+            text-align: center;
+            border-radius: 50px;
+            padding: 16px;
+            position: fixed;
+            z-index: 1000;
+            bottom: 30px;
+            font-weight: bold;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        #toast.show {
+            visibility: visible;
+            animation: fadein 0.5s, fadeout 0.5s 2.5s;
+        }
+
+        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
+        @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+
+        .grid-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .profile-card { display: flex; flex-direction: column; padding: 20px; height: 100%; }
+        .pfp-img { width: 120px; height: 120px; border-radius: 15px; object-fit: cover; border: 3px solid var(--soft-pink); align-self: center; margin-bottom: 15px; }
+        .detail-label { font-weight: bold; font-size: 0.7rem; text-transform: uppercase; margin-top: 10px; display: block; opacity: 0.7; }
+        .detail-text { font-size: 0.95rem; margin: 0; word-wrap: break-word; font-weight: bold; white-space: pre-wrap; }
+        .mini-btn { width: 100%; padding: 6px; border-radius: 8px; border: 1px solid var(--soft-pink); cursor: pointer; background: white; font-size: 0.8rem; margin-top: 5px;}
+
+        .fronting-box { background: var(--front-gold); border: 2px dashed var(--magenta); padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 20px; }
+        .front-card-mini { background: white; padding: 10px; border-radius: 15px; border: 2px solid var(--magenta); display: flex; align-items: center; gap: 10px; position: relative;}
+        .front-pfp { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid currentColor; }
+        .remove-front-btn { background: white; border: 1px solid currentColor; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; position: absolute; top: -5px; right: -5px;}
+
+        .chat-interface { display: flex; height: 500px; border: 1px solid var(--soft-pink); border-radius: 15px; overflow: hidden; background: white; }
+        .chat-sidebar { width: 220px; background: var(--bg); border-right: 1px solid var(--soft-pink); display: flex; flex-direction: column; padding: 10px; }
+        .channel-list { flex: 1; overflow-y: auto; }
+        .channel-item { padding: 8px 12px; margin-bottom: 5px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; }
+        .channel-item.active { background: var(--magenta); color: white !important; }
+        .chat-main { flex: 1; display: flex; flex-direction: column; padding: 15px; background: #fffafa; }
+        #chat-display { flex: 1; overflow-y: auto; margin-bottom: 15px; display: flex; flex-direction: column; gap: 10px; padding: 10px; }
+        .chat-msg { display: flex; gap: 12px; align-items: flex-start; padding: 10px; border-radius: 12px; background: white; border: 1px solid var(--soft-pink); }
+        .chat-pfp { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid currentColor; }
+
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; }
+        th { background: var(--soft-pink); padding: 12px; text-align: left; color: var(--magenta) !important; }
+        td { padding: 12px; border-bottom: 1px solid var(--soft-pink); }
+
+        @media (max-width: 900px) { .grid-container { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 600px) { .grid-container { grid-template-columns: 1fr; } .chat-interface { flex-direction: column; height: 600px; } .chat-sidebar { width: 100%; height: 150px; } }
+    </style>
+</head>
+<body>
+
+    <div id="toast">Synced to Cloud! ✨</div>
+
+    <div id="auth-screen">
+        <div class="auth-card">
+            <h1 id="auth-title">System Entry</h1>
+            <p id="auth-desc">Login to sync across devices.</p>
+            <input type="email" id="email-input" placeholder="Email address...">
+            <input type="password" id="passcode-input" placeholder="Password...">
+            <button class="main-btn" id="auth-btn" onclick="handleAuth()">Login</button>
+            <p id="switch-auth" style="font-size: 0.8rem; margin-top: 15px; cursor: pointer; text-decoration: underline;" onclick="toggleAuthMode()">No account? Register</p>
+        </div>
+    </div>
+
+    <div id="dashboard">
+        <nav>
+            <button class="tab-btn active" id="btn-overview" onclick="showTab('overview')">Overview</button>
+            <button class="tab-btn" id="btn-profiles" onclick="showTab('profiles')">Profiles</button>
+            <button class="tab-btn" id="btn-chat" onclick="showTab('chat')">Chat Rooms</button>
+            <button class="tab-btn" id="btn-history" onclick="showTab('history')">History</button>
+            <button class="tab-btn" style="border-color: #aaa; color: #aaa;" onclick="logout()">Logout</button>
+        </nav>
+
+        <div id="overview" class="view-section active">
+            <section>
+                <h1 id="view-sys-name">System Name</h1>
+                <p id="view-sys-bio">Description...</p>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="edit-sys-name" placeholder="Update Name">
+                    <input type="text" id="edit-sys-bio" placeholder="Update Bio">
+                    <button class="main-btn" onclick="updateSystemInfo()" style="width: 120px;">Save</button>
+                </div>
+            </section>
+            <div class="fronting-box">
+                <h3 style="margin-top:0">Currently Fronting</h3>
+                <div id="fronting-display" style="display:flex; flex-wrap:wrap; justify-content:center; gap:15px;">No one is fronting.</div>
+            </div>
+            <h3>Directory</h3>
+            <div id="overview-list"></div>
+        </div>
+
+        <div id="profiles" class="view-section">
+            <section>
+                <h2 id="form-title">Manage Alters</h2>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <input type="hidden" id="edit-id">
+                    <input type="text" id="name" placeholder="Name">
+                    <input type="text" id="pronouns" placeholder="Pronouns">
+                    <input type="text" id="role" placeholder="Role">
+                    <div><label style="font-size: 0.7rem;">Theme Color:</label><input type="color" id="color" value="#ff00ff"></div>
+                    <input type="text" id="fandoms" placeholder="Fandoms">
+                    <textarea id="bio" placeholder="Bio (Add lines or description...)" style="grid-column: span 2; height: 80px;"></textarea>
+                    <input type="file" id="pfp" accept="image/*" style="grid-column: span 2;">
+                </div>
+                <button class="main-btn" onclick="saveAlter()" style="margin-top:10px;">Save Alter</button>
+                <button class="mini-btn" id="cancel-edit" style="display:none;" onclick="clearForm()">Cancel Edit</button>
+            </section>
+            <div id="detailed-profiles-list" class="grid-container"></div>
+        </div>
+
+        <div id="chat" class="view-section">
+            <section>
+                <h2 id="current-channel-title">Chat</h2>
+                <div class="chat-interface">
+                    <div class="chat-sidebar">
+                        <div id="channel-list" class="channel-list"></div>
+                        <button class="mini-btn" onclick="addChannel()">+ New Room</button>
+                    </div>
+                    <div class="chat-main">
+                        <div id="chat-display"></div>
+                        <div style="display: flex; gap: 10px; align-items: flex-end;">
+                            <div style="flex: 1;">
+                                <select id="chat-speaker"></select>
+                                <textarea id="chat-input" placeholder="Type a message..." style="height: 50px;"></textarea>
+                            </div>
+                            <button class="main-btn" onclick="sendMessage()" style="width: 80px; height: 50px;">Send</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div id="history" class="view-section">
+            <section>
+                <h2>Fronting History</h2>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead><tr><th>Name</th><th>Status</th><th>Started</th><th>Ended</th><th>Total Time</th></tr></thead>
+                        <tbody id="history-log"></tbody>
+                    </table>
+                </div>
+                <button class="mini-btn" style="width:auto; margin-top:20px;" onclick="clearHistory()">Clear All History</button>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        // --- YOUR SUPABASE KEYS ---
+        const SB_URL = 'https://ctrbkrwiwpojbzfpsxwl.supabase.co';
+        const SB_KEY = 'sb_publishable_uK-ihohO48o6BPRW8rmDqQ_LbJnfTI7';
+        const _supabase = supabase.createClient(SB_URL, SB_KEY);
+
+        let isRegisterMode = false;
+        let systemData = {
+            name: "System Name", bio: "Description...", members: [], history: [],
+            channels: { "general": [], "trigger-warning": [], "adult-general": [] }, 
+            activeChannel: "general"
+        };
+
+        function toggleAuthMode() { 
+            isRegisterMode = !isRegisterMode; 
+            document.getElementById('auth-title').innerText = isRegisterMode ? "Register System" : "System Entry";
+            document.getElementById('auth-btn').innerText = isRegisterMode ? "Register" : "Login";
+            document.getElementById('switch-auth').innerText = isRegisterMode ? "Login instead" : "No account? Register"; 
+        }
+
+        async function handleAuth() { 
+            const email = document.getElementById('email-input').value;
+            const pass = document.getElementById('passcode-input').value;
+            if(!email || !pass) return alert("Missing fields");
+
+            if(isRegisterMode) { 
+                const { error } = await _supabase.auth.signUp({ email, password: pass });
+                if(error) alert(error.message);
+                else alert("Registration successful! You can now login.");
+            } else { 
+                const { error } = await _supabase.auth.signInWithPassword({ email, password: pass });
+                if(error) alert(error.message);
+                else {
+                    await loadSystemData();
+                    loginSuccess();
+                }
             }
         }
-    }
 
-    function loginSuccess() { 
-        document.getElementById('auth-screen').style.display = 'none'; 
-        document.getElementById('dashboard').style.display = 'block'; 
-        refreshUI(); 
-    }
-
-    async function logout() { 
-        await _supabase.auth.signOut();
-        location.reload(); 
-    }
-
-    // --- CLOUD SYNC LOGIC ---
-
-    async function loadSystemData() {
-        const { data: { user } } = await _supabase.auth.getUser();
-        if (!user) return;
-
-        const { data, error } = await _supabase
-            .from('profiles')
-            .select('system_data')
-            .eq('user_id', user.id)
-            .single();
-        
-        if (data && data.system_data) {
-            systemData = data.system_data;
-        }
-    }
-
-    async function syncToCloud() {
-        const { data: { user } } = await _supabase.auth.getUser();
-        if (!user) return;
-
-        const { error } = await _supabase
-            .from('profiles')
-            .upsert({ 
-                user_id: user.id, 
-                system_data: systemData 
-            }, { onConflict: 'user_id' });
-
-        if (!error) showToast();
-    }
-
-    function showToast() {
-        const x = document.getElementById("toast");
-        x.className = "show";
-        setTimeout(() => { x.className = x.className.replace("show", ""); }, 3000);
-    }
-
-    // --- UI & REFRESH LOGIC ---
-    // (existing dashboard working)
-
-    function updateSystemInfo() {
-        systemData.name = document.getElementById('edit-sys-name').value || systemData.name;
-        systemData.bio = document.getElementById('edit-sys-bio').value || systemData.bio;
-        refreshUI();
-        syncToCloud();
-    }
-
-    function saveAlter() {
-        const id = document.getElementById('edit-id').value;
-        const pfpInput = document.getElementById('pfp');
-        const finalize = (img) => {
-            const member = {
-                id: id ? parseInt(id) : Date.now(),
-                name: document.getElementById('name').value || "Unnamed",
-                pronouns: document.getElementById('pronouns').value || "",
-                role: document.getElementById('role').value || "",
-                color: document.getElementById('color').value,
-                bio: document.getElementById('bio').value || "",
-                fandoms: document.getElementById('fandoms').value || "",
-                pfp: img || (id ? systemData.members.find(m => m.id == id).pfp : "https://via.placeholder.com/150"),
-                isFronting: id ? systemData.members.find(m => m.id == id).isFronting : false,
-                frontStatus: id ? systemData.members.find(m => m.id == id).frontStatus : "",
-                startTime: id ? systemData.members.find(m => m.id == id).startTime : null
-            };
-            if(id) {
-                const idx = systemData.members.findIndex(m => m.id == id);
-                systemData.members[idx] = member;
-            } else { systemData.members.push(member); }
+        function loginSuccess() { 
+            document.getElementById('auth-screen').style.display = 'none'; 
+            document.getElementById('dashboard').style.display = 'block'; 
             refreshUI(); 
-            clearForm();
-            syncToCloud();
-        };
-        if (pfpInput.files[0]) {
-            const reader = new FileReader();
-            reader.onload = (e) => finalize(e.target.result);
-            reader.readAsDataURL(pfpInput.files[0]);
-        } else finalize();
-    }
-
-    // 
-
-    function refreshUI() {
-        document.getElementById('view-sys-name').innerText = systemData.name;
-        document.getElementById('view-sys-bio').innerText = systemData.bio;
-        // ... 
-        //  UI logic identical to original dashboard.
-    }
-
-    window.onload = async () => {
-        const { data: { session } } = await _supabase.auth.getSession();
-        if (session) {
-            await loadSystemData();
-            loginSuccess();
         }
-    };
-</script>
+
+        async function logout() { await _supabase.auth.signOut(); location.reload(); }
+
+        async function syncToCloud() {
+            const { data: { user } } = await _supabase.auth.getUser();
+            if (!user) return;
+            await _supabase.from('profiles').upsert({ user_id: user.id, system_data: systemData }, { onConflict: 'user_id' });
+            showToast();
+        }
+
+        async function loadSystemData() {
+            const { data: { user } } = await _supabase.auth.getUser();
+            if (!user) return;
+            const { data } = await _supabase.from('profiles').select('system_data').eq('user_id', user.id).single();
+            if (data) systemData = data.system_data;
+        }
+
+        function showToast() {
+            const x = document.getElementById("toast");
+            x.className = "show";
+            setTimeout(() => { x.className = x.className.replace("show", ""); }, 3000);
+        }
+
+        function showTab(tabId) {
+            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            document.getElementById('btn-' + tabId).classList.add('active');
+            if(tabId === 'chat') scrollChat();
+        }
+
+        function updateSystemInfo() {
+            systemData.name = document.getElementById('edit-sys-name').value || systemData.name;
+            systemData.bio = document.getElementById('edit-sys-bio').value || systemData.bio;
+            refreshUI(); syncToCloud();
+        }
+
+        function compressImage(file, callback) {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (e) => {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const size = 300;
+                    let w = img.width, h = img.height;
+                    if (w > h) { h *= size/w; w = size; } else { w *= size/h; h = size; }
+                    canvas.width = w; canvas.height = h;
+                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    callback(canvas.toDataURL('image/jpeg', 0.6));
+                };
+            };
+        }
+
+        function saveAlter() {
+            const id = document.getElementById('edit-id').value;
+            const pfpInput = document.getElementById('pfp');
+            const finalize = (img) => {
+                const member = {
+                    id: id ? parseInt(id) : Date.now(),
+                    name: document.getElementById('name').value || "Unnamed",
+                    pronouns: document.getElementById('pronouns').value || "",
+                    role: document.getElementById('role').value || "",
+                    color: document.getElementById('color').value,
+                    bio: document.getElementById('bio').value || "",
+                    fandoms: document.getElementById('fandoms').value || "",
+                    pfp: img || (id ? systemData.members.find(m => m.id == id).pfp : "https://via.placeholder.com/150"),
+                    isFronting: id ? systemData.members.find(m => m.id == id).isFronting : false,
+                    frontStatus: id ? systemData.members.find(m => m.id == id).frontStatus : "",
+                    startTime: id ? systemData.members.find(m => m.id == id).startTime : null
+                };
+                if(id) {
+                    const idx = systemData.members.findIndex(m => m.id == id);
+                    systemData.members[idx] = member;
+                } else { systemData.members.push(member); }
+                refreshUI(); clearForm(); syncToCloud();
+            };
+            if (pfpInput.files[0]) compressImage(pfpInput.files[0], finalize); else finalize();
+        }
+
+        function clearForm() {
+            document.getElementById('edit-id').value = ''; document.getElementById('name').value = '';
+            document.getElementById('pronouns').value = ''; document.getElementById('role').value = '';
+            document.getElementById('color').value = '#ff00ff'; document.getElementById('bio').value = '';
+            document.getElementById('fandoms').value = ''; document.getElementById('pfp').value = '';
+            document.getElementById('form-title').innerText = "Manage Alters"; document.getElementById('cancel-edit').style.display = 'none';
+        }
+
+        function toggleFront(id) {
+            const m = systemData.members.find(m => m.id == id);
+            const now = new Date();
+            if(!m.isFronting) {
+                const status = prompt("Fronting status?", "Fronting");
+                if(status !== null) { m.isFronting = true; m.frontStatus = status; m.startTime = now.getTime(); }
+            } else {
+                const dur = now.getTime() - m.startTime;
+                systemData.history.unshift({
+                    name: m.name, status: m.frontStatus,
+                    start: new Date(m.startTime).toLocaleString(),
+                    end: now.toLocaleString(),
+                    total: `${Math.floor(dur/3600000)}h ${Math.floor((dur%3600000)/60000)}m`,
+                    color: m.color
+                });
+                m.isFronting = false; m.frontStatus = ""; m.startTime = null;
+            }
+            refreshUI(); syncToCloud();
+        }
+
+        function addChannel() {
+            const name = prompt("Room name:");
+            if(name) {
+                const slug = name.toLowerCase().replace(/\s+/g, '-');
+                if(!systemData.channels[slug]) { systemData.channels[slug] = []; systemData.activeChannel = slug; refreshUI(); syncToCloud(); }
+            }
+        }
+
+        function deleteChannel(slug) {
+            if(['general', 'trigger-warning', 'adult-general'].includes(slug)) return;
+            if(confirm(`Delete #${slug}?`)) { delete systemData.channels[slug]; systemData.activeChannel = 'general'; refreshUI(); syncToCloud(); }
+        }
+
+        function switchChannel(slug) { systemData.activeChannel = slug; refreshUI(); scrollChat(); }
+
+        function sendMessage() {
+            const sid = document.getElementById('chat-speaker').value;
+            const text = document.getElementById('chat-input').value;
+            if(!text) return;
+            let spk = sid === "system" ? {name:"System Note", color:"#ff00ff", pfp:"https://via.placeholder.com/35"} : systemData.members.find(m => m.id == sid);
+            systemData.channels[systemData.activeChannel].push({
+                name: spk.name, color: spk.color, pfp: spk.pfp, text: text,
+                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+            });
+            document.getElementById('chat-input').value = '';
+            refreshUI(); scrollChat(); syncToCloud();
+        }
+
+        function scrollChat() { const d = document.getElementById('chat-display'); d.scrollTop = d.scrollHeight; }
+
+        function editAlter(id) {
+            const m = systemData.members.find(mem => mem.id == id);
+            document.getElementById('edit-id').value = m.id; document.getElementById('name').value = m.name;
+            document.getElementById('pronouns').value = m.pronouns; document.getElementById('role').value = m.role;
+            document.getElementById('color').value = m.color; document.getElementById('bio').value = m.bio;
+            document.getElementById('fandoms').value = m.fandoms; document.getElementById('form-title').innerText = "Editing: " + m.name;
+            document.getElementById('cancel-edit').style.display = 'block'; showTab('profiles');
+        }
+
+        function deleteAlter(id) { if(confirm("Delete this alter?")) { systemData.members = systemData.members.filter(m => m.id != id); refreshUI(); syncToCloud(); } }
+        function clearHistory() { if(confirm("Clear history?")) { systemData.history = []; refreshUI(); syncToCloud(); } }
+
+        function refreshUI() {
+            document.getElementById('view-sys-name').innerText = systemData.name;
+            document.getElementById('view-sys-bio').innerText = systemData.bio;
+            document.getElementById('current-channel-title').innerText = `Chat - #${systemData.activeChannel}`;
+            const frontingDisplay = document.getElementById('fronting-display');
+            const overviewList = document.getElementById('overview-list');
+            const detailedList = document.getElementById('detailed-profiles-list');
+            const historyLog = document.getElementById('history-log');
+            const chatDisplay = document.getElementById('chat-display');
+            const chatSpeaker = document.getElementById('chat-speaker');
+            const chanList = document.getElementById('channel-list');
+
+            frontingDisplay.innerHTML = ''; overviewList.innerHTML = ''; detailedList.innerHTML = ''; historyLog.innerHTML = ''; chatDisplay.innerHTML = ''; chanList.innerHTML = '';
+            const savedSpk = chatSpeaker.value;
+            chatSpeaker.innerHTML = '<option value="system">System Note</option>';
+
+            systemData.members.forEach(m => {
+                chatSpeaker.innerHTML += `<option value="${m.id}">${m.name}</option>`;
+                if(m.isFronting) {
+                    frontingDisplay.innerHTML += `<div class="front-card-mini" style="border-color:${m.color}; color:${m.color}"><img src="${m.pfp}" class="front-pfp" style="border-color:${m.color}"><div style="text-align:left;"><b style="color:${m.color}">${m.name}</b><br><span style="font-size:0.7rem; color:${m.color}">${m.frontStatus}</span></div><button class="remove-front-btn" style="color:${m.color}" onclick="toggleFront(${m.id})">×</button></div>`;
+                }
+                overviewList.innerHTML += `<div class="card" style="border-left: 10px solid ${m.color}; color:${m.color}"><strong>${m.name}</strong> — ${m.role || 'No Role'}</div>`;
+                detailedList.innerHTML += `<div class="card profile-card" style="border-top: 8px solid ${m.color}; border-color: ${m.color}"><img src="${m.pfp}" class="pfp-img" style="border-color:${m.color}"><h2 style="color:${m.color} !important; text-align:center; margin:0;">${m.name}</h2><span class="detail-label" style="color:${m.color}">Pronouns</span><p class="detail-text" style="color:${m.color}">${m.pronouns || 'Not set'}</p><span class="detail-label" style="color:${m.color}">Role</span><p class="detail-text" style="color:${m.color}">${m.role || 'Not set'}</p><span class="detail-label" style="color:${m.color}">Bio</span><p class="detail-text" style="color:${m.color}">${m.bio || 'None'}</p><div style="margin-top:auto; padding-top:15px;"><button class="mini-btn" style="color:${m.color}; border-color:${m.color}" onclick="toggleFront(${m.id})">${m.isFronting ? 'Leave Front' : 'Front'}</button><button class="mini-btn" style="color:${m.color}; border-color:${m.color}" onclick="editAlter(${m.id})">Edit Profile</button><button class="mini-btn" style="color:red; border-color:red" onclick="deleteAlter(${m.id})">Delete</button></div></div>`;
+            });
+
+            Object.keys(systemData.channels).forEach(c => {
+                const isDef = ['general', 'trigger-warning', 'adult-general'].includes(c);
+                chanList.innerHTML += `<div class="channel-item ${systemData.activeChannel === c ? 'active' : ''}" onclick="switchChannel('${c}')">#${c}${!isDef ? `<span onclick="event.stopPropagation(); deleteChannel('${c}')" style="font-size:10px; opacity:0.6;">×</span>` : ''}</div>`;
+            });
+
+            (systemData.channels[systemData.activeChannel] || []).forEach(msg => {
+                chatDisplay.innerHTML += `<div class="chat-msg" style="border-color:${msg.color}"><img src="${msg.pfp}" class="chat-pfp" style="border-color:${msg.color}"><div style="flex:1"><b style="color:${msg.color}">${msg.name} <small style="color:#aaa; font-weight:normal; font-size:0.7rem;">${msg.time}</small></b><p style="color:${msg.color}; margin: 5px 0 0 0; line-height:1.4;">${msg.text}</p></div></div>`;
+            });
+
+            systemData.history.forEach(h => {
+                historyLog.innerHTML += `<tr><td style="color:${h.color}; font-weight:bold;">${h.name}</td><td style="color:${h.color}">${h.status}</td><td style="color:${h.color}; font-size:0.8rem;">${h.start}</td><td style="color:${h.color}; font-size:0.8rem;">${h.end}</td><td style="color:${h.color}; font-weight:bold;">${h.total}</td></tr>`;
+            });
+            chatSpeaker.value = savedSpk || "system";
+            if(!frontingDisplay.innerHTML) frontingDisplay.innerText = "No one is fronting.";
+        }
+
+        window.onload = async () => {
+            const { data: { session } } = await _supabase.auth.getSession();
+            if (session) { await loadSystemData(); loginSuccess(); }
+        };
+    </script>
+</body>
+</html>

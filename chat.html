@@ -3,42 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Plural Chat - Groups Edition</title>
+    <title>Plural Chat - Pink Discord Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --bg: #fff0f6; --panel: #ffffff; --soft-pink: #ffdeeb; --magenta: #ff00ff; }
+        :root { --bg: #fff0f6; --panel: #ffffff; --soft-pink: #ffdeeb; --magenta: #ff00ff; --dark-magenta: #cc00cc; }
         * { font-family: 'Georgia', serif; box-sizing: border-box; color: var(--magenta); }
         body { background-color: var(--bg); margin: 0; padding: 20px; height: 100vh; display: flex; flex-direction: column; }
         
+        /* Navigation */
         nav { margin-bottom: 20px; display: flex; gap: 10px; justify-content: center; }
-        .nav-link { padding: 10px 20px; border: 2px solid var(--magenta); background: white; border-radius: 50px; text-decoration: none; font-weight: bold; }
+        .nav-link { padding: 10px 20px; border: 2px solid var(--magenta); background: white; border-radius: 50px; text-decoration: none; font-weight: bold; transition: 0.3s; }
+        .nav-link:hover { background: var(--soft-pink); }
 
+        /* Main Container */
         .discord-container { display: flex; flex: 1; background: white; border: 3px solid var(--magenta); border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(255,0,255,0.1); }
         
+        /* Sidebar */
         .sidebar { width: 280px; background: var(--soft-pink); border-right: 2px solid var(--magenta); display: flex; flex-direction: column; }
-        .sidebar-header { padding: 15px; font-weight: bold; border-bottom: 1px solid var(--magenta); background: white; display: flex; justify-content: space-between; align-items: center; }
-        .create-btn { background: var(--magenta); color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 20px; line-height: 1; }
+        .sidebar-header { padding: 15px; font-weight: bold; border-bottom: 1px solid var(--magenta); display: flex; justify-content: space-between; align-items: center; background: white; }
+        .add-group-btn { background: var(--magenta); color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 20px; line-height: 1; }
         
-        .list-section { padding: 10px; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.7; }
-        .item { padding: 12px 15px; cursor: pointer; border-bottom: 1px solid rgba(255,0,255,0.05); transition: 0.2s; display: flex; align-items: center; gap: 10px; text-transform: none; letter-spacing: normal; }
-        .item:hover, .item.active { background: white; font-weight: bold; }
+        #friends-list { flex: 1; overflow-y: auto; }
+        .list-section-label { font-size: 0.7rem; padding: 10px 15px 5px; text-transform: uppercase; opacity: 0.7; letter-spacing: 1px; }
+        .friend-item { padding: 12px 15px; cursor: pointer; border-bottom: 1px solid rgba(255,0,255,0.05); transition: 0.2s; display: flex; align-items: center; gap: 10px; }
+        .friend-item:hover, .friend-item.active { background: white; font-weight: bold; }
 
+        /* Chat Area */
         .chat-area { flex: 1; display: flex; flex-direction: column; }
-        #chat-header { padding: 15px 20px; border-bottom: 1px solid var(--soft-pink); font-weight: bold; background: #fffafa; }
-        #message-list { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        #chat-header { padding: 15px 20px; border-bottom: 1px solid var(--soft-pink); font-weight: bold; font-size: 1.2rem; }
+        #message-list { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; background: #fffafa; }
         
-        .msg-row { display: flex; gap: 12px; align-items: flex-start; }
-        .msg-pfp { width: 40px; height: 40px; border-radius: 50%; border: 2px solid; }
-        .proxy-tag { background: var(--magenta); color: white; font-size: 0.6rem; padding: 2px 5px; border-radius: 4px; vertical-align: middle; margin-left: 5px; }
+        /* Messages */
+        .msg-row { display: flex; gap: 12px; align-items: flex-start; animation: fadeIn 0.2s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .msg-pfp { width: 42px; height: 42px; border-radius: 12px; border: 2px solid; object-fit: cover; }
+        .proxy-tag { background: var(--magenta); color: white; font-size: 0.6rem; padding: 2px 5px; border-radius: 4px; text-transform: uppercase; margin-left: 5px; }
 
+        /* Input */
         .input-bar { padding: 20px; border-top: 2px solid var(--magenta); display: flex; gap: 10px; background: white; }
         select, input { padding: 12px; border: 2px solid var(--soft-pink); border-radius: 12px; outline: none; }
         .send-btn { background: var(--magenta); color: white; border: none; padding: 0 25px; border-radius: 12px; cursor: pointer; font-weight: bold; }
+
+        /* Modal for Creating Groups */
+        #group-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 30px; border-radius: 20px; border: 3px solid var(--magenta); width: 350px; display: flex; flex-direction: column; gap: 15px; }
+        .friend-checkbox { display: flex; align-items: center; gap: 10px; padding: 5px 0; }
     </style>
 </head>
 <body>
 
 <audio id="notif-sound" src="https://raw.githubusercontent.com/Anisayari/Discord-Alert-Sound/main/discord_notification.mp3" preload="auto"></audio>
+
+<div id="group-modal">
+    <div class="modal-content">
+        <h3>Create New Group</h3>
+        <input type="text" id="new-group-name" placeholder="Group Name (e.g. Besties)">
+        <p style="font-size: 0.8rem;">Select Friends to Add:</p>
+        <div id="modal-friends-list"></div>
+        <button class="send-btn" style="padding: 10px;" onclick="createGroup()">Create Group Chat</button>
+        <button onclick="closeModal()" style="background: none; border: none; cursor: pointer; font-size: 0.8rem;">Cancel</button>
+    </div>
+</div>
 
 <nav>
     <a href="index.html" class="nav-link">Dashboard</a>
@@ -49,12 +74,14 @@
     <div class="sidebar">
         <div class="sidebar-header">
             <span>Conversations</span>
-            <button class="create-btn" onclick="createGroup()" title="Create Group Chat">+</button>
+            <button class="add-group-btn" onclick="openModal()">+</button>
         </div>
-        <div class="list-section">Direct Messages</div>
-        <div id="dm-list"></div>
-        <div class="list-section">Group Chats</div>
-        <div id="group-list"></div>
+        <div id="friends-list">
+            <div class="list-section-label">Direct Messages</div>
+            <div id="dm-list"></div>
+            <div class="list-section-label">Group Chats</div>
+            <div id="group-list"></div>
+        </div>
     </div>
 
     <div class="chat-area">
@@ -75,24 +102,25 @@
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
     let currentUser = null;
-    let activeConvId = null;
+    let currentChatId = null; // This will be conversation_id
     let myAlters = [];
+    let allFriends = [];
 
     async function init() {
         const { data: { user } } = await _supabase.auth.getUser();
         if(!user) return window.location.href = "index.html";
         currentUser = user;
 
-        // Load Proxy Dropdown
+        // Load Proxy Options
         const { data: profile } = await _supabase.from('profiles').select('system_data').eq('user_id', user.id).single();
         myAlters = profile?.system_data?.members || [];
         const select = document.getElementById('proxy-select');
-        myAlters.forEach(alt => { select.innerHTML += `<option value="${alt.id}">${alt.name}</option>`; });
+        myAlters.forEach(alt => select.innerHTML += `<option value="${alt.id}">${alt.name}</option>`);
 
         loadSidebar();
         
-        _supabase.channel('realtime-chat').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'global_messages' }, payload => {
-            if (payload.new.conversation_id === activeConvId) {
+        _supabase.channel('chat-updates').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'global_messages' }, payload => {
+            if (payload.new.conversation_id === currentChatId) {
                 renderMessage(payload.new);
                 if (payload.new.sender_name !== myAlters.find(a => a.id == document.getElementById('proxy-select').value)?.name) {
                     document.getElementById('notif-sound').play().catch(()=>{});
@@ -104,55 +132,45 @@
     async function loadSidebar() {
         // Load DMs (Connections)
         const { data: connections } = await _supabase.from('connections').select('friend_id').eq('user_id', currentUser.id);
-        const fIds = connections?.map(c => c.friend_id) || [];
-        const { data: friends } = await _supabase.from('profiles').select('user_id, username').in('user_id', fIds);
-        
+        const friendIds = connections?.map(c => c.friend_id) || [];
+        const { data: friendProfiles } = await _supabase.from('profiles').select('user_id, username').in('user_id', friendIds);
+        allFriends = friendProfiles || [];
+
         const dmList = document.getElementById('dm-list');
         dmList.innerHTML = '';
-        friends?.forEach(f => {
+        allFriends.forEach(f => {
             const div = document.createElement('div');
-            div.className = 'item';
-            div.innerHTML = `👤 ${f.username}`;
-            div.onclick = () => selectChat([currentUser.id, f.user_id].sort().join('_'), f.username, div);
+            div.className = 'friend-item';
+            div.innerHTML = `<span>👤</span> @${f.username}`;
+            div.onclick = () => selectChat(getDmId(f.user_id), `@${f.username}`, div);
             dmList.appendChild(div);
         });
 
-        // Load Groups (from local storage for now or a 'groups' table if you create one)
-        // For this simple version, we'll fetch messages that have a non-ID conversation_id
-        const { data: groups } = await _supabase.from('global_messages').select('conversation_id').ilike('conversation_id', 'group_%');
-        const uniqueGroups = [...new Set(groups?.map(g => g.conversation_id))];
-        
+        // Load Groups (Unique conversation_ids marked as is_group where user is involved)
+        // Note: For simplicity, we are fetching any message marked as a group.
+        const { data: groups } = await _supabase.from('global_messages').select('conversation_id, group_name').eq('is_group', true);
         const groupList = document.getElementById('group-list');
         groupList.innerHTML = '';
-        uniqueGroups.forEach(gId => {
+        
+        // Filter unique group names
+        const uniqueGroups = [...new Map(groups?.map(item => [item['conversation_id'], item])).values()];
+        uniqueGroups.forEach(g => {
             const div = document.createElement('div');
-            div.className = 'item';
-            div.innerHTML = `💬 ${gId.replace('group_', '').replace(/_/g, ' ')}`;
-            div.onclick = () => selectChat(gId, gId.replace('group_', '').replace(/_/g, ' '), div);
+            div.className = 'friend-item';
+            div.innerHTML = `<span>🏠</span> ${g.group_name}`;
+            div.onclick = () => selectChat(g.conversation_id, g.group_name, div);
             groupList.appendChild(div);
         });
     }
 
-    async function createGroup() {
-        const name = prompt("Enter Group Name:");
-        const friend1 = prompt("Enter first friend's username:");
-        const friend2 = prompt("Enter second friend's username:");
+    function getDmId(fId) { return [currentUser.id, fId].sort().join('_'); }
+
+    async function selectChat(id, title, element) {
+        currentChatId = id;
+        document.getElementById('chat-header').innerText = title;
+        document.querySelectorAll('.friend-item').forEach(el => el.classList.remove('active'));
+        element.classList.add('active');
         
-        if(!name || !friend1) return;
-
-        // In a real Discord, we'd save the members to a table. 
-        // For your prototype, we just start a conversation with a unique "group_" prefix.
-        const gId = "group_" + name.replace(/\s+/g, '_');
-        selectChat(gId, name);
-        alert("Group created! Send a message to start the history.");
-    }
-
-    async function selectChat(id, displayName, element) {
-        activeConvId = id;
-        document.getElementById('chat-header').innerText = displayName;
-        document.querySelectorAll('.item').forEach(el => el.classList.remove('active'));
-        if(element) element.classList.add('active');
-
         const { data: msgs } = await _supabase.from('global_messages').select('*').eq('conversation_id', id).order('created_at', { ascending: true });
         const list = document.getElementById('message-list');
         list.innerHTML = '';
@@ -165,9 +183,9 @@
         div.className = 'msg-row';
         div.innerHTML = `
             <img src="${msg.sender_pfp}" class="msg-pfp" style="border-color: ${msg.sender_color}">
-            <div>
-                <b style="color: ${msg.sender_color}">${msg.sender_name}</b><span class="proxy-tag">Proxy</span>
-                <div style="color: #444; margin-top: 2px;">${msg.message_text}</div>
+            <div class="msg-content">
+                <div><b style="color: ${msg.sender_color}">${msg.sender_name}</b><span class="proxy-tag">Proxy</span></div>
+                <div style="color: #444; margin-top: 3px;">${msg.message_text}</div>
             </div>
         `;
         list.appendChild(div);
@@ -176,21 +194,58 @@
 
     async function sendProxyMessage() {
         const input = document.getElementById('msg-input');
-        if (!input.value || !activeConvId) return;
-
+        if (!input.value || !currentChatId) return;
         const alter = myAlters.find(a => a.id == document.getElementById('proxy-select').value);
 
+        // Check if current chat is a group to keep the label
+        const isGroup = document.querySelector('.friend-item.active').parentNode.id === 'group-list';
+        const groupName = isGroup ? document.getElementById('chat-header').innerText : null;
+
         await _supabase.from('global_messages').insert([{
-            conversation_id: activeConvId,
+            conversation_id: currentChatId,
             sender_name: alter.name,
             sender_pfp: alter.pfp,
             sender_color: alter.color,
-            message_text: input.value
+            message_text: input.value,
+            is_group: isGroup,
+            group_name: groupName
         }]);
         input.value = '';
     }
 
-    document.getElementById('msg-input').addEventListener('keypress', (e) => { if(e.key === 'Enter') sendProxyMessage(); });
+    /* Modal Logic */
+    function openModal() {
+        document.getElementById('group-modal').style.display = 'flex';
+        const list = document.getElementById('modal-friends-list');
+        list.innerHTML = '';
+        allFriends.forEach(f => {
+            list.innerHTML += `<div class="friend-checkbox"><input type="checkbox" value="${f.user_id}" class="g-member"> @${f.username}</div>`;
+        });
+    }
+    function closeModal() { document.getElementById('group-modal').style.display = 'none'; }
+
+    async function createGroup() {
+        const name = document.getElementById('new-group-name').value;
+        if(!name) return alert("Give your group a name!");
+        
+        // Generate a random ID for the group room
+        const groupId = "group_" + Math.random().toString(36).substr(2, 9);
+        const alter = myAlters[0]; // System default for the "Group Created" message
+
+        await _supabase.from('global_messages').insert([{
+            conversation_id: groupId,
+            sender_name: "System",
+            sender_pfp: "https://placehold.co/100x100?text=S",
+            sender_color: "#ff00ff",
+            message_text: `Group "${name}" created!`,
+            is_group: true,
+            group_name: name
+        }]);
+
+        closeModal();
+        loadSidebar();
+    }
+
     window.onload = init;
 </script>
 </body>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>System Mobile</title>
+<title>System Mobile Pro</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root { --bg: #fff0f6; --panel: #ffffff; --soft-pink: #ffdeeb; --magenta: #ff00ff; --front-gold: #fff9c4; --nav-height: 70px; }
@@ -25,11 +25,15 @@ header { display: flex; justify-content: space-between; align-items: center; mar
 .view-section.active { display: block; }
 section, .card { background: var(--panel); padding: 15px; border-radius: 20px; border: 2px solid var(--soft-pink); margin-bottom: 15px; }
 .main-btn { background: var(--magenta); color: white; border: none; padding: 15px; border-radius: 15px; width: 100%; font-weight: bold; font-size: 1rem; margin-top: 10px; }
-input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid var(--soft-pink); border-radius: 12px; font-size: 16px; background: var(--bg); }
+input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid var(--soft-pink); border-radius: 12px; font-size: 16px; background: var(--bg); }
 
 /* FRONTING */
 .fronting-container { background: var(--front-gold); padding: 15px; border-radius: 20px; border: 2px dashed var(--magenta); margin-bottom: 20px; text-align: center; }
-.mini-pfp { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid var(--magenta); }
+.front-bubble { display: inline-flex; flex-direction: column; align-items: center; margin: 5px; position: relative; }
+.mini-pfp { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 3px solid var(--magenta); }
+.remove-front-dot { position: absolute; top: -5px; right: -5px; background: red; color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; border: none; font-weight: bold; }
+.status-text { font-size: 0.7rem; color: #666; font-style: italic; margin-top: 4px; max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 .history-item { font-size: 0.85rem; padding: 8px 0; border-bottom: 1px solid var(--soft-pink); display: flex; justify-content: space-between; }
 
 #toast { visibility: hidden; background: var(--magenta); color: white; padding: 12px 25px; border-radius: 50px; position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); z-index: 10001; }
@@ -51,7 +55,7 @@ input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid var
 
 <div id="dashboard" style="display:none;">
     <header>
-        <h2 id="view-sys-name" style="margin:0;">System</h2>
+        <h2 id="view-sys-name" style="margin:0; font-size: 1.2rem;">System</h2>
         <button class="logout-btn" onclick="logout()">Logout</button>
     </header>
 
@@ -60,9 +64,7 @@ input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid var
             <h4 style="margin: 0 0 10px 0">Fronting Now</h4>
             <div id="fronting-display" style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap;"></div>
         </div>
-
         <div id="overview-list"></div>
-
         <section>
             <h3 style="margin-top:0">Front History</h3>
             <div id="front-history-list"></div>
@@ -73,10 +75,9 @@ input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid var
         <section>
             <h3 style="margin-top:0">Add New Alter</h3>
             <input type="text" id="add-name" placeholder="Name">
-            <input type="text" id="add-role" placeholder="Role (e.g. Protector)">
-            <input type="text" id="add-pronouns" placeholder="Pronouns">
+            <input type="text" id="add-role" placeholder="Role">
             <input type="text" id="add-pfp" placeholder="PFP URL">
-            <input type="color" id="add-color" value="#ff00ff" style="height: 50px; padding: 5px;">
+            <input type="color" id="add-color" value="#ff00ff" style="height: 40px; width: 100%; border: none; background: none;">
             <button class="main-btn" onclick="addAlter()">Add Alter</button>
         </section>
         <div id="detailed-profiles-list"></div>
@@ -84,11 +85,11 @@ input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid var
 
     <div id="sidekicks" class="view-section">
         <section>
-            <h3 style="margin-top:0">Find Systems</h3>
-            <input type="text" id="sidekick-search" placeholder="Search by username...">
-            <button class="main-btn">Search</button>
+            <h3 style="margin-top:0">Friends</h3>
+            <input type="text" id="friend-search" placeholder="Enter username...">
+            <button class="main-btn" onclick="addFriend()">Add Friend</button>
         </section>
-        <div id="sidekicks-list"></div>
+        <div id="friends-list-container"></div>
     </div>
 
     <nav class="bottom-nav">
@@ -105,6 +106,7 @@ const SB_URL = 'https://ctrbkrwiwpojbzfpsxwl.supabase.co';
 const SB_KEY = 'sb_publishable_uK-ihohO48o6BPRW8rmDqQ_LbJnfTI7';
 const _supabase = supabase.createClient(SB_URL, SB_KEY);
 let systemData = { members: [], history: [] };
+let currentUser = null;
 
 async function handleAuth() {
     const email = document.getElementById('email-input').value;
@@ -116,18 +118,21 @@ async function handleAuth() {
 async function loadData() {
     const { data: { user } } = await _supabase.auth.getUser();
     if (!user) return;
+    currentUser = user;
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('dashboard').style.display = 'block';
+    
     const { data } = await _supabase.from('profiles').select('*').eq('user_id', user.id).single();
     if (data?.system_data) systemData = data.system_data;
     if (!systemData.history) systemData.history = [];
+    
     refreshUI();
+    loadFriends();
 }
 
 function refreshUI() {
     document.getElementById('view-sys-name').innerText = systemData.name || "System Dashboard";
     
-    // 🏠 HOME TAB REFRESH
     const fDisp = document.getElementById('fronting-display');
     const oList = document.getElementById('overview-list');
     const hList = document.getElementById('front-history-list');
@@ -136,7 +141,12 @@ function refreshUI() {
 
     (systemData.members || []).forEach(m => {
         if(m.isFronting) {
-            fDisp.innerHTML += `<img src="${m.pfp}" class="mini-pfp" style="border-color:${m.color}">`;
+            fDisp.innerHTML += `
+                <div class="front-bubble">
+                    <button class="remove-front-dot" onclick="toggleFront(${m.id})">×</button>
+                    <img src="${m.pfp}" class="mini-pfp" style="border-color:${m.color}">
+                    <span class="status-text">${m.status || ''}</span>
+                </div>`;
         }
         oList.innerHTML += `
             <div class="card" style="display:flex; justify-content:space-between; align-items:center; border-left: 10px solid ${m.color}">
@@ -150,55 +160,25 @@ function refreshUI() {
             </div>`;
     });
 
-    // Front History (Latest 5 entries)
     (systemData.history || []).slice(-5).reverse().forEach(entry => {
-        hList.innerHTML += `
-            <div class="history-item">
-                <span><strong>${entry.name}</strong></span>
-                <span style="color:#888;">${entry.time}</span>
-            </div>`;
+        hList.innerHTML += `<div class="history-item"><span>${entry.name}</span><span style="color:#888;">${entry.time}</span></div>`;
     });
 
-    // 👥 ALTERS TAB REFRESH
     const pList = document.getElementById('detailed-profiles-list');
     pList.innerHTML = '';
     (systemData.members || []).forEach(m => {
         pList.innerHTML += `
             <section style="border-top: 4px solid ${m.color}">
                 <div style="display:flex; gap:15px; align-items:center;">
-                    <img src="${m.pfp}" style="width:60px; height:60px; border-radius:15px; object-fit:cover;">
-                    <div>
+                    <img src="${m.pfp}" style="width:50px; height:50px; border-radius:12px; object-fit:cover;">
+                    <div style="flex:1">
                         <h3 style="margin:0">${m.name}</h3>
-                        <p style="margin:5px 0; font-size:0.85rem; color:#666;">${m.role} • ${m.pronouns}</p>
+                        <p style="margin:2px 0; font-size:0.8rem; color:#666;">${m.role}</p>
                     </div>
+                    <button class="logout-btn" style="color:red; border-color:red" onclick="removeAlter(${m.id})">Del</button>
                 </div>
-                <button class="logout-btn" style="width:100%; margin-top:10px; color:red; border-color:red" onclick="removeAlter(${m.id})">Remove</button>
             </section>`;
     });
-}
-
-function addAlter() {
-    const newMember = {
-        id: Date.now(),
-        name: document.getElementById('add-name').value,
-        role: document.getElementById('add-role').value,
-        pronouns: document.getElementById('add-pronouns').value,
-        pfp: document.getElementById('add-pfp').value || 'https://via.placeholder.com/150',
-        color: document.getElementById('add-color').value,
-        isFronting: false
-    };
-    if(!newMember.name) return;
-    systemData.members.push(newMember);
-    sync(); refreshUI();
-    // Clear inputs
-    ['add-name', 'add-role', 'add-pronouns', 'add-pfp'].forEach(id => document.getElementById(id).value = '');
-}
-
-function removeAlter(id) {
-    if(confirm('Are you sure?')) {
-        systemData.members = systemData.members.filter(m => m.id != id);
-        sync(); refreshUI();
-    }
 }
 
 function toggleFront(id) {
@@ -206,12 +186,63 @@ function toggleFront(id) {
     m.isFronting = !m.isFronting;
     
     if(m.isFronting) {
+        const status = prompt(`Enter status for ${m.name} (optional):`);
+        m.status = status || "";
         systemData.history.push({
             name: m.name,
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         });
+    } else {
+        m.status = "";
     }
     sync(); refreshUI();
+}
+
+async function loadFriends() {
+    const { data: connections } = await _supabase.from('connections').select('friend_id').eq('user_id', currentUser.id);
+    const friendIds = connections?.map(c => c.friend_id) || [];
+    const { data: profiles } = await _supabase.from('profiles').select('username').in('user_id', friendIds);
+    
+    const container = document.getElementById('friends-list-container');
+    container.innerHTML = '';
+    profiles?.forEach(p => {
+        container.innerHTML += `<div class="card"><strong>@${p.username}</strong></div>`;
+    });
+}
+
+async function addFriend() {
+    const username = document.getElementById('friend-search').value.replace('@', '');
+    const { data: friend } = await _supabase.from('profiles').select('user_id').eq('username', username).single();
+    if (friend) {
+        await _supabase.from('connections').insert([{ user_id: currentUser.id, friend_id: friend.user_id }]);
+        document.getElementById('friend-search').value = '';
+        loadFriends();
+        showToast();
+    } else {
+        alert("System not found!");
+    }
+}
+
+function addAlter() {
+    const newMember = {
+        id: Date.now(),
+        name: document.getElementById('add-name').value,
+        role: document.getElementById('add-role').value,
+        pfp: document.getElementById('add-pfp').value || 'https://via.placeholder.com/150',
+        color: document.getElementById('add-color').value,
+        isFronting: false,
+        status: ""
+    };
+    if(!newMember.name) return;
+    systemData.members.push(newMember);
+    sync(); refreshUI();
+}
+
+function removeAlter(id) {
+    if(confirm('Delete this alter?')) {
+        systemData.members = systemData.members.filter(m => m.id != id);
+        sync(); refreshUI();
+    }
 }
 
 function showTab(id) {
@@ -222,8 +253,7 @@ function showTab(id) {
 }
 
 async function sync() {
-    const { data: { user } } = await _supabase.auth.getUser();
-    await _supabase.from('profiles').upsert({ user_id: user.id, system_data: systemData });
+    await _supabase.from('profiles').update({ system_data: systemData }).eq('user_id', currentUser.id);
     showToast();
 }
 

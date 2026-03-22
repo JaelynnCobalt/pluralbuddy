@@ -12,9 +12,11 @@ body { background-color: var(--bg); margin: 0; padding: 20px; display: flex; fle
 h1, h2, h3 { color: var(--magenta) !important; }
 
 #dashboard { display: none; width: 100%; max-width: 1100px; }
-nav { margin-bottom: 30px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-.tab-btn, .nav-link { padding: 10px 20px; border: 2px solid var(--magenta); background: white; cursor: pointer; border-radius: 50px; font-weight: bold; transition: 0.3s; text-decoration: none; font-size: 0.9rem; }
+nav { margin-bottom: 30px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; align-items: center; }
+.tab-btn, .nav-link, .mobile-btn { padding: 10px 20px; border: 2px solid var(--magenta); background: white; cursor: pointer; border-radius: 50px; font-weight: bold; transition: 0.3s; text-decoration: none; font-size: 0.9rem; display: inline-flex; align-items: center; }
 .tab-btn.active { background: var(--magenta); color: white !important; }
+.mobile-btn { background: var(--soft-pink); border-style: dashed; }
+.mobile-btn:hover { background: var(--magenta); color: white !important; }
 
 .view-section { display: none; width: 100%; }
 .view-section.active { display: block; }
@@ -22,7 +24,7 @@ section, .card { background: var(--panel); padding: 20px; border-radius: 20px; b
 input, textarea, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid var(--soft-pink); border-radius: 10px; }
 .main-btn { background: var(--magenta); color: white !important; border: none; padding: 12px; border-radius: 10px; cursor: pointer; width: 100%; font-size: 1rem; font-weight: bold; }
 
-/* COMPACT HISTORY STYLES */
+/* HISTORY & PROFILE GRID STYLES */
 .history-group { border-left: 5px solid var(--magenta); background: #fff; margin-bottom: 15px; padding: 5px 0; border-radius: 0 15px 15px 0; box-shadow: 2px 2px 5px rgba(0,0,0,0.03); }
 .history-entry { padding: 8px 15px; display: flex; align-items: center; gap: 15px; font-size: 0.85rem; border-bottom: 1px solid #fff0f6; }
 .history-entry:last-child { border-bottom: none; }
@@ -30,7 +32,6 @@ input, textarea, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px
 .hist-status { font-style: italic; opacity: 0.8; flex-grow: 1; }
 .hist-time { font-family: monospace; font-size: 0.8rem; opacity: 0.7; white-space: nowrap; }
 
-/* PROFILE GRID */
 .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
 .profile-card { border-top: 10px solid; position: relative; display: flex; flex-direction: column; }
 .pfp-img { width: 120px; height: 120px; border-radius: 15px; object-fit: cover; border: 3px solid var(--soft-pink); align-self: center; margin-bottom: 15px; }
@@ -38,12 +39,10 @@ input, textarea, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px
 .detail-text { font-size: 0.95rem; font-weight: bold; white-space: pre-wrap; margin: 0; }
 .mini-btn { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--soft-pink); cursor: pointer; background: white; font-size: 0.8rem; margin-top: 5px; font-weight: bold; }
 
-/* FRONTING */
 .fronting-box { background: var(--front-gold); border: 2px dashed var(--magenta); padding: 25px; border-radius: 20px; text-align: center; margin-bottom: 20px; }
 .front-card-mini { background: white; padding: 10px 15px; border-radius: 15px; border: 2px solid; display: flex; align-items: center; gap: 12px; position: relative; }
 .remove-front-btn { position: absolute; top: -8px; right: -8px; background: white; border: 2px solid; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; }
 
-/* OVERLAY */
 #profile-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 240, 246, 0.98); z-index: 9999; overflow-y: auto; padding: 20px; }
 .overlay-content { max-width: 1000px; margin: 40px auto; background: white; padding: 30px; border-radius: 30px; border: 3px solid var(--magenta); position: relative; }
 .close-overlay { position: absolute; top: 20px; right: 25px; font-size: 40px; cursor: pointer; }
@@ -63,7 +62,7 @@ input, textarea, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px
     <div class="overlay-content">
         <span class="close-overlay" onclick="closeOverlay()">&times;</span>
         <div id="overlay-body"></div>
-        <a href="chat.html" class="floating-chat-link">💬 Open Global Chat</a>
+        <a href="mobilechat.html" class="floating-chat-link">💬 Open Sidekick Chat</a>
     </div>
 </div>
 
@@ -83,6 +82,7 @@ input, textarea, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px
         <button class="tab-btn" id="btn-history" onclick="showTab('history')">Front History</button>
         <button class="tab-btn" id="btn-sidekicks" onclick="showTab('sidekicks')">Sidekicks</button>
         <a href="internal.html" class="nav-link">🏠 Internal Chat</a>
+        <a href="mobileindex.html" class="mobile-btn">📱 Mobile Mode</a>
         <button class="tab-btn" style="border-color: #aaa; color: #aaa;" onclick="logout()">Logout</button>
     </nav>
 
@@ -161,6 +161,8 @@ input, textarea, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px
 </div>
 
 <script>
+/* Your existing script remains unchanged as the logic for Auth, Sync, and UI stays consistent. 
+   Just ensure your mobileindex.html exists and links to mobileinternal.html and mobilechat.html. */
 const SB_URL = 'https://ctrbkrwiwpojbzfpsxwl.supabase.co';
 const SB_KEY = 'sb_publishable_uK-ihohO48o6BPRW8rmDqQ_LbJnfTI7';
 const _supabase = supabase.createClient(SB_URL, SB_KEY);

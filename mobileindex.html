@@ -2,72 +2,35 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>System Mobile</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root { --bg: #fff0f6; --panel: #ffffff; --soft-pink: #ffdeeb; --magenta: #ff00ff; --front-gold: #fff9c4; --nav-height: 70px; }
 * { font-family: 'system-ui', -apple-system, sans-serif; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-body { 
-    background-color: var(--bg); 
-    margin: 0; 
-    padding: 20px 15px calc(var(--nav-height) + 20px) 15px; 
-    min-height: 100vh; 
-}
+body { background-color: var(--bg); margin: 0; padding: 20px 15px calc(var(--nav-height) + 30px) 15px; min-height: 100vh; }
 
-/* TOP HEADER */
-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-}
+header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-top: env(safe-area-inset-top); }
 .logout-btn { font-size: 0.8rem; border: 1px solid #ccc; padding: 5px 10px; border-radius: 8px; background: white; color: #888; }
 
-/* BOTTOM NAVIGATION BAR */
-.bottom-nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: var(--nav-height);
-    background: white;
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    border-top: 2px solid var(--soft-pink);
-    box-shadow: 0 -5px 15px rgba(0,0,0,0.05);
-    z-index: 1000;
-    padding-bottom: env(safe-area-inset-bottom); /* Fix for notched iPhones */
-}
-
-.nav-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-decoration: none;
-    background: none;
-    border: none;
-    color: #888;
-    font-size: 0.7rem;
-    font-weight: bold;
-    flex: 1;
-}
-
+/* BOTTOM NAV */
+.bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: var(--nav-height); background: white; display: flex; justify-content: space-around; align-items: center; border-top: 2px solid var(--soft-pink); box-shadow: 0 -5px 15px rgba(0,0,0,0.05); z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
+.nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; background: none; border: none; color: #888; font-size: 0.7rem; font-weight: bold; flex: 1; }
 .nav-item.active { color: var(--magenta); }
 .nav-item span { font-size: 1.4rem; margin-bottom: 2px; }
 
-/* UI ELEMENTS */
+/* UI */
 .view-section { display: none; }
 .view-section.active { display: block; }
 section, .card { background: var(--panel); padding: 15px; border-radius: 20px; border: 2px solid var(--soft-pink); margin-bottom: 15px; }
-.main-btn { background: var(--magenta); color: white; border: none; padding: 15px; border-radius: 15px; width: 100%; font-weight: bold; font-size: 1rem; }
-input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid var(--soft-pink); border-radius: 12px; font-size: 16px; }
+.main-btn { background: var(--magenta); color: white; border: none; padding: 15px; border-radius: 15px; width: 100%; font-weight: bold; font-size: 1rem; margin-top: 10px; }
+input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid var(--soft-pink); border-radius: 12px; font-size: 16px; background: var(--bg); }
 
-/* FRONTING DISPLAY */
+/* FRONTING */
 .fronting-container { background: var(--front-gold); padding: 15px; border-radius: 20px; border: 2px dashed var(--magenta); margin-bottom: 20px; text-align: center; }
-.mini-pfp { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--magenta); }
+.mini-pfp { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid var(--magenta); }
+.history-item { font-size: 0.85rem; padding: 8px 0; border-bottom: 1px solid var(--soft-pink); display: flex; justify-content: space-between; }
 
 #toast { visibility: hidden; background: var(--magenta); color: white; padding: 12px 25px; border-radius: 50px; position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); z-index: 10001; }
 #toast.show { visibility: visible; }
@@ -75,10 +38,10 @@ input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid v
 </head>
 <body>
 
-<div id="toast">Changes Synced! ✨</div>
+<div id="toast">Synced ✨</div>
 
 <div id="auth-screen">
-    <section style="text-align: center; margin-top: 100px;">
+    <section style="text-align: center; margin-top: 80px;">
         <h1 style="color:var(--magenta)">System Mobile</h1>
         <input type="email" id="email-input" placeholder="Email">
         <input type="password" id="passcode-input" placeholder="Password">
@@ -88,7 +51,7 @@ input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid v
 
 <div id="dashboard" style="display:none;">
     <header>
-        <h2 id="view-sys-name" style="margin:0; font-size: 1.2rem;">System</h2>
+        <h2 id="view-sys-name" style="margin:0;">System</h2>
         <button class="logout-btn" onclick="logout()">Logout</button>
     </header>
 
@@ -97,41 +60,43 @@ input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid v
             <h4 style="margin: 0 0 10px 0">Fronting Now</h4>
             <div id="fronting-display" style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap;"></div>
         </div>
+
         <div id="overview-list"></div>
+
+        <section>
+            <h3 style="margin-top:0">Front History</h3>
+            <div id="front-history-list"></div>
+        </section>
     </div>
 
     <div id="profiles" class="view-section">
         <section>
-            <h3>Add Member</h3>
-            <input type="text" id="name" placeholder="Name">
-            <input type="text" id="role" placeholder="Role">
-            <button class="main-btn" onclick="saveAlter()">Quick Add</button>
+            <h3 style="margin-top:0">Add New Alter</h3>
+            <input type="text" id="add-name" placeholder="Name">
+            <input type="text" id="add-role" placeholder="Role (e.g. Protector)">
+            <input type="text" id="add-pronouns" placeholder="Pronouns">
+            <input type="text" id="add-pfp" placeholder="PFP URL">
+            <input type="color" id="add-color" value="#ff00ff" style="height: 50px; padding: 5px;">
+            <button class="main-btn" onclick="addAlter()">Add Alter</button>
         </section>
         <div id="detailed-profiles-list"></div>
     </div>
 
     <div id="sidekicks" class="view-section">
-        <input type="text" id="sidekick-search" placeholder="Search systems...">
-        <button class="main-btn" onclick="addSidekick()">Add Sidekick</button>
-        <div id="sidekicks-list" style="margin-top:15px;"></div>
+        <section>
+            <h3 style="margin-top:0">Find Systems</h3>
+            <input type="text" id="sidekick-search" placeholder="Search by username...">
+            <button class="main-btn">Search</button>
+        </section>
+        <div id="sidekicks-list"></div>
     </div>
 
     <nav class="bottom-nav">
-        <button class="nav-item active" id="tab-overview" onclick="showTab('overview')">
-            <span>🏠</span>Home
-        </button>
-        <button class="nav-item" id="tab-profiles" onclick="showTab('profiles')">
-            <span>👥</span>Alters
-        </button>
-        <a href="mobileinternal.html" class="nav-item">
-            <span>💭</span>Internal
-        </a>
-        <a href="mobilechat.html" class="nav-item">
-            <span>🌎</span>Global
-        </a>
-        <button class="nav-item" id="tab-sidekicks" onclick="showTab('sidekicks')">
-            <span>✨</span>Sidekicks
-        </button>
+        <button class="nav-item active" id="tab-overview" onclick="showTab('overview')"><span>🏠</span>Home</button>
+        <button class="nav-item" id="tab-profiles" onclick="showTab('profiles')"><span>👥</span>Alters</button>
+        <a href="mobileinternal.html" class="nav-item"><span>💭</span>Internal</a>
+        <a href="mobilechat.html" class="nav-item"><span>🌎</span>Global</a>
+        <button class="nav-item" id="tab-sidekicks" onclick="showTab('sidekicks')"><span>✨</span>Friends</button>
     </nav>
 </div>
 
@@ -139,7 +104,7 @@ input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid v
 const SB_URL = 'https://ctrbkrwiwpojbzfpsxwl.supabase.co';
 const SB_KEY = 'sb_publishable_uK-ihohO48o6BPRW8rmDqQ_LbJnfTI7';
 const _supabase = supabase.createClient(SB_URL, SB_KEY);
-let systemData = { members: [] };
+let systemData = { members: [], history: [] };
 
 async function handleAuth() {
     const email = document.getElementById('email-input').value;
@@ -155,28 +120,98 @@ async function loadData() {
     document.getElementById('dashboard').style.display = 'block';
     const { data } = await _supabase.from('profiles').select('*').eq('user_id', user.id).single();
     if (data?.system_data) systemData = data.system_data;
+    if (!systemData.history) systemData.history = [];
     refreshUI();
 }
 
 function refreshUI() {
-    document.getElementById('view-sys-name').innerText = systemData.name || "System";
+    document.getElementById('view-sys-name').innerText = systemData.name || "System Dashboard";
+    
+    // 🏠 HOME TAB REFRESH
     const fDisp = document.getElementById('fronting-display');
     const oList = document.getElementById('overview-list');
+    const hList = document.getElementById('front-history-list');
     
-    fDisp.innerHTML = ''; oList.innerHTML = '';
+    fDisp.innerHTML = ''; oList.innerHTML = ''; hList.innerHTML = '';
 
     (systemData.members || []).forEach(m => {
         if(m.isFronting) {
-            fDisp.innerHTML += `<img src="${m.pfp}" class="mini-pfp" title="${m.name}" style="border-color:${m.color}">`;
+            fDisp.innerHTML += `<img src="${m.pfp}" class="mini-pfp" style="border-color:${m.color}">`;
         }
         oList.innerHTML += `
             <div class="card" style="display:flex; justify-content:space-between; align-items:center; border-left: 10px solid ${m.color}">
-                <strong>${m.name}</strong>
+                <div>
+                    <strong>${m.name}</strong><br>
+                    <span style="font-size:0.75rem; color:#888;">${m.role || 'Member'}</span>
+                </div>
                 <button class="logout-btn" style="color:var(--magenta); border-color:var(--magenta)" onclick="toggleFront(${m.id})">
-                    ${m.isFronting ? 'Exit' : 'Front'}
+                    ${m.isFronting ? 'Leave' : 'Front'}
                 </button>
             </div>`;
     });
+
+    // Front History (Latest 5 entries)
+    (systemData.history || []).slice(-5).reverse().forEach(entry => {
+        hList.innerHTML += `
+            <div class="history-item">
+                <span><strong>${entry.name}</strong></span>
+                <span style="color:#888;">${entry.time}</span>
+            </div>`;
+    });
+
+    // 👥 ALTERS TAB REFRESH
+    const pList = document.getElementById('detailed-profiles-list');
+    pList.innerHTML = '';
+    (systemData.members || []).forEach(m => {
+        pList.innerHTML += `
+            <section style="border-top: 4px solid ${m.color}">
+                <div style="display:flex; gap:15px; align-items:center;">
+                    <img src="${m.pfp}" style="width:60px; height:60px; border-radius:15px; object-fit:cover;">
+                    <div>
+                        <h3 style="margin:0">${m.name}</h3>
+                        <p style="margin:5px 0; font-size:0.85rem; color:#666;">${m.role} • ${m.pronouns}</p>
+                    </div>
+                </div>
+                <button class="logout-btn" style="width:100%; margin-top:10px; color:red; border-color:red" onclick="removeAlter(${m.id})">Remove</button>
+            </section>`;
+    });
+}
+
+function addAlter() {
+    const newMember = {
+        id: Date.now(),
+        name: document.getElementById('add-name').value,
+        role: document.getElementById('add-role').value,
+        pronouns: document.getElementById('add-pronouns').value,
+        pfp: document.getElementById('add-pfp').value || 'https://via.placeholder.com/150',
+        color: document.getElementById('add-color').value,
+        isFronting: false
+    };
+    if(!newMember.name) return;
+    systemData.members.push(newMember);
+    sync(); refreshUI();
+    // Clear inputs
+    ['add-name', 'add-role', 'add-pronouns', 'add-pfp'].forEach(id => document.getElementById(id).value = '');
+}
+
+function removeAlter(id) {
+    if(confirm('Are you sure?')) {
+        systemData.members = systemData.members.filter(m => m.id != id);
+        sync(); refreshUI();
+    }
+}
+
+function toggleFront(id) {
+    const m = systemData.members.find(m => m.id == id);
+    m.isFronting = !m.isFronting;
+    
+    if(m.isFronting) {
+        systemData.history.push({
+            name: m.name,
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        });
+    }
+    sync(); refreshUI();
 }
 
 function showTab(id) {
@@ -184,13 +219,6 @@ function showTab(id) {
     document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
     document.getElementById(id).classList.add('active');
     document.getElementById('tab-'+id).classList.add('active');
-}
-
-function toggleFront(id) {
-    const m = systemData.members.find(m => m.id == id);
-    m.isFronting = !m.isFronting;
-    if(m.isFronting) m.startTime = Date.now();
-    sync(); refreshUI();
 }
 
 async function sync() {

@@ -3,137 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Sidekick Chat</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --bg: #fff0f6; --panel: #ffffff; --soft-pink: #ffdeeb; --magenta: #ff00ff; --dark-magenta: #cc00cc; }
-        * { font-family: 'Georgia', serif; box-sizing: border-box; color: var(--magenta); -webkit-tap-highlight-color: transparent; }
+        :root { --bg: #fdf2f7; --panel: #ffffff; --soft-pink: #ffdeeb; --magenta: #ff00ff; --text: #333; }
+        * { font-family: -apple-system, system-ui, sans-serif; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         body { background-color: var(--bg); margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-        /* Mobile Header */
+        /* HEADER */
         .app-header {
-            padding: calc(15px + env(safe-area-inset-top)) 15px 15px 15px;
-            background: white;
-            border-bottom: 2px solid var(--soft-pink);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            z-index: 1001;
+            padding: calc(15px + env(safe-area-inset-top)) 15px 15px;
+            background: white; border-bottom: 1px solid var(--soft-pink);
+            display: flex; align-items: center; justify-content: space-between; z-index: 1001;
         }
 
-        /* Container Layout */
-        .discord-container { display: flex; flex: 1; overflow: hidden; position: relative; width: 100%; }
+        /* VIEWPORT SLIDER */
+        .view-container { display: flex; flex: 1; width: 200%; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .view-container.in-chat { transform: translateX(-50%); }
+
+        /* LIST VIEW (Left Side) */
+        .list-view { width: 50%; display: flex; flex-direction: column; background: white; }
+        .list-section-label { font-size: 0.75rem; padding: 15px 15px 5px; color: #999; text-transform: uppercase; font-weight: bold; }
+        .convo-item { padding: 15px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid var(--bg); transition: 0.2s; }
+        .convo-item:active { background: var(--soft-pink); }
+        .convo-icon { width: 45px; height: 45px; border-radius: 50%; background: var(--soft-pink); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+
+        /* CHAT VIEW (Right Side) */
+        .chat-view { width: 50%; display: flex; flex-direction: column; background: var(--bg); }
+        .chat-header { padding: 10px 15px; background: white; border-bottom: 1px solid var(--soft-pink); display: flex; align-items: center; gap: 10px; }
         
-        /* Sidebar (Conversation List) */
-        .sidebar { 
-            width: 100%; 
-            background: var(--panel); 
-            display: flex; 
-            flex-direction: column;
-            position: absolute;
-            height: 100%;
-            transition: transform 0.3s ease;
-            z-index: 10;
-        }
-        .sidebar.hidden { transform: translateX(-100%); }
-
-        .sidebar-header { padding: 15px; font-weight: bold; border-bottom: 1px solid var(--soft-pink); display: flex; justify-content: space-between; align-items: center; }
-        #friends-list { flex: 1; overflow-y: auto; background: white; }
-        .list-section-label { font-size: 0.7rem; padding: 15px 15px 5px; text-transform: uppercase; opacity: 0.6; letter-spacing: 1px; }
-        .friend-item { padding: 15px; cursor: pointer; border-bottom: 1px solid var(--bg); display: flex; align-items: center; gap: 12px; }
-        .friend-item:active { background: var(--soft-pink); }
-
-        /* Chat Area (Message View) */
-        .chat-area { 
-            width: 100%;
-            display: flex; 
-            flex-direction: column; 
-            background: #fffafa;
-            position: absolute;
-            height: 100%;
-            transform: translateX(100%);
-            transition: transform 0.3s ease;
-            z-index: 20;
-        }
-        .chat-area.active { transform: translateX(0); }
-
-        .chat-header { 
-            padding: 15px; 
-            background: white;
-            border-bottom: 1px solid var(--soft-pink); 
-            font-weight: bold; 
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
         #message-list { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
+
+        /* BUBBLES */
+        .msg-row { display: flex; gap: 8px; max-width: 85%; align-self: flex-start; }
+        .msg-row.own { align-self: flex-end; flex-direction: row-reverse; }
+        .msg-pfp { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 2px solid white; margin-top: auto; }
+        .bubble { 
+            background: white; padding: 10px 14px; border-radius: 18px; border-bottom-left-radius: 4px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05); font-size: 0.95rem; line-height: 1.4; color: #333;
+        }
+        .own .bubble { background: var(--magenta); color: white; border-bottom-left-radius: 18px; border-bottom-right-radius: 4px; }
+        .msg-info { font-size: 0.65rem; color: #999; margin-top: 4px; }
+        .own .msg-info { text-align: right; }
+
+        /* INPUT AREA */
+        .input-area { background: white; padding: 10px; border-top: 1px solid var(--soft-pink); padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
         
-        /* Messages */
-        .msg-row { display: flex; gap: 10px; align-items: flex-start; max-width: 90%; animation: fadeIn 0.2s ease; }
-        .msg-pfp { width: 38px; height: 38px; border-radius: 10px; border: 2px solid; object-fit: cover; flex-shrink: 0; }
-        .msg-content { flex: 1; }
-        .msg-author-row { display: flex; align-items: center; gap: 5px; font-size: 0.85rem; margin-bottom: 3px; }
-        .proxy-tag { background: var(--magenta); color: white; font-size: 0.55rem; padding: 1px 4px; border-radius: 4px; text-transform: uppercase; }
-        .msg-text { background: white; padding: 10px 12px; border-radius: 0 12px 12px 12px; border: 1px solid var(--soft-pink); font-size: 0.95rem; line-height: 1.4; color: #333; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        /* HORIZONTAL PROXY SWITCHER */
+        .proxy-switcher { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; }
+        .proxy-switcher::-webkit-scrollbar { display: none; }
+        .proxy-btn { flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%; border: 2px solid transparent; padding: 2px; }
+        .proxy-btn.active { border-color: var(--magenta); transform: scale(1.1); }
+        .proxy-btn img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
 
-        /* Input Bar */
-        .input-bar { 
-            padding: 10px 10px calc(10px + env(safe-area-inset-bottom)); 
-            border-top: 1px solid var(--soft-pink); 
-            display: flex; 
-            flex-direction: column;
-            gap: 8px; 
-            background: white; 
-        }
-        .input-row { display: flex; gap: 8px; }
-        #proxy-select { width: 100%; padding: 8px; border: 1px solid var(--magenta); border-radius: 8px; font-weight: bold; font-size: 14px; }
-        #msg-input { flex: 1; padding: 10px; border: 1px solid var(--soft-pink); border-radius: 12px; font-size: 16px; outline: none; }
-        .send-btn { background: var(--magenta); color: white; border: none; padding: 0 15px; border-radius: 12px; font-weight: bold; }
+        .input-row { display: flex; gap: 8px; align-items: center; }
+        #msg-input { flex: 1; padding: 10px 15px; background: var(--bg); border: 1px solid var(--soft-pink); border-radius: 20px; font-size: 16px; outline: none; }
+        .send-circle { background: var(--magenta); color: white; border: none; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
 
-        /* Buttons */
-        .back-btn { background: var(--soft-pink); border: none; padding: 5px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .add-group-btn { background: var(--magenta); color: white; border: none; border-radius: 50%; width: 32px; height: 32px; font-size: 20px; }
+        /* MODAL */
+        #group-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center; padding: 20px; }
+        .modal-card { background: white; padding: 20px; border-radius: 20px; width: 100%; max-width: 350px; }
+        input[type="text"] { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--soft-pink); margin-bottom: 15px; }
 
-        /* Modal */
-        #group-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center; padding: 20px; }
-        .modal-content { background: white; padding: 25px; border-radius: 20px; width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 15px; }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Desktop Resizing */
-        @media (min-width: 768px) {
-            .sidebar { position: relative; width: 300px; transform: none !important; }
-            .chat-area { position: relative; transform: none !important; }
-            .back-btn { display: none; }
-        }
+        .back-btn { background: none; border: none; font-size: 1.5rem; color: var(--magenta); padding: 0 5px; }
     </style>
 </head>
 <body>
 
-<audio id="notif-sound" src="https://raw.githubusercontent.com/Anisayari/Discord-Alert-Sound/main/discord_notification.mp3" preload="auto"></audio>
-
-<div id="group-modal">
-    <div class="modal-content">
-        <h3 style="margin-top: 0;">New Group Chat</h3>
-        <input type="text" id="new-group-name" placeholder="Group Name">
-        <div id="modal-friends-list" style="max-height: 200px; overflow-y: auto; margin: 10px 0;"></div>
-        <button class="send-btn" style="padding: 12px;" onclick="createGroup()">Create Group</button>
-        <button onclick="closeModal()" style="background: none; border: none; color: #888; margin-top: 5px;">Cancel</button>
-    </div>
-</div>
+<audio id="notif-sound" src="https://raw.githubusercontent.com/Anisayari/Discord-Alert-Sound/main/discord_notification.mp3"></audio>
 
 <div class="app-header">
-    <a href="index.html" style="text-decoration: none; font-weight: bold; font-size: 0.9rem;">🏠 Dashboard</a>
-    <span style="font-weight: bold; font-size: 1rem;">Sidekick Chat</span>
-    <button class="add-group-btn" onclick="openModal()">+</button>
+    <a href="mobileindex.html" style="text-decoration: none; color: #888; font-weight: bold; font-size: 0.9rem;">⇠ Home</a>
+    <span style="font-weight: bold; color: var(--magenta);">Sidekicks</span>
+    <button onclick="openModal()" style="border:none; background:none; color:var(--magenta); font-size:1.5rem;">⊕</button>
 </div>
 
-<div class="discord-container">
-    <div class="sidebar" id="sidebar">
+<div class="view-container" id="main-slider">
+    <div class="list-view">
         <div id="friends-list">
             <div class="list-section-label">Direct Messages</div>
             <div id="dm-list"></div>
@@ -142,20 +89,32 @@
         </div>
     </div>
 
-    <div class="chat-area" id="chat-view">
+    <div class="chat-view">
         <div class="chat-header">
-            <button class="back-btn" onclick="closeChat()">←</button>
-            <span id="chat-header-title">Select a conversation</span>
-        </div>
-        <div id="message-list"></div>
-
-        <div class="input-bar">
-            <select id="proxy-select"></select>
-            <div class="input-row">
-                <input type="text" id="msg-input" placeholder="Message..." autocomplete="off">
-                <button class="send-btn" onclick="sendProxyMessage()">Send</button>
+            <button class="back-btn" onclick="closeChat()">‹</button>
+            <div>
+                <div id="chat-header-title" style="font-weight: bold; font-size: 1rem; color: var(--magenta);">Chat</div>
+                <div id="chat-header-status" style="font-size: 0.7rem; color: #999;">Active</div>
             </div>
         </div>
+        <div id="message-list"></div>
+        <div class="input-area">
+            <div class="proxy-switcher" id="proxy-switcher"></div>
+            <div class="input-row">
+                <input type="text" id="msg-input" placeholder="Aa" autocomplete="off">
+                <button class="send-circle" onclick="sendProxyMessage()">↑</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="group-modal">
+    <div class="modal-card">
+        <h3 style="margin-top: 0; color: var(--magenta);">New Group</h3>
+        <input type="text" id="new-group-name" placeholder="Group Name">
+        <div id="modal-friends-list" style="max-height: 150px; overflow-y: auto; margin-bottom: 15px;"></div>
+        <button onclick="createGroup()" style="width:100%; padding:12px; background:var(--magenta); color:white; border:none; border-radius:10px; font-weight:bold;">Create</button>
+        <button onclick="closeModal()" style="width:100%; background:none; border:none; color:#999; margin-top:10px;">Cancel</button>
     </div>
 </div>
 
@@ -168,29 +127,44 @@
     let currentChatId = null;
     let myAlters = [];
     let allFriends = [];
+    let currentActiveProxy = null;
 
     async function init() {
         const { data: { user } } = await _supabase.auth.getUser();
-        if(!user) return window.location.href = "index.html";
+        if(!user) return window.location.href = "mobileindex.html";
         currentUser = user;
 
         const { data: profile } = await _supabase.from('profiles').select('system_data').eq('user_id', user.id).single();
         myAlters = profile?.system_data?.members || [];
-        const select = document.getElementById('proxy-select');
-        myAlters.forEach(alt => select.innerHTML += `<option value="${alt.id}">${alt.name}</option>`);
-
+        renderProxySwitcher();
         loadSidebar();
-        
-        _supabase.channel('chat-updates').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'global_messages' }, payload => {
+
+        _supabase.channel('sidekick-realtime').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'global_messages' }, payload => {
             if (payload.new.conversation_id === currentChatId) {
                 renderMessage(payload.new);
-                const currentAlterId = document.getElementById('proxy-select').value;
-                const currentAlterName = myAlters.find(a => a.id == currentAlterId)?.name;
-                if (payload.new.sender_name !== currentAlterName) {
+                if (payload.new.sender_name !== currentActiveProxy?.name) {
                     document.getElementById('notif-sound').play().catch(()=>{});
                 }
             }
         }).subscribe();
+    }
+
+    function renderProxySwitcher() {
+        const switcher = document.getElementById('proxy-switcher');
+        switcher.innerHTML = '';
+        myAlters.forEach((alt, idx) => {
+            if(idx === 0) currentActiveProxy = alt;
+            switcher.innerHTML += `
+                <div class="proxy-btn ${idx === 0 ? 'active' : ''}" onclick="selectProxy('${alt.id}', this)">
+                    <img src="${alt.pfp}" style="background:${alt.color}">
+                </div>`;
+        });
+    }
+
+    function selectProxy(id, el) {
+        currentActiveProxy = myAlters.find(a => a.id == id);
+        document.querySelectorAll('.proxy-btn').forEach(b => b.classList.remove('active'));
+        el.classList.add('active');
     }
 
     async function loadSidebar() {
@@ -202,11 +176,11 @@
         const dmList = document.getElementById('dm-list');
         dmList.innerHTML = '';
         allFriends.forEach(f => {
-            const div = document.createElement('div');
-            div.className = 'friend-item';
-            div.innerHTML = `<span>👤</span> @${f.username}`;
-            div.onclick = () => selectChat(getDmId(f.user_id), `@${f.username}`);
-            dmList.appendChild(div);
+            dmList.innerHTML += `
+                <div class="convo-item" onclick="selectChat('${getDmId(f.user_id)}', '@${f.username}')">
+                    <div class="convo-icon">👤</div>
+                    <div style="font-weight:600;">@${f.username}</div>
+                </div>`;
         });
 
         const { data: groups } = await _supabase.from('global_messages').select('conversation_id, group_name').eq('is_group', true);
@@ -214,11 +188,11 @@
         groupList.innerHTML = '';
         const uniqueGroups = [...new Map(groups?.map(item => [item['conversation_id'], item])).values()];
         uniqueGroups.forEach(g => {
-            const div = document.createElement('div');
-            div.className = 'friend-item';
-            div.innerHTML = `<span>🏠</span> ${g.group_name}`;
-            div.onclick = () => selectChat(g.conversation_id, g.group_name);
-            groupList.appendChild(div);
+            groupList.innerHTML += `
+                <div class="convo-item" onclick="selectChat('${g.conversation_id}', '${g.group_name}')">
+                    <div class="convo-icon">🏠</div>
+                    <div style="font-weight:600;">${g.group_name}</div>
+                </div>`;
         });
     }
 
@@ -227,8 +201,7 @@
     async function selectChat(id, title) {
         currentChatId = id;
         document.getElementById('chat-header-title').innerText = title;
-        document.getElementById('sidebar').classList.add('hidden');
-        document.getElementById('chat-view').classList.add('active');
+        document.getElementById('main-slider').classList.add('in-chat');
         
         const { data: msgs } = await _supabase.from('global_messages').select('*').eq('conversation_id', id).order('created_at', { ascending: true });
         const list = document.getElementById('message-list');
@@ -237,23 +210,21 @@
     }
 
     function closeChat() {
-        document.getElementById('sidebar').classList.remove('hidden');
-        document.getElementById('chat-view').classList.remove('active');
+        document.getElementById('main-slider').classList.remove('in-chat');
         currentChatId = null;
     }
 
     function renderMessage(msg) {
         const list = document.getElementById('message-list');
+        const isOwn = currentActiveProxy && msg.sender_name === currentActiveProxy.name;
+        
         const div = document.createElement('div');
-        div.className = 'msg-row';
+        div.className = `msg-row ${isOwn ? 'own' : ''}`;
         div.innerHTML = `
-            <img src="${msg.sender_pfp}" class="msg-pfp" style="border-color: ${msg.sender_color}">
+            <img src="${msg.sender_pfp}" class="msg-pfp">
             <div class="msg-content">
-                <div class="msg-author-row">
-                    <b style="color: ${msg.sender_color}">${msg.sender_name}</b>
-                    <span class="proxy-tag">Proxy</span>
-                </div>
-                <div class="msg-text">${msg.message_text}</div>
+                <div class="bubble">${msg.message_text}</div>
+                <div class="msg-info">${msg.sender_name}</div>
             </div>`;
         list.appendChild(div);
         list.scrollTop = list.scrollHeight;
@@ -262,42 +233,38 @@
     async function sendProxyMessage() {
         const input = document.getElementById('msg-input');
         if (!input.value.trim() || !currentChatId) return;
-        const alter = myAlters.find(a => a.id == document.getElementById('proxy-select').value);
 
         const isGroup = currentChatId.startsWith('group_');
-        const groupName = isGroup ? document.getElementById('chat-header-title').innerText : null;
-
         await _supabase.from('global_messages').insert([{
             conversation_id: currentChatId,
-            sender_name: alter.name,
-            sender_pfp: alter.pfp,
-            sender_color: alter.color,
+            sender_name: currentActiveProxy.name,
+            sender_pfp: currentActiveProxy.pfp,
+            sender_color: currentActiveProxy.color,
             message_text: input.value,
             is_group: isGroup,
-            group_name: groupName
+            group_name: isGroup ? document.getElementById('chat-header-title').innerText : null
         }]);
         input.value = '';
     }
 
-    // Modal Controls
     function openModal() {
         document.getElementById('group-modal').style.display = 'flex';
         const list = document.getElementById('modal-friends-list');
         list.innerHTML = '';
         allFriends.forEach(f => {
-            list.innerHTML += `<div style="padding:8px 0;"><label><input type="checkbox" value="${f.user_id}" class="g-member"> @${f.username}</label></div>`;
+            list.innerHTML += `<div style="padding:10px 0;"><label><input type="checkbox" value="${f.user_id}" class="g-member"> @${f.username}</label></div>`;
         });
     }
     function closeModal() { document.getElementById('group-modal').style.display = 'none'; }
 
     async function createGroup() {
         const name = document.getElementById('new-group-name').value;
-        if(!name) return alert("Give your group a name!");
+        if(!name) return;
         const groupId = "group_" + Math.random().toString(36).substr(2, 9);
         await _supabase.from('global_messages').insert([{
             conversation_id: groupId,
             sender_name: "System",
-            sender_pfp: "https://via.placeholder.com/100",
+            sender_pfp: "https://via.placeholder.com/100/ff00ff/ffffff?text=SYS",
             sender_color: "#ff00ff",
             message_text: `Group "${name}" created!`,
             is_group: true,

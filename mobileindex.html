@@ -28,18 +28,15 @@
         .view-section.active { display: block; }
         section, .card { background: var(--panel); padding: 15px; border-radius: 20px; border: 2px solid var(--soft-pink); margin-bottom: 15px; }
         .main-btn { background: var(--magenta); color: white; border: none; padding: 12px; border-radius: 12px; width: 100%; font-weight: bold; font-size: 1rem; margin-top: 5px; }
-        .secondary-btn { background: var(--soft-pink); color: var(--magenta); border: none; padding: 10px; border-radius: 10px; width: 100%; font-weight: bold; margin-top: 5px; }
         input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid var(--soft-pink); border-radius: 12px; font-size: 16px; background: #fafafa; }
 
-        /* FRONTING */
+        /* FRONTING & HISTORY */
         .fronting-container { background: var(--front-gold); padding: 15px; border-radius: 20px; border: 2px dashed var(--magenta); margin-bottom: 20px; text-align: center; }
         .front-bubble { display: inline-flex; flex-direction: column; align-items: center; margin: 5px; position: relative; }
         .mini-pfp { width: 55px; height: 55px; border-radius: 50%; object-fit: cover; border: 3px solid var(--magenta); background: white; }
         .remove-front-dot { position: absolute; top: -2px; right: -2px; background: red; color: white; border-radius: 50%; width: 22px; height: 22px; border: 2px solid white; font-weight: bold; font-size: 14px; display: flex; align-items: center; justify-content: center; z-index: 10; }
         .history-card { padding: 10px 15px; border-bottom: 1px solid var(--soft-pink); display: flex; align-items: center; gap: 12px; position: relative; }
         
-        .overlay { display: none; position: fixed; inset: 0; background: white; z-index: 2000; padding: 20px; overflow-y: auto; padding-top: env(safe-area-inset-top); }
-        .close-overlay { background: var(--bg); border: none; padding: 10px 20px; border-radius: 10px; font-weight: bold; margin-bottom: 20px; color: var(--magenta); }
         #toast { visibility: hidden; background: var(--magenta); color: white; padding: 12px 25px; border-radius: 50px; position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); z-index: 3000; }
         #toast.show { visibility: visible; }
     </style>
@@ -53,11 +50,6 @@
 
 <div id="toast">Synced ✨</div>
 
-<div id="editor-overlay" class="overlay">
-    <button class="close-overlay" onclick="closeOverlay()">← Back</button>
-    <div id="editor-content"></div>
-</div>
-
 <div id="auth-screen" style="display:none;">
     <section style="text-align: center; margin-top: 80px;">
         <h1 style="color:var(--magenta)">PluralPoint</h1>
@@ -70,7 +62,7 @@
 <div id="dashboard" style="display:none;">
     <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
         <h2 style="margin:0; font-size: 1.1rem; color: #555;">Dashboard</h2>
-        <button onclick="openSystemEditor()" style="background:none; border:none; font-size:1.4rem;">⚙️</button>
+        <button style="background:none; border:none; font-size:1.4rem;">⚙️</button>
     </header>
 
     <div id="overview" class="view-section active">
@@ -94,6 +86,7 @@
             <div style="background: var(--soft-pink); padding: 10px 15px; font-weight: bold; color: var(--magenta); display: flex; justify-content: space-between; align-items: center;">
                 <span>Front History</span>
                 <div style="display:flex; gap:10px;">
+                    <a href="mobilefh.html" style="text-decoration:none; background:white; border:none; border-radius:8px; padding:5px 12px; font-size:0.75rem; color:var(--magenta); font-weight:bold;">Detailed History</a>
                     <button onclick="clearHistory()" style="background:none; border:none; font-size:0.7rem; color:#888;">Clear</button>
                 </div>
             </div>
@@ -104,7 +97,7 @@
     <div id="sidekicks" class="view-section">
         <section>
             <input type="text" id="friend-search" placeholder="Username...">
-            <button class="main-btn" onclick="addFriend()">Add Sidekick</button>
+            <button class="main-btn">Add Sidekick</button>
         </section>
         <div id="friends-list-container"></div>
     </div>
@@ -145,21 +138,18 @@ async function loadData() {
         };
         
         currentUser = user;
-        const { data, error } = await _supabase.from('profiles').select('*').eq('user_id', user.id).single();
+        const { data } = await _supabase.from('profiles').select('*').eq('user_id', user.id).single();
         
         if (data) {
             systemData = data.system_data || { members: [], history: [] };
             if(!systemData.history) systemData.history = [];
             currentUsername = data.username || "";
         }
-
         refreshUI();
         await loadFriendsLive();
-        
     } catch (err) {
-        console.error("Load error:", err);
+        console.error(err);
     } finally {
-        // This ALWAYS runs, even if there is an error, so the screen isn't stuck
         document.getElementById('loading-screen').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
     }
@@ -182,7 +172,8 @@ function refreshUI() {
         oList.innerHTML += `<div class="card" style="display:flex; justify-content:space-between; align-items:center; border-left: 8px solid ${m.color}"><strong>${m.name}</strong><button class="main-btn" style="width:auto; padding:8px 12px; margin:0;" onclick="toggleFront(${m.id})">${m.isFronting ? 'Leave' : 'Front'}</button></div>`;
     });
 
-    const hist = [...systemData.history].reverse().slice(0, 10);
+    const hist = [...systemData.history].reverse().slice(0, 5);
+    if(hist.length === 0) hList.innerHTML = '<div style="padding:20px; text-align:center; color:#888;">No history yet</div>';
     hist.forEach((entry) => {
         hList.innerHTML += `<div class="history-card"><img src="${entry.pfp}" style="width:35px; height:35px; border-radius:50%; object-fit:cover;"><div style="flex:1"><div style="font-size:0.85rem; font-weight:bold;">${entry.name}</div><div style="font-size:0.7rem; color:#666;">${entry.status || 'Fronting'}</div></div><div style="font-size:0.7rem; color:#bbb;">${entry.displayTime || ''}</div></div>`;
     });
@@ -205,23 +196,21 @@ async function loadFriendsLive() {
     try {
         const { data: conn } = await _supabase.from('connections').select('friend_id').eq('user_id', currentUser.id);
         if (!conn || conn.length === 0) return;
-
         const { data: profs } = await _supabase.from('profiles').select('username, system_data').in('user_id', conn.map(c => c.friend_id));
         const cont = document.getElementById('friends-list-container'); 
         cont.innerHTML = '';
-        
         profs?.forEach(p => {
             const fronts = (p.system_data?.members || []).filter(m => m.isFronting);
             let fH = fronts.length > 0 ? '' : '<div style="font-size:0.75rem; color:#999;">Offline</div>';
             fronts.forEach(f => fH += `<div style="display:flex; align-items:center; gap:8px; margin-top:5px;"><img src="${f.pfp}" style="width:30px; height:30px; border-radius:50%; border:2px solid ${f.color}"><div style="font-size:0.8rem;"><strong>${f.name}</strong>: ${f.status || 'Fronting'}</div></div>`);
             cont.innerHTML += `<div class="card"><strong>@${p.username}</strong>${fH}</div>`;
         });
-    } catch(e) { console.log("Friend load skipped (empty or error)"); }
+    } catch(e) { }
 }
 
 async function sync() { await _supabase.from('profiles').update({ system_data: systemData }).eq('user_id', currentUser.id); showToast("Synced ✨"); }
 function showToast(m) { const t = document.getElementById('toast'); t.innerText = m; t.className = 'show'; setTimeout(() => t.className = '', 2000); }
-function showTab(id) { document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); document.getElementById(id).classList.add('active'); document.getElementById('tab-'+id).classList.add('active'); if(id==='sidekicks') loadFriendsLive(); }
+function showTab(id) { document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); document.getElementById(id).classList.add('active'); document.getElementById('tab-'+id).classList.add('active'); }
 function logout() { _supabase.auth.signOut(); location.reload(); }
 function clearHistory() { if(confirm("Clear history?")) { systemData.history = []; sync(); refreshUI(); } }
 window.onload = loadData;

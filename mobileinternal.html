@@ -6,84 +6,40 @@
 <title>System Chat</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root {
-    --bg: #fdf2f7;
-    --panel: #ffffff;
-    --soft-pink: #ffdeeb;
-    --magenta: #ff00ff;
-    --text: #333;
-}
-
-* { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+:root { --bg: #fdf2f7; --panel: #ffffff; --soft-pink: #ffdeeb; --magenta: #ff00ff; --text: #333; }
+* { box-sizing: border-box; font-family: -apple-system, system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
 body { margin: 0; background: var(--bg); color: var(--text); display: flex; height: 100vh; flex-direction: column; overflow: hidden; }
 
-/* DRAWER MENU */
-.sidebar { 
-    position: fixed; left: -280px; top: 0; width: 280px; height: 100%;
-    background: white; border-right: 1px solid var(--soft-pink);
-    transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 2000;
-}
+/* SIDEBAR & CATEGORIES */
+.sidebar { position: fixed; left: -280px; top: 0; width: 280px; height: 100%; background: white; border-right: 1px solid var(--soft-pink); transition: 0.3s; z-index: 2000; overflow-y: auto; }
 .sidebar.open { left: 0; box-shadow: 10px 0 30px rgba(255,0,255,0.1); }
-.room-item { padding: 15px 20px; font-weight: 600; color: var(--magenta); border-bottom: 1px solid var(--bg); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-.room-item.active { background: var(--soft-pink); }
-.lock-icon { font-size: 0.8rem; opacity: 0.6; }
+.category-header { padding: 15px 10px 5px 15px; font-size: 0.7rem; font-weight: 800; color: #999; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
+.room-item { padding: 10px 15px 10px 25px; font-weight: 600; color: #555; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+.room-item.active { background: var(--soft-pink); color: var(--magenta); }
+.room-actions { opacity: 0; transition: 0.2s; padding: 5px; }
+.room-item:hover .room-actions { opacity: 1; }
 
-/* HEADER */
-.chat-header { 
-    padding: 15px; padding-top: calc(15px + env(safe-area-inset-top));
-    background: white; border-bottom: 1px solid var(--soft-pink);
-    display: flex; align-items: center; gap: 12px; z-index: 1000;
-}
-.menu-toggle { font-size: 1.2rem; background: none; border: none; color: var(--magenta); padding: 5px; }
+/* MODAL/MENU */
+.dot-menu { background: none; border: none; color: #aaa; font-size: 1.2rem; padding: 0 5px; }
 
-/* CHAT AREA */
-#chat-display { 
-    flex: 1; overflow-y: auto; padding: 15px; 
-    display: flex; flex-direction: column; gap: 15px; 
-    background: var(--bg);
-}
-
-/* MESSAGE BUBBLES */
+/* CHAT UI */
+.chat-header { padding: 15px; padding-top: calc(15px + env(safe-area-inset-top)); background: white; border-bottom: 1px solid var(--soft-pink); display: flex; align-items: center; gap: 12px; }
+#chat-display { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; background: var(--bg); }
 .message { display: flex; gap: 10px; max-width: 85%; align-self: flex-start; }
 .message.own { align-self: flex-end; flex-direction: row-reverse; }
+.msg-pfp { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+.bubble { background: white; padding: 10px 14px; border-radius: 18px; border-top-left-radius: 4px; font-size: 0.95rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.own .bubble { background: var(--magenta); color: white; border-top-right-radius: 4px; border-top-left-radius: 18px; }
 
-.msg-pfp { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-.bubble { 
-    background: white; padding: 10px 14px; border-radius: 18px; 
-    border-top-left-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-    font-size: 0.95rem; line-height: 1.4; word-wrap: break-word;
-}
-.own .bubble { 
-    background: var(--magenta); color: white; 
-    border-radius: 18px; border-top-right-radius: 4px; border-top-left-radius: 18px;
-}
-.msg-meta { font-size: 0.7rem; color: #999; margin-top: 4px; padding: 0 5px; }
-.own .msg-meta { text-align: right; }
-
-/* INPUT AREA */
-.input-container { 
-    background: white; padding: 10px; border-top: 1px solid var(--soft-pink);
-    padding-bottom: calc(10px + env(safe-area-inset-bottom));
-}
-
-.member-picker { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; }
-.member-picker::-webkit-scrollbar { display: none; }
-.picker-btn { flex: 0 0 auto; width: 45px; height: 45px; border-radius: 50%; border: 3px solid transparent; padding: 2px; transition: 0.2s; }
+/* INPUT */
+.input-container { background: white; padding: 10px; border-top: 1px solid var(--soft-pink); padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
+.member-picker { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; }
+.picker-btn { flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%; border: 2px solid transparent; }
 .picker-btn.active { border-color: var(--magenta); transform: scale(1.1); }
 .picker-btn img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
-
-.input-row { display: flex; gap: 8px; align-items: flex-end; }
-#msg-input { 
-    flex: 1; background: var(--bg); border: 1px solid var(--soft-pink);
-    border-radius: 20px; padding: 10px 15px; font-size: 16px;
-    max-height: 100px; resize: none; outline: none;
-}
-.send-btn { 
-    background: var(--magenta); color: white; border: none; 
-    width: 40px; height: 40px; border-radius: 50%; 
-    font-weight: bold; font-size: 1.2rem; display: flex; align-items: center; justify-content: center;
-}
-
+.input-row { display: flex; gap: 8px; }
+#msg-input { flex: 1; background: var(--bg); border: 1px solid var(--soft-pink); border-radius: 20px; padding: 10px 15px; font-size: 16px; outline: none; }
+.send-btn { background: var(--magenta); color: white; border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem; }
 #sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 1500; }
 </style>
 </head>
@@ -92,21 +48,20 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; heig
 <div id="sidebar-overlay" onclick="toggleMenu()"></div>
 
 <div class="sidebar" id="sidebar">
-    <div style="padding: 20px; font-weight: bold; border-bottom: 1px solid var(--bg); display: flex; justify-content: space-between; align-items: center;">
-        <span>Rooms</span>
-        <button onclick="addRoom()" style="border:none; background:none; color:var(--magenta); font-size:1.8rem; cursor:pointer;">+</button>
+    <div style="padding: 20px; border-bottom: 1px solid var(--soft-pink); display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-weight: bold; color: var(--magenta);">Internal Space</span>
+        <button onclick="addCategory()" style="border:none; background:none; font-size:1.2rem;">📁+</button>
     </div>
-    <div id="room-list"></div>
-    <div style="position: absolute; bottom: 20px; left: 20px;">
-        <a href="mobileindex.html" style="text-decoration: none; color: #888; font-weight: bold;">⇠ Dashboard</a>
+    <div id="category-list"></div>
+    <div style="padding: 20px;">
+        <a href="mobileindex.html" style="text-decoration: none; color: #888; font-size: 0.8rem;">⇠ Dashboard</a>
     </div>
 </div>
 
 <header class="chat-header">
-    <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+    <button style="background:none; border:none; color:var(--magenta); font-size:1.5rem;" onclick="toggleMenu()">☰</button>
     <div style="flex:1">
         <div id="current-room-name" style="font-weight: bold; color: var(--magenta);"># general</div>
-        <div id="room-status-label" style="font-size: 0.7rem; color: #999;">Internal System Chat</div>
     </div>
 </header>
 
@@ -115,7 +70,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; heig
 <div class="input-container">
     <div class="member-picker" id="member-picker"></div>
     <div class="input-row">
-        <textarea id="msg-input" placeholder="Type a message..." rows="1" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+        <textarea id="msg-input" placeholder="Message..." rows="1"></textarea>
         <button class="send-btn" onclick="sendInternalMessage()">↑</button>
     </div>
 </div>
@@ -125,71 +80,136 @@ const SB_URL = 'https://ctrbkrwiwpojbzfpsxwl.supabase.co';
 const SB_KEY = 'sb_publishable_uK-ihohO48o6BPRW8rmDqQ_LbJnfTI7';
 const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
-// Updated structure: internalRooms[roomName] = { messages: [], pin: null }
-let systemData = { members: [], internalRooms: { "general": { messages: [], pin: null } }, activeRoom: "general" };
+// New Structure: categories: [ {name: "Chat", rooms: { "general": {messages:[], pin:null} } } ]
+let systemData = { 
+    members: [], 
+    categories: [{ name: "Text Channels", rooms: { "general": { messages: [], pin: null } } }],
+    activeRoom: "general" 
+};
 let currentProxyId = 'system';
 
 async function loadData() {
     const { data: { user } } = await _supabase.auth.getUser();
     if (!user) return window.location.href = 'mobileindex.html';
-    
     const { data } = await _supabase.from('profiles').select('system_data').eq('user_id', user.id).single();
+    
     if (data?.system_data) {
-        systemData = data.system_data;
-        // Migration check for old data format
-        if (!systemData.internalRooms) {
-            systemData.internalRooms = { "general": { messages: [], pin: null } };
-        } else {
-            // Fix any rooms that are just arrays (old format)
-            Object.keys(systemData.internalRooms).forEach(key => {
-                if (Array.isArray(systemData.internalRooms[key])) {
-                    systemData.internalRooms[key] = { messages: systemData.internalRooms[key], pin: null };
-                }
-            });
+        let sd = data.system_data;
+        // Migration to Categories if needed
+        if (!sd.categories) {
+            sd.categories = [{ name: "Internal", rooms: sd.internalRooms || { "general": { messages: [], pin: null } } }];
+            delete sd.internalRooms;
         }
+        systemData = sd;
     }
-    renderRooms();
+    renderUI();
+}
+
+function renderUI() {
+    renderSidebar();
     renderMemberPicker();
     renderMessages();
 }
 
-function renderMemberPicker() {
-    const picker = document.getElementById('member-picker');
-    picker.innerHTML = `
-        <div class="picker-btn ${currentProxyId === 'system' ? 'active' : ''}" onclick="setSpeaker('system', this)">
-            <img src="https://via.placeholder.com/150/ff00ff/ffffff?text=SYS">
-        </div>`;
-    
-    (systemData.members || []).forEach(m => {
-        picker.innerHTML += `
-            <div class="picker-btn ${currentProxyId == m.id ? 'active' : ''}" onclick="setSpeaker('${m.id}', this)">
-                <img src="${m.pfp}" style="border: 2px solid ${m.color}">
-            </div>`;
+function renderSidebar() {
+    const list = document.getElementById('category-list');
+    list.innerHTML = '';
+    systemData.categories.forEach((cat, catIdx) => {
+        let catHtml = `<div class="category-header"><span>${cat.name}</span><button onclick="addRoom(${catIdx})" style="border:none; background:none; color:#aaa;">+</button></div>`;
+        Object.keys(cat.rooms).forEach(roomKey => {
+            const room = cat.rooms[roomKey];
+            catHtml += `
+                <div class="room-item ${systemData.activeRoom === roomKey ? 'active' : ''}" onclick="switchRoom('${roomKey}')">
+                    <span># ${roomKey} ${room.pin ? '🔒' : ''}</span>
+                    <button class="dot-menu" onclick="event.stopPropagation(); showRoomOptions('${roomKey}', ${catIdx})">⋮</button>
+                </div>`;
+        });
+        list.innerHTML += catHtml;
     });
 }
 
-function setSpeaker(id, el) {
-    currentProxyId = id;
-    document.querySelectorAll('.picker-btn').forEach(b => b.classList.remove('active'));
-    el.classList.add('active');
+function showRoomOptions(roomKey, catIdx) {
+    const action = prompt(`Options for #${roomKey}:\n1. Delete Room\n2. Move Category\n(Type number)`);
+    if (action === "1") deleteRoom(roomKey, catIdx);
+    if (action === "2") moveRoom(roomKey, catIdx);
+}
+
+async function deleteRoom(roomKey, catIdx) {
+    const room = systemData.categories[catIdx].rooms[roomKey];
+    if (room.pin) {
+        const p = prompt("Enter PIN to delete this locked room:");
+        if (p !== room.pin) return alert("Wrong PIN.");
+    }
+    if (confirm(`Delete #${roomKey} permanently?`)) {
+        delete systemData.categories[catIdx].rooms[roomKey];
+        if (systemData.activeRoom === roomKey) systemData.activeRoom = "general";
+        await sync();
+        renderUI();
+    }
+}
+
+async function moveRoom(roomKey, oldCatIdx) {
+    const names = systemData.categories.map((c, i) => `${i}: ${c.name}`).join('\n');
+    const newIdx = prompt(`Move to which category index?\n${names}`);
+    if (newIdx !== null && systemData.categories[newIdx]) {
+        const roomData = systemData.categories[oldCatIdx].rooms[roomKey];
+        delete systemData.categories[oldCatIdx].rooms[roomKey];
+        systemData.categories[newIdx].rooms[roomKey] = roomData;
+        await sync();
+        renderUI();
+    }
+}
+
+async function addCategory() {
+    const name = prompt("Category Name:");
+    if (name) {
+        systemData.categories.push({ name, rooms: {} });
+        await sync();
+        renderUI();
+    }
+}
+
+async function addRoom(catIdx) {
+    const name = prompt("Room Name:").toLowerCase().replace(/\s+/g, '-');
+    if (!name) return;
+    let pin = confirm("PIN protect this room?") ? prompt("Set 4-digit PIN:") : null;
+    systemData.categories[catIdx].rooms[name] = { messages: [], pin };
+    await sync();
+    switchRoom(name);
+}
+
+function switchRoom(roomKey) {
+    let targetRoom = null;
+    systemData.categories.forEach(c => { if(c.rooms[roomKey]) targetRoom = c.rooms[roomKey]; });
+    
+    if (targetRoom?.pin) {
+        if (prompt("Enter PIN:") !== targetRoom.pin) return alert("Access Denied");
+    }
+    
+    systemData.activeRoom = roomKey;
+    document.getElementById('current-room-name').innerText = `# ${roomKey}`;
+    renderUI();
+    if (document.getElementById('sidebar').classList.contains('open')) toggleMenu();
 }
 
 function renderMessages() {
     const display = document.getElementById('chat-display');
     display.innerHTML = '';
-    const roomObj = systemData.internalRooms[systemData.activeRoom];
-    const messages = roomObj ? roomObj.messages : [];
+    let activeRoomObj = null;
+    systemData.categories.forEach(c => { if(c.rooms[systemData.activeRoom]) activeRoomObj = c.rooms[systemData.activeRoom]; });
     
-    messages.forEach((msg) => {
-        display.innerHTML += `
-            <div class="message ${msg.id === currentProxyId ? 'own' : ''}">
-                <img src="${msg.pfp}" class="msg-pfp">
-                <div class="msg-content">
-                    <div class="bubble">${msg.text}</div>
-                    <div class="msg-meta">${msg.name} • ${msg.time}</div>
-                </div>
-            </div>`;
-    });
+    if (activeRoomObj) {
+        activeRoomObj.messages.forEach(msg => {
+            display.innerHTML += `
+                <div class="message ${msg.id === currentProxyId ? 'own' : ''}">
+                    <img src="${msg.pfp}" class="msg-pfp">
+                    <div class="msg-content">
+                        <div class="bubble">${msg.text}</div>
+                        <div class="msg-meta" style="font-size:0.6rem; color:#999;">${msg.name} • ${msg.time}</div>
+                    </div>
+                </div>`;
+        });
+    }
     display.scrollTop = display.scrollHeight;
 }
 
@@ -198,10 +218,10 @@ async function sendInternalMessage() {
     if (!input.value.trim()) return;
 
     let speaker = currentProxyId === 'system' 
-        ? { name: "System", color: "#ff00ff", pfp: "https://via.placeholder.com/150/ff00ff/ffffff?text=SYS" }
+        ? { name: "System", pfp: "https://via.placeholder.com/150/ff00ff/ffffff?text=SYS" }
         : systemData.members.find(m => m.id == currentProxyId);
 
-    const newMessage = {
+    const msg = {
         id: currentProxyId,
         name: speaker.name,
         pfp: speaker.pfp,
@@ -209,79 +229,34 @@ async function sendInternalMessage() {
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
-    systemData.internalRooms[systemData.activeRoom].messages.push(newMessage);
+    systemData.categories.forEach(c => {
+        if (c.rooms[systemData.activeRoom]) c.rooms[systemData.activeRoom].messages.push(msg);
+    });
+
     input.value = '';
-    input.style.height = 'auto';
     renderMessages();
-    
+    await sync();
+}
+
+async function sync() {
     const { data: { user } } = await _supabase.auth.getUser();
     await _supabase.from('profiles').update({ system_data: systemData }).eq('user_id', user.id);
 }
 
-function toggleMenu() {
-    const side = document.getElementById('sidebar');
-    const over = document.getElementById('sidebar-overlay');
-    const isOpen = side.classList.toggle('open');
-    over.style.display = isOpen ? 'block' : 'none';
-}
-
-function switchRoom(room) {
-    const roomObj = systemData.internalRooms[room];
-    
-    // Check for PIN
-    if (roomObj.pin) {
-        const attempt = prompt("Enter PIN for this room:");
-        if (attempt !== roomObj.pin) {
-            alert("Incorrect PIN.");
-            return;
-        }
-    }
-
-    systemData.activeRoom = room;
-    document.getElementById('current-room-name').innerText = `# ${room}`;
-    document.getElementById('room-status-label').innerText = roomObj.pin ? "🔒 PIN Protected Chat" : "Internal System Chat";
-    renderRooms();
-    renderMessages();
-    if (document.getElementById('sidebar').classList.contains('open')) toggleMenu();
-}
-
-function renderRooms() {
-    const list = document.getElementById('room-list');
-    list.innerHTML = '';
-    Object.keys(systemData.internalRooms).forEach(roomKey => {
-        const isLocked = systemData.internalRooms[roomKey].pin;
-        list.innerHTML += `
-            <div class="room-item ${systemData.activeRoom === roomKey ? 'active' : ''}" onclick="switchRoom('${roomKey}')">
-                <span># ${roomKey}</span>
-                ${isLocked ? '<span class="lock-icon">🔒</span>' : ''}
-            </div>`;
+function renderMemberPicker() {
+    const picker = document.getElementById('member-picker');
+    picker.innerHTML = `<div class="picker-btn ${currentProxyId==='system'?'active':''}" onclick="setSpeaker('system')"><img src="https://via.placeholder.com/150/ff00ff/ffffff?text=SYS"></div>`;
+    systemData.members.forEach(m => {
+        picker.innerHTML += `<div class="picker-btn ${currentProxyId==m.id?'active':''}" onclick="setSpeaker('${m.id}')"><img src="${m.pfp}"></div>`;
     });
 }
 
-async function addRoom() {
-    const name = prompt("New Room Name:");
-    if (!name) return;
-    
-    const slug = name.toLowerCase().replace(/\s+/g, '-');
-    if (systemData.internalRooms[slug]) return alert("Room already exists!");
-
-    let pin = null;
-    const wantsLock = confirm("Do you want to PIN lock this room?");
-    if (wantsLock) {
-        pin = prompt("Set a 4-digit PIN:");
-        if (!pin || pin.length < 1) {
-            alert("Lock cancelled (no PIN entered)");
-            pin = null;
-        }
-    }
-
-    systemData.internalRooms[slug] = { messages: [], pin: pin };
-    
-    // Sync immediately to save the new room
-    const { data: { user } } = await _supabase.auth.getUser();
-    await _supabase.from('profiles').update({ system_data: systemData }).eq('user_id', user.id);
-    
-    switchRoom(slug);
+function setSpeaker(id) { currentProxyId = id; renderMemberPicker(); renderMessages(); }
+function toggleMenu() {
+    const s = document.getElementById('sidebar');
+    const o = document.getElementById('sidebar-overlay');
+    const open = s.classList.toggle('open');
+    o.style.display = open ? 'block' : 'none';
 }
 
 window.onload = loadData;

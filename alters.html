@@ -2,35 +2,78 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Alters</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Manage Alters | PluralPoint</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root { --bg: #fff0f6; --panel: #ffffff; --magenta: #ff00ff; --soft-pink: #ffdeeb; }
-        * { font-family: 'Georgia', serif; box-sizing: border-box; color: var(--magenta); }
-        body { background-color: var(--bg); padding: 20px; }
+        * { font-family: 'system-ui', -apple-system, sans-serif; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg); padding: 20px 15px 50px 15px; margin: 0; }
+
+        .back-link { text-decoration: none; font-weight: bold; color: var(--magenta); display: inline-block; margin-bottom: 20px; font-size: 1.1rem; }
+        
         .card { background: var(--panel); padding: 20px; border-radius: 20px; border: 2px solid var(--soft-pink); margin-bottom: 20px; }
-        input, textarea { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid var(--soft-pink); border-radius: 10px; }
-        .main-btn { background: var(--magenta); color: white !important; border: none; padding: 12px; border-radius: 10px; cursor: pointer; width: 100%; font-weight: bold; }
-        .back-link { text-decoration: none; font-weight: bold; display: block; margin-bottom: 20px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-        .pfp-preview { width: 100px; height: 100px; object-fit: cover; border-radius: 10px; display: block; margin: 10px auto; }
+        
+        h2 { margin-top: 0; color: var(--magenta); font-size: 1.4rem; }
+        label { display: block; font-size: 0.8rem; font-weight: bold; margin-top: 12px; color: #666; }
+        
+        input, textarea { width: 100%; padding: 12px; margin: 5px 0; border: 1px solid var(--soft-pink); border-radius: 12px; font-size: 16px; background: #fafafa; }
+        
+        /* Color Picker Styling */
+        .color-row { display: flex; align-items: center; gap: 15px; margin: 10px 0; }
+        input[type="color"] { width: 60px; height: 60px; border: none; border-radius: 50%; padding: 0; overflow: hidden; cursor: pointer; background: none; }
+        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        input[type="color"]::-webkit-color-swatch { border: none; border-radius: 50%; }
+
+        .main-btn { background: var(--magenta); color: white; border: none; padding: 15px; border-radius: 15px; cursor: pointer; width: 100%; font-weight: bold; font-size: 1rem; margin-top: 15px; }
+        .delete-btn { background: none; color: #ff4d4d; border: 1px solid #ff4d4d; padding: 8px; border-radius: 10px; width: 100%; margin-top: 10px; font-size: 0.8rem; }
+
+        .pfp-area { text-align: center; margin-bottom: 15px; }
+        .pfp-preview { width: 120px; height: 120px; object-fit: cover; border-radius: 25%; border: 4px solid var(--soft-pink); background: #eee; }
+        
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; margin-top: 30px; }
+        .alter-mini-card { background: white; padding: 15px; border-radius: 15px; text-align: center; border-bottom: 5px solid; cursor: pointer; }
+        .alter-mini-card img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; margin-bottom: 8px; }
     </style>
 </head>
 <body>
 
-<a href="mobileindex.html" class="back-link">⬅ Back to Dashboard</a>
+<a href="mobileindex.html" class="back-link">← Dashboard</a>
 
-<section class="card">
+<section class="card" id="editor-form">
     <h2 id="form-title">Add New Alter</h2>
     <input type="hidden" id="edit-id">
+    
+    <div class="pfp-area">
+        <img src="https://via.placeholder.com/150" id="preview-img" class="pfp-preview">
+        <input type="file" id="pfp-input" accept="image/*" style="display:none" onchange="previewFile()">
+        <button class="main-btn" style="background:var(--soft-pink); color:var(--magenta); padding:8px; font-size:0.8rem;" onclick="document.getElementById('pfp-input').click()">Change Photo</button>
+    </div>
+
+    <label>Name</label>
     <input type="text" id="name" placeholder="Name">
-    <input type="text" id="role" placeholder="Role">
-    <textarea id="bio" placeholder="Bio..."></textarea>
-    <label>Theme Color:</label>
-    <input type="color" id="color" value="#ff00ff">
-    <input type="file" id="pfp" accept="image/*">
-    <button class="main-btn" onclick="saveAlter()">Save Alter</button>
+    
+    <div style="display:flex; gap:10px;">
+        <div style="flex:1"><label>Pronouns</label><input type="text" id="pronouns" placeholder="they/them"></div>
+        <div style="flex:1"><label>Role</label><input type="text" id="role" placeholder="Protector"></div>
+    </div>
+
+    <label>Source (Media/Factive/etc)</label>
+    <input type="text" id="source" placeholder="Original / Media Name">
+
+    <label>Bio & Notes</label>
+    <textarea id="bio" rows="3" placeholder="Tell us about them..."></textarea>
+
+    <div class="color-row">
+        <div>
+            <label>Custom Theme</label>
+            <input type="color" id="color-picker" value="#ff00ff">
+        </div>
+        <p style="font-size: 0.8rem; color: #888;">Tap circle to open color wheel</p>
+    </div>
+
+    <button class="main-btn" onclick="saveAlter()">Save Alter Profile ✨</button>
+    <button id="delete-btn" class="delete-btn" style="display:none;" onclick="deleteAlter()">Delete Alter</button>
 </section>
 
 <div id="alters-grid" class="grid"></div>
@@ -40,75 +83,84 @@ const SB_URL = 'https://ctrbkrwiwpojbzfpsxwl.supabase.co';
 const SB_KEY = 'sb_publishable_uK-ihohO48o6BPRW8rmDqQ_LbJnfTI7';
 const _supabase = supabase.createClient(SB_URL, SB_KEY);
 let systemData = { members: [] };
+let currentUser = null;
 
 async function loadAlters() {
     const { data: { user } } = await _supabase.auth.getUser();
+    if(!user) return;
+    currentUser = user;
     const { data } = await _supabase.from('profiles').select('system_data').eq('user_id', user.id).single();
     if (data?.system_data) systemData = data.system_data;
     render();
 }
 
+function previewFile() {
+    const file = document.getElementById('pfp-input').files[0];
+    const reader = new FileReader();
+    reader.onloadend = () => { document.getElementById('preview-img').src = reader.result; }
+    if (file) reader.readAsDataURL(file);
+}
+
 function render() {
     const grid = document.getElementById('alters-grid');
     grid.innerHTML = '';
-    systemData.members.forEach(m => {
+    (systemData.members || []).forEach(m => {
         grid.innerHTML += `
-            <div class="card" style="border-top: 8px solid ${m.color}">
-                <img src="${m.pfp || ''}" class="pfp-preview">
-                <h3>${m.name}</h3>
-                <p><b>${m.role}</b></p>
-                <button class="main-btn" style="background:#fff; color:var(--magenta)!important; border:1px solid" onclick="editAlter(${m.id})">Edit</button>
-                <button class="main-btn" style="background:red; margin-top:5px" onclick="deleteAlter(${m.id})">Delete</button>
+            <div class="alter-mini-card" style="border-color: ${m.color}" onclick="editAlter(${m.id})">
+                <img src="${m.pfp || 'https://via.placeholder.com/150'}">
+                <div style="font-weight:bold; color:#333; font-size:0.9rem;">${m.name}</div>
+                <div style="font-size:0.7rem; color:#888;">${m.role || ''}</div>
             </div>`;
     });
 }
 
 async function saveAlter() {
     const id = document.getElementById('edit-id').value;
-    const file = document.getElementById('pfp').files[0];
-    let pfpBase64 = id ? systemData.members.find(m => m.id == id).pfp : "";
-
-    const finalize = async (img) => {
-        const alter = {
-            id: id ? parseInt(id) : Date.now(),
-            name: document.getElementById('name').value,
-            role: document.getElementById('role').value,
-            bio: document.getElementById('bio').value,
-            color: document.getElementById('color').value,
-            pfp: img || pfpBase64,
-            isFronting: false
-        };
-        if (id) systemData.members[systemData.members.findIndex(m => m.id == id)] = alter;
-        else systemData.members.push(alter);
-        
-        const { data: { user } } = await _supabase.auth.getUser();
-        await _supabase.from('profiles').update({ system_data: systemData }).eq('user_id', user.id);
-        location.reload();
+    const newAlter = {
+        id: id ? parseInt(id) : Date.now(),
+        name: document.getElementById('name').value,
+        pronouns: document.getElementById('pronouns').value,
+        role: document.getElementById('role').value,
+        source: document.getElementById('source').value,
+        bio: document.getElementById('bio').value,
+        color: document.getElementById('color-picker').value,
+        pfp: document.getElementById('preview-img').src,
+        isFronting: id ? systemData.members.find(m => m.id == id).isFronting : false
     };
 
-    if (file) {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => finalize(reader.result);
-    } else finalize();
+    if (id) {
+        const idx = systemData.members.findIndex(m => m.id == id);
+        systemData.members[idx] = newAlter;
+    } else {
+        if(!systemData.members) systemData.members = [];
+        systemData.members.push(newAlter);
+    }
+    
+    await _supabase.from('profiles').update({ system_data: systemData }).eq('user_id', currentUser.id);
+    location.reload();
 }
 
 function editAlter(id) {
     const m = systemData.members.find(m => m.id == id);
     document.getElementById('edit-id').value = m.id;
     document.getElementById('name').value = m.name;
-    document.getElementById('role').value = m.role;
-    document.getElementById('bio').value = m.bio;
-    document.getElementById('color').value = m.color;
-    document.getElementById('form-title').innerText = "Editing " + m.name;
+    document.getElementById('pronouns').value = m.pronouns || '';
+    document.getElementById('role').value = m.role || '';
+    document.getElementById('source').value = m.source || '';
+    document.getElementById('bio').value = m.bio || '';
+    document.getElementById('color-picker').value = m.color || '#ff00ff';
+    document.getElementById('preview-img').src = m.pfp || 'https://via.placeholder.com/150';
+    document.getElementById('form-title').innerText = "Edit " + m.name;
+    document.getElementById('delete-btn').style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-async function deleteAlter(id) {
-    if(confirm("Delete alter?")) {
-        systemData.members = systemData.members.filter(m => m.id !== id);
-        const { data: { user } } = await _supabase.auth.getUser();
-        await _supabase.from('profiles').update({ system_data: systemData }).eq('user_id', user.id);
-        render();
+async function deleteAlter() {
+    const id = document.getElementById('edit-id').value;
+    if(confirm("Delete this alter permanently?")) {
+        systemData.members = systemData.members.filter(m => m.id != id);
+        await _supabase.from('profiles').update({ system_data: systemData }).eq('user_id', currentUser.id);
+        location.reload();
     }
 }
 

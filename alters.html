@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Alters</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --bg: #fff0f6; --panel: #ffffff; --magenta: #ff00ff; --soft-pink: #ffdeeb; }
+        * { font-family: 'Georgia', serif; box-sizing: border-box; color: var(--magenta); }
+        body { background-color: var(--bg); padding: 20px; }
+        .card { background: var(--panel); padding: 20px; border-radius: 20px; border: 2px solid var(--soft-pink); margin-bottom: 20px; }
+        input, textarea { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid var(--soft-pink); border-radius: 10px; }
+        .main-btn { background: var(--magenta); color: white !important; border: none; padding: 12px; border-radius: 10px; cursor: pointer; width: 100%; font-weight: bold; }
+        .back-link { text-decoration: none; font-weight: bold; display: block; margin-bottom: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .pfp-preview { width: 100px; height: 100px; object-fit: cover; border-radius: 10px; display: block; margin: 10px auto; }
+    </style>
+</head>
+<body>
+
+<a href="mobileindex.html" class="back-link">⬅ Back to Dashboard</a>
+
+<section class="card">
+    <h2 id="form-title">Add New Alter</h2>
+    <input type="hidden" id="edit-id">
+    <input type="text" id="name" placeholder="Name">
+    <input type="text" id="role" placeholder="Role">
+    <textarea id="bio" placeholder="Bio..."></textarea>
+    <label>Theme Color:</label>
+    <input type="color" id="color" value="#ff00ff">
+    <input type="file" id="pfp" accept="image/*">
+    <button class="main-btn" onclick="saveAlter()">Save Alter</button>
+</section>
+
+<div id="alters-grid" class="grid"></div>
+
+<script>
+const SB_URL = 'https://ctrbkrwiwpojbzfpsxwl.supabase.co';
+const SB_KEY = 'sb_publishable_uK-ihohO48o6BPRW8rmDqQ_LbJnfTI7';
+const _supabase = supabase.createClient(SB_URL, SB_KEY);
+let systemData = { members: [] };
+
+async function loadAlters() {
+    const { data: { user } } = await _supabase.auth.getUser();
+    const { data } = await _supabase.from('profiles').select('system_data').eq('user_id', user.id).single();
+    if (data?.system_data) systemData = data.system_data;
+    render();
+}
+
+function render() {
+    const grid = document.getElementById('alters-grid');
+    grid.innerHTML = '';
+    systemData.members.forEach(m => {
+        grid.innerHTML += `
+            <div class="card" style="border-top: 8px solid ${m.color}">
+                <img src="${m.pfp || ''}" class="pfp-preview">
+                <h3>${m.name}</h3>
+                <p><b>${m.role}</b></p>
+                <button class="main-btn" style="background:#fff; color:var(--magenta)!important; border:1px solid" onclick="editAlter(${m.id})">Edit</button>
+                <button class="main-btn" style="background:red; margin-top:5px" onclick="deleteAlter(${m.id})">Delete</button>
+            </div>`;
+    });
+}
+
+async function saveAlter() {
+    const id = document.getElementById('edit-id').value;
+    const file = document.getElementById('pfp').files[0];
+    let pfpBase64 = id ? systemData.members.find(m => m.id == id).pfp : "";
+
+    const finalize = async (img) => {
+        const alter = {
+            id: id ? parseInt(id) : Date.now(),
+            name: document.getElementById('name').value,
+            role: document.getElementById('role').value,
+            bio: document.getElementById('bio').value,
+            color: document.getElementById('color').value,
+            pfp: img || pfpBase64,
+            isFronting: false
+        };
+        if (id) systemData.members[systemData.members.findIndex(m => m.id == id)] = alter;
+        else systemData.members.push(alter);
+        
+        const { data: { user } } = await _supabase.auth.getUser();
+        await _supabase.from('profiles').update({ system_data: systemData }).eq('user_id', user.id);
+        location.reload();
+    };
+
+    if (file) {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => finalize(reader.result);
+    } else finalize();
+}
+
+function editAlter(id) {
+    const m = systemData.members.find(m => m.id == id);
+    document.getElementById('edit-id').value = m.id;
+    document.getElementById('name').value = m.name;
+    document.getElementById('role').value = m.role;
+    document.getElementById('bio').value = m.bio;
+    document.getElementById('color').value = m.color;
+    document.getElementById('form-title').innerText = "Editing " + m.name;
+}
+
+async function deleteAlter(id) {
+    if(confirm("Delete alter?")) {
+        systemData.members = systemData.members.filter(m => m.id !== id);
+        const { data: { user } } = await _supabase.auth.getUser();
+        await _supabase.from('profiles').update({ system_data: systemData }).eq('user_id', user.id);
+        render();
+    }
+}
+
+window.onload = loadAlters;
+</script>
+</body>
+</html>

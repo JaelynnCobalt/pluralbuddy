@@ -24,8 +24,9 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; heig
     transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 2000;
 }
 .sidebar.open { left: 0; box-shadow: 10px 0 30px rgba(255,0,255,0.1); }
-.room-item { padding: 15px 20px; font-weight: 600; color: var(--magenta); border-bottom: 1px solid var(--bg); }
+.room-item { padding: 15px 20px; font-weight: 600; color: var(--magenta); border-bottom: 1px solid var(--bg); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
 .room-item.active { background: var(--soft-pink); }
+.lock-icon { font-size: 0.8rem; opacity: 0.6; }
 
 /* HEADER */
 .chat-header { 
@@ -50,7 +51,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; heig
 .bubble { 
     background: white; padding: 10px 14px; border-radius: 18px; 
     border-top-left-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-    font-size: 0.95rem; line-height: 1.4;
+    font-size: 0.95rem; line-height: 1.4; word-wrap: break-word;
 }
 .own .bubble { 
     background: var(--magenta); color: white; 
@@ -59,22 +60,15 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; heig
 .msg-meta { font-size: 0.7rem; color: #999; margin-top: 4px; padding: 0 5px; }
 .own .msg-meta { text-align: right; }
 
-/* INPUT AREA - TEXTING STYLE */
+/* INPUT AREA */
 .input-container { 
     background: white; padding: 10px; border-top: 1px solid var(--soft-pink);
     padding-bottom: calc(10px + env(safe-area-inset-bottom));
 }
 
-/* HORIZONTAL MEMBER PICKER */
-.member-picker {
-    display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px;
-    scrollbar-width: none;
-}
+.member-picker { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; }
 .member-picker::-webkit-scrollbar { display: none; }
-.picker-btn {
-    flex: 0 0 auto; width: 45px; height: 45px; border-radius: 50%;
-    border: 3px solid transparent; padding: 2px; transition: 0.2s;
-}
+.picker-btn { flex: 0 0 auto; width: 45px; height: 45px; border-radius: 50%; border: 3px solid transparent; padding: 2px; transition: 0.2s; }
 .picker-btn.active { border-color: var(--magenta); transform: scale(1.1); }
 .picker-btn img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
 
@@ -90,9 +84,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; heig
     font-weight: bold; font-size: 1.2rem; display: flex; align-items: center; justify-content: center;
 }
 
-#sidebar-overlay {
-    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 1500;
-}
+#sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 1500; }
 </style>
 </head>
 <body>
@@ -100,9 +92,9 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; heig
 <div id="sidebar-overlay" onclick="toggleMenu()"></div>
 
 <div class="sidebar" id="sidebar">
-    <div style="padding: 20px; font-weight: bold; border-bottom: 1px solid var(--bg); display: flex; justify-content: space-between;">
+    <div style="padding: 20px; font-weight: bold; border-bottom: 1px solid var(--bg); display: flex; justify-content: space-between; align-items: center;">
         <span>Rooms</span>
-        <button onclick="addRoom()" style="border:none; background:none; color:var(--magenta); font-size:1.5rem;">+</button>
+        <button onclick="addRoom()" style="border:none; background:none; color:var(--magenta); font-size:1.8rem; cursor:pointer;">+</button>
     </div>
     <div id="room-list"></div>
     <div style="position: absolute; bottom: 20px; left: 20px;">
@@ -114,18 +106,14 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; heig
     <button class="menu-toggle" onclick="toggleMenu()">☰</button>
     <div style="flex:1">
         <div id="current-room-name" style="font-weight: bold; color: var(--magenta);"># general</div>
-        <div style="font-size: 0.7rem; color: #999;">Internal System Chat</div>
+        <div id="room-status-label" style="font-size: 0.7rem; color: #999;">Internal System Chat</div>
     </div>
 </header>
 
 <div id="chat-display"></div>
 
 <div class="input-container">
-    <div class="member-picker" id="member-picker">
-        <div class="picker-btn active" onclick="setSpeaker('system', this)" id="btn-system">
-            <img src="https://via.placeholder.com/150/ff00ff/ffffff?text=SYS">
-        </div>
-    </div>
+    <div class="member-picker" id="member-picker"></div>
     <div class="input-row">
         <textarea id="msg-input" placeholder="Type a message..." rows="1" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
         <button class="send-btn" onclick="sendInternalMessage()">↑</button>
@@ -137,7 +125,8 @@ const SB_URL = 'https://ctrbkrwiwpojbzfpsxwl.supabase.co';
 const SB_KEY = 'sb_publishable_uK-ihohO48o6BPRW8rmDqQ_LbJnfTI7';
 const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
-let systemData = { members: [], internalRooms: { "general": [] }, activeRoom: "general" };
+// Updated structure: internalRooms[roomName] = { messages: [], pin: null }
+let systemData = { members: [], internalRooms: { "general": { messages: [], pin: null } }, activeRoom: "general" };
 let currentProxyId = 'system';
 
 async function loadData() {
@@ -147,7 +136,17 @@ async function loadData() {
     const { data } = await _supabase.from('profiles').select('system_data').eq('user_id', user.id).single();
     if (data?.system_data) {
         systemData = data.system_data;
-        if (!systemData.internalRooms) systemData.internalRooms = { "general": [] };
+        // Migration check for old data format
+        if (!systemData.internalRooms) {
+            systemData.internalRooms = { "general": { messages: [], pin: null } };
+        } else {
+            // Fix any rooms that are just arrays (old format)
+            Object.keys(systemData.internalRooms).forEach(key => {
+                if (Array.isArray(systemData.internalRooms[key])) {
+                    systemData.internalRooms[key] = { messages: systemData.internalRooms[key], pin: null };
+                }
+            });
+        }
     }
     renderRooms();
     renderMemberPicker();
@@ -178,10 +177,10 @@ function setSpeaker(id, el) {
 function renderMessages() {
     const display = document.getElementById('chat-display');
     display.innerHTML = '';
-    const messages = systemData.internalRooms[systemData.activeRoom] || [];
+    const roomObj = systemData.internalRooms[systemData.activeRoom];
+    const messages = roomObj ? roomObj.messages : [];
     
-    messages.forEach((msg, idx) => {
-        const isOwn = idx === messages.length - 1; // Visual flavor for the "texting" feel
+    messages.forEach((msg) => {
         display.innerHTML += `
             <div class="message ${msg.id === currentProxyId ? 'own' : ''}">
                 <img src="${msg.pfp}" class="msg-pfp">
@@ -210,7 +209,7 @@ async function sendInternalMessage() {
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
-    systemData.internalRooms[systemData.activeRoom].push(newMessage);
+    systemData.internalRooms[systemData.activeRoom].messages.push(newMessage);
     input.value = '';
     input.style.height = 'auto';
     renderMessages();
@@ -227,28 +226,62 @@ function toggleMenu() {
 }
 
 function switchRoom(room) {
+    const roomObj = systemData.internalRooms[room];
+    
+    // Check for PIN
+    if (roomObj.pin) {
+        const attempt = prompt("Enter PIN for this room:");
+        if (attempt !== roomObj.pin) {
+            alert("Incorrect PIN.");
+            return;
+        }
+    }
+
     systemData.activeRoom = room;
     document.getElementById('current-room-name').innerText = `# ${room}`;
+    document.getElementById('room-status-label').innerText = roomObj.pin ? "🔒 PIN Protected Chat" : "Internal System Chat";
     renderRooms();
     renderMessages();
-    toggleMenu();
+    if (document.getElementById('sidebar').classList.contains('open')) toggleMenu();
 }
 
 function renderRooms() {
     const list = document.getElementById('room-list');
     list.innerHTML = '';
-    Object.keys(systemData.internalRooms).forEach(room => {
-        list.innerHTML += `<div class="room-item ${systemData.activeRoom === room ? 'active' : ''}" onclick="switchRoom('${room}')"># ${room}</div>`;
+    Object.keys(systemData.internalRooms).forEach(roomKey => {
+        const isLocked = systemData.internalRooms[roomKey].pin;
+        list.innerHTML += `
+            <div class="room-item ${systemData.activeRoom === roomKey ? 'active' : ''}" onclick="switchRoom('${roomKey}')">
+                <span># ${roomKey}</span>
+                ${isLocked ? '<span class="lock-icon">🔒</span>' : ''}
+            </div>`;
     });
 }
 
-function addRoom() {
+async function addRoom() {
     const name = prompt("New Room Name:");
-    if (name) {
-        const slug = name.toLowerCase().replace(/\s+/g, '-');
-        systemData.internalRooms[slug] = [];
-        switchRoom(slug);
+    if (!name) return;
+    
+    const slug = name.toLowerCase().replace(/\s+/g, '-');
+    if (systemData.internalRooms[slug]) return alert("Room already exists!");
+
+    let pin = null;
+    const wantsLock = confirm("Do you want to PIN lock this room?");
+    if (wantsLock) {
+        pin = prompt("Set a 4-digit PIN:");
+        if (!pin || pin.length < 1) {
+            alert("Lock cancelled (no PIN entered)");
+            pin = null;
+        }
     }
+
+    systemData.internalRooms[slug] = { messages: [], pin: pin };
+    
+    // Sync immediately to save the new room
+    const { data: { user } } = await _supabase.auth.getUser();
+    await _supabase.from('profiles').update({ system_data: systemData }).eq('user_id', user.id);
+    
+    switchRoom(slug);
 }
 
 window.onload = loadData;

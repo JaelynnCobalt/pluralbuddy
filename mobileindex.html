@@ -143,45 +143,79 @@ let currentUser = null;
 let currentUsername = "";
 
 function updateLoading(percent) {
-    document.getElementById('load-bar').style.width = percent + '%';
-    document.getElementById('load-star').style.left = (percent - 8) + '%';
+    const bar = document.getElementById('load-bar');
+    const star = document.getElementById('load-star');
+    if(bar) bar.style.width = percent + '%';
+    if(star) star.style.left = Math.max(0, percent - 8) + '%';
+}
+
+async function handleAuth() {
+    const email = document.getElementById('email-input').value;
+    const password = document.getElementById('passcode-input').value;
+    try {
+        const { error } = await _supabase.auth.signInWithPassword({ email, password });
+        if(error) throw error;
+        location.reload();
+    } catch(e) { alert("Login failed: " + e.message); }
 }
 
 async function loadData() {
     try {
         updateLoading(30);
-        const { data: { user } } = await _supabase.auth.getUser();
-        if (!user) {
+        const { data: { user }, error: userError } = await _supabase.auth.getUser();
+        
+        if (!user || userError) {
             document.getElementById('loading-screen').style.display = 'none';
             document.getElementById('auth-screen').style.display = 'block';
             return;
         };
+
         currentUser = user;
         updateLoading(60);
-        const { data } = await _supabase.from('profiles').select('*').eq('user_id', user.id).single();
+        
+        const { data, error: profileError } = await _supabase.from('profiles').select('*').eq('user_id', user.id).single();
+        
+        // Safety Check: Initialize systemData if profile or system_data is missing
         if (data) {
             systemData = data.system_data || { members: [], history: [], bio: "" };
-            currentUsername = data.username || "";
+            if (!systemData.members) systemData.members = [];
+            if (!systemData.history) systemData.history = [];
+            currentUsername = data.username || "user";
         }
+
+        updateLoading(85);
         refreshUI();
-        await loadFriendsLive();
+        
+        try {
+            await loadFriendsLive();
+        } catch (e) { console.warn("Friends failed to load, continuing..."); }
+
         updateLoading(100);
         setTimeout(() => {
             document.getElementById('loading-screen').style.display = 'none';
             document.getElementById('dashboard').style.display = 'block';
         }, 500);
-    } catch (err) { console.error(err); }
+
+    } catch (err) { 
+        console.error("Critical Load Error:", err);
+        // Force show dashboard even if things are broken so user isn't stuck
+        document.getElementById('loading-screen').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+    }
 }
 
 function refreshUI() {
     document.getElementById('view-sys-name').innerText = systemData.name || "System";
-    document.getElementById('view-sys-user').innerText = "@" + currentUsername;
+    document.getElementById('view-sys-user').innerText = "@" + (currentUsername || "username");
     document.getElementById('sys-pfp-display').src = systemData.pfp || "https://via.placeholder.com/150";
     
     const fDisp = document.getElementById('fronting-display');
     const oList = document.getElementById('overview-list');
     const hList = document.getElementById('front-history-list');
-    fDisp.innerHTML = ''; oList.innerHTML = ''; hList.innerHTML = '';
+    
+    if(fDisp) fDisp.innerHTML = ''; 
+    if(oList) oList.innerHTML = ''; 
+    if(hList) hList.innerHTML = '';
 
     (systemData.members || []).forEach(m => {
         if(m.isFronting) {
@@ -191,11 +225,14 @@ function refreshUI() {
     });
 
     const hist = [...(systemData.history || [])].reverse().slice(0, 5);
-    if(hist.length === 0) hList.innerHTML = '<div style="padding:20px; text-align:center; color:#888;">No history yet</div>';
-    hist.forEach((entry) => {
-        const timeStr = new Date(entry.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        hList.innerHTML += `<div class="history-card"><img src="${entry.pfp}" style="width:35px; height:35px; border-radius:50%; object-fit:cover;"><div style="flex:1"><div style="font-size:0.85rem; font-weight:bold;">${entry.name}</div><div style="font-size:0.7rem; color:#666;">${entry.status || 'Fronting'}</div></div><div style="font-size:0.7rem; color:#bbb;">${timeStr}</div></div>`;
-    });
+    if(hist.length === 0) {
+        if(hList) hList.innerHTML = '<div style="padding:20px; text-align:center; color:#888;">No history yet</div>';
+    } else {
+        hist.forEach((entry) => {
+            const timeStr = entry.startTime ? new Date(entry.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--';
+            hList.innerHTML += `<div class="history-card"><img src="${entry.pfp}" style="width:35px; height:35px; border-radius:50%; object-fit:cover;"><div style="flex:1"><div style="font-size:0.85rem; font-weight:bold;">${entry.name}</div><div style="font-size:0.7rem; color:#666;">${entry.status || 'Fronting'}</div></div><div style="font-size:0.7rem; color:#bbb;">${timeStr}</div></div>`;
+        });
+    }
 }
 
 async function toggleFront(id) {
@@ -210,23 +247,99 @@ async function toggleFront(id) {
         systemData.members[mIdx].status = s || "Fronting";
         systemData.members[mIdx].startTime = now.toISOString();
         if(!systemData.history) systemData.history = [];
-        systemData.history.push({ id: m.id, name: m.name, pfp: m.pfp, status: s || "Fronting", startTime: now.toISOString(), timestamp: now.toISOString() });
+        systemData.history.push({ 
+            id: m.id, 
+            name: m.name, 
+            pfp: m.pfp, 
+            status: s || "Fronting", 
+            startTime: now.toISOString(), 
+            timestamp: now.toISOString() 
+        });
     } else {
         const start = new Date(m.startTime);
         const duration = Math.round((now - start) / 60000);
         const entry = systemData.history.findLast(h => h.id == id && !h.endTime);
-        if(entry) { entry.endTime = now.toISOString(); entry.duration = duration; }
+        if(entry) { 
+            entry.endTime = now.toISOString(); 
+            entry.duration = Math.max(0, duration); 
+        }
         systemData.members[mIdx].isFronting = false;
         systemData.members[mIdx].status = "";
     }
-    refreshUI(); await sync();
+    refreshUI(); 
+    await sync();
 }
 
-async function sync() { await _supabase.from('profiles').update({ system_data: systemData }).eq('user_id', currentUser.id); showToast("Synced ✨"); }
-function showToast(m) { const t = document.getElementById('toast'); t.innerText = m; t.className = 'show'; setTimeout(() => t.className = '', 2000); }
+async function sync() { 
+    if(!currentUser) return;
+    await _supabase.from('profiles').update({ system_data: systemData }).eq('user_id', currentUser.id); 
+    showToast("Synced ✨"); 
+}
+
+function showToast(m) { 
+    const t = document.getElementById('toast'); 
+    if(t) { t.innerText = m; t.className = 'show'; setTimeout(() => t.className = '', 2000); }
+}
+
 async function logout() { await _supabase.auth.signOut(); location.reload(); }
-function showTab(id) { document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); document.getElementById(id).classList.add('active'); const navBtn = document.getElementById('tab-'+id); if(navBtn) navBtn.classList.add('active'); }
-function clearHistory() { if(confirm("Clear history?")) { systemData.history = []; sync(); refreshUI(); } }
+
+function showTab(id) { 
+    document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active')); 
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); 
+    const target = document.getElementById(id);
+    if(target) target.classList.add('active'); 
+    const navBtn = document.getElementById('tab-'+id); 
+    if(navBtn) navBtn.classList.add('active'); 
+}
+
+function clearHistory() { 
+    if(confirm("Clear history?")) { systemData.history = []; sync(); refreshUI(); } 
+}
+
+async function loadFriendsLive() {
+    const cont = document.getElementById('friends-list-container');
+    if(!cont) return;
+    const { data: conn } = await _supabase.from('connections').select('friend_id').eq('user_id', currentUser.id);
+    if (!conn || conn.length === 0) return;
+    const { data: profs } = await _supabase.from('profiles').select('username, system_data').in('user_id', conn.map(c => c.friend_id));
+    cont.innerHTML = '';
+    profs?.forEach(p => {
+        const fronts = (p.system_data?.members || []).filter(m => m.isFronting);
+        let fH = fronts.length > 0 ? '' : '<div style="font-size:0.75rem; color:#999;">Offline</div>';
+        fronts.forEach(f => fH += `<div style="display:flex; align-items:center; gap:8px; margin-top:5px;"><img src="${f.pfp}" style="width:30px; height:30px; border-radius:50%; border:2px solid ${f.color}"><div style="font-size:0.8rem;"><strong>${f.name}</strong>: ${f.status || 'Fronting'}</div></div>`);
+        cont.innerHTML += `<div class="card"><strong>@${p.username}</strong>${fH}</div>`;
+    });
+}
+
+function previewImage(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = e => { 
+            systemData.pfp = e.target.result; 
+            document.getElementById('edit-pfp-preview').src = e.target.result;
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+async function saveSettings() {
+    systemData.name = document.getElementById('edit-sys-name').value;
+    currentUsername = document.getElementById('edit-username').value;
+    systemData.bio = document.getElementById('edit-bio').value;
+    await _supabase.from('profiles').update({ system_data: systemData, username: currentUsername }).eq('user_id', currentUser.id);
+    showToast("Profile Updated!");
+    refreshUI();
+    showTab('overview');
+}
+
+function showSettings() {
+    document.getElementById('edit-sys-name').value = systemData.name || "";
+    document.getElementById('edit-username').value = currentUsername || "";
+    document.getElementById('edit-bio').value = systemData.bio || "";
+    document.getElementById('edit-pfp-preview').src = systemData.pfp || "https://via.placeholder.com/150";
+    showTab('settings');
+}
+
 window.onload = loadData;
 </script>
 </body>

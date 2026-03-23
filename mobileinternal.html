@@ -14,45 +14,56 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; heig
 .sidebar { 
     position: fixed; left: -280px; top: 0; width: 280px; height: 100%; 
     background: white; border-right: 1px solid var(--soft-pink); 
-    transition: 0.3s; z-index: 2000; display: flex; flex-direction: column; 
+    transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 2000; display: flex; flex-direction: column; 
 }
 .sidebar.open { left: 0; box-shadow: 10px 0 30px rgba(255,0,255,0.1); }
-.sidebar-content { flex: 1; overflow-y: auto; }
+.sidebar-content { flex: 1; overflow-y: auto; padding-top: 10px; }
 
-/* CATEGORIES & ROOMS */
-.category-header { padding: 20px 10px 5px 15px; font-size: 0.7rem; font-weight: 800; color: #999; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
-.room-item { padding: 10px 15px 10px 25px; font-weight: 600; color: #555; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-.room-item.active { background: var(--soft-pink); color: var(--magenta); }
-.dot-menu { background: none; border: none; color: #ccc; font-size: 1.2rem; padding: 0 5px; cursor: pointer; }
-
-/* BOTTOM NAV IN SIDEBAR */
-.sidebar-footer { padding: 20px; border-top: 1px solid var(--soft-pink); background: #fafafa; }
-.dash-link { 
-    display: block; text-align: center; text-decoration: none; 
-    background: var(--magenta); color: white; padding: 12px; 
-    border-radius: 12px; font-weight: bold; font-size: 0.9rem;
-    box-shadow: 0 4px 10px rgba(255, 0, 255, 0.2);
+/* DISCORD STYLE CATEGORIES */
+.category-wrapper { margin-bottom: 15px; }
+.category-header { 
+    padding: 10px 15px; font-size: 0.7rem; font-weight: 800; color: #aaa; 
+    text-transform: uppercase; display: flex; justify-content: space-between; align-items: center;
+    letter-spacing: 0.5px;
 }
+.category-header:active { background: #fafafa; }
 
-/* CHAT UI */
+.room-item { 
+    padding: 8px 15px 8px 25px; font-weight: 600; color: #555; 
+    display: flex; justify-content: space-between; align-items: center; cursor: pointer; 
+}
+.room-item.active { background: var(--soft-pink); color: var(--magenta); border-radius: 0 20px 20px 0; margin-right: 10px; }
+.dot-menu { background: none; border: none; color: #ccc; font-size: 1.2rem; padding: 0 5px; }
+
+/* PROMINENT DASHBOARD BUTTON */
+.sidebar-footer { padding: 20px; border-top: 2px solid var(--soft-pink); background: white; }
+.dash-link { 
+    display: flex; align-items: center; justify-content: center; text-decoration: none; 
+    background: var(--magenta); color: white; padding: 15px; 
+    border-radius: 15px; font-weight: bold; font-size: 1rem;
+    box-shadow: 0 4px 15px rgba(255, 0, 255, 0.3); transition: 0.2s;
+}
+.dash-link:active { transform: scale(0.95); opacity: 0.9; }
+
+/* CHAT AREA */
 .chat-header { padding: 15px; padding-top: calc(15px + env(safe-area-inset-top)); background: white; border-bottom: 1px solid var(--soft-pink); display: flex; align-items: center; gap: 12px; }
 #chat-display { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; background: var(--bg); }
 .message { display: flex; gap: 10px; max-width: 85%; align-self: flex-start; }
 .message.own { align-self: flex-end; flex-direction: row-reverse; }
-.msg-pfp { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+.msg-pfp { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 2px solid white; }
 .bubble { background: white; padding: 10px 14px; border-radius: 18px; border-top-left-radius: 4px; font-size: 0.95rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
 .own .bubble { background: var(--magenta); color: white; border-top-right-radius: 4px; border-top-left-radius: 18px; }
 
 /* INPUT */
 .input-container { background: white; padding: 10px; border-top: 1px solid var(--soft-pink); padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
 .member-picker { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; }
-.picker-btn { flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%; border: 2px solid transparent; }
+.picker-btn { flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%; border: 2px solid transparent; padding: 2px; }
 .picker-btn.active { border-color: var(--magenta); transform: scale(1.1); }
 .picker-btn img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
 .input-row { display: flex; gap: 8px; }
 #msg-input { flex: 1; background: var(--bg); border: 1px solid var(--soft-pink); border-radius: 20px; padding: 10px 15px; font-size: 16px; outline: none; resize: none; }
-.send-btn { background: var(--magenta); color: white; border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem; }
-#sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 1500; }
+.send-btn { background: var(--magenta); color: white; border: none; width: 42px; height: 42px; border-radius: 50%; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; }
+#sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1500; }
 </style>
 </head>
 <body>
@@ -61,21 +72,23 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; heig
 
 <div class="sidebar" id="sidebar">
     <div style="padding: 20px; border-bottom: 1px solid var(--soft-pink); display: flex; justify-content: space-between; align-items: center;">
-        <span style="font-weight: bold; color: var(--magenta);">Internal Space</span>
-        <button onclick="addCategory()" style="border:none; background:none; font-size:1.2rem; color: var(--magenta);">📁+</button>
+        <span style="font-weight: bold; color: var(--magenta); font-size: 1.2rem;">Internal Space</span>
+        <button onclick="addCategory()" style="border:none; background:none; font-size:1.5rem; color: var(--magenta);">📁</button>
     </div>
     
-    <div class="sidebar-content" id="category-list"></div>
+    <div class="sidebar-content" id="category-list">
+        </div>
 
     <div class="sidebar-footer">
-        <a href="mobileindex.html" class="dash-link">⇠ Return to Dashboard</a>
+        <a href="mobileindex.html" class="dash-link">🏠 Return to Dashboard</a>
     </div>
 </div>
 
 <header class="chat-header">
-    <button style="background:none; border:none; color:var(--magenta); font-size:1.5rem;" onclick="toggleMenu()">☰</button>
+    <button style="background:none; border:none; color:var(--magenta); font-size:1.5rem; padding: 5px;" onclick="toggleMenu()">☰</button>
     <div style="flex:1">
-        <div id="current-room-name" style="font-weight: bold; color: var(--magenta);"># general</div>
+        <div id="current-room-name" style="font-weight: bold; color: var(--magenta); font-size: 1.1rem;"># general</div>
+        <div id="room-lock-status" style="font-size: 0.65rem; color: #999;">Public to system</div>
     </div>
 </header>
 
@@ -84,7 +97,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; heig
 <div class="input-container">
     <div class="member-picker" id="member-picker"></div>
     <div class="input-row">
-        <textarea id="msg-input" placeholder="Message..." rows="1"></textarea>
+        <textarea id="msg-input" placeholder="Message..." rows="1" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
         <button class="send-btn" onclick="sendInternalMessage()">↑</button>
     </div>
 </div>
@@ -108,8 +121,9 @@ async function loadData() {
     
     if (data?.system_data) {
         let sd = data.system_data;
+        // Logic to keep legacy rooms if moving from old version
         if (!sd.categories) {
-            sd.categories = [{ name: "Internal", rooms: sd.internalRooms || { "general": { messages: [], pin: null } } }];
+            sd.categories = [{ name: "Main", rooms: sd.internalRooms || { "general": { messages: [], pin: null } } }];
         }
         systemData = sd;
     }
@@ -125,11 +139,15 @@ function renderUI() {
 function renderSidebar() {
     const list = document.getElementById('category-list');
     list.innerHTML = '';
+    
     systemData.categories.forEach((cat, catIdx) => {
-        let catHtml = `<div class="category-header">
-            <span onclick="renameCategory(${catIdx})">${cat.name}</span>
-            <button onclick="addRoom(${catIdx})" style="border:none; background:none; color:#aaa; font-size:1.2rem;">+</button>
-        </div>`;
+        let catHtml = `
+        <div class="category-wrapper">
+            <div class="category-header">
+                <span onclick="renameCategory(${catIdx})">${cat.name}</span>
+                <button onclick="addRoom(${catIdx})" style="border:none; background:none; color:#aaa; font-size:1.2rem;">+</button>
+            </div>`;
+        
         Object.keys(cat.rooms).forEach(roomKey => {
             const room = cat.rooms[roomKey];
             catHtml += `
@@ -138,12 +156,14 @@ function renderSidebar() {
                     <button class="dot-menu" onclick="event.stopPropagation(); showRoomOptions('${roomKey}', ${catIdx})">⋮</button>
                 </div>`;
         });
+        
+        catHtml += `</div>`;
         list.innerHTML += catHtml;
     });
 }
 
 function showRoomOptions(roomKey, catIdx) {
-    const action = prompt(`Options for #${roomKey}:\n1. Delete Room\n2. Move Category\n3. Rename Room\n4. Change/Add PIN\n(Type number)`);
+    const action = prompt(`Edit #${roomKey}:\n1. Delete Channel\n2. Move Category\n3. Rename Channel\n4. Set/Change PIN\n(Enter number)`);
     if (action === "1") deleteRoom(roomKey, catIdx);
     if (action === "2") moveRoom(roomKey, catIdx);
     if (action === "3") renameRoom(roomKey, catIdx);
@@ -152,16 +172,20 @@ function showRoomOptions(roomKey, catIdx) {
 
 async function deleteRoom(roomKey, catIdx) {
     const room = systemData.categories[catIdx].rooms[roomKey];
-    if (room.pin && prompt("Enter PIN to delete:") !== room.pin) return alert("Wrong PIN.");
-    if (confirm(`Delete #${roomKey}?`)) {
+    if (room.pin) {
+        const p = prompt("This channel is PIN locked. Enter PIN to delete:");
+        if (p !== room.pin) return alert("Incorrect PIN. Deletion cancelled.");
+    }
+    if (confirm(`Are you sure you want to delete #${roomKey}? All messages will be lost.`)) {
         delete systemData.categories[catIdx].rooms[roomKey];
         if (systemData.activeRoom === roomKey) systemData.activeRoom = "general";
-        await sync(); renderUI();
+        await sync(); 
+        renderUI();
     }
 }
 
 async function renameRoom(roomKey, catIdx) {
-    const newName = prompt("New room name:").toLowerCase().replace(/\s+/g, '-');
+    const newName = prompt("New channel name:").toLowerCase().replace(/\s+/g, '-');
     if (newName && !systemData.categories[catIdx].rooms[newName]) {
         systemData.categories[catIdx].rooms[newName] = systemData.categories[catIdx].rooms[roomKey];
         delete systemData.categories[catIdx].rooms[roomKey];
@@ -172,36 +196,24 @@ async function renameRoom(roomKey, catIdx) {
 
 async function changePin(roomKey, catIdx) {
     const room = systemData.categories[catIdx].rooms[roomKey];
-    if (room.pin && prompt("Enter current PIN to change it:") !== room.pin) return alert("Wrong PIN.");
-    const newPin = prompt("Enter new 4-digit PIN (or leave blank to remove):");
+    if (room.pin && prompt("Enter current PIN to verify:") !== room.pin) return alert("Wrong PIN.");
+    const newPin = prompt("Enter new 4-digit PIN (Leave blank to remove lock):");
     room.pin = newPin || null;
     await sync(); renderUI();
 }
 
-async function renameCategory(idx) {
-    const newName = prompt("Rename Category:", systemData.categories[idx].name);
-    if (newName) { systemData.categories[idx].name = newName; await sync(); renderUI(); }
-}
-
-async function moveRoom(roomKey, oldCatIdx) {
-    const names = systemData.categories.map((c, i) => `${i}: ${c.name}`).join('\n');
-    const newIdx = prompt(`Move to which category index?\n${names}`);
-    if (newIdx !== null && systemData.categories[newIdx]) {
-        systemData.categories[newIdx].rooms[roomKey] = systemData.categories[oldCatIdx].rooms[roomKey];
-        delete systemData.categories[oldCatIdx].rooms[roomKey];
+async function addCategory() {
+    const name = prompt("Category Name (e.g. Private, Ventures, Daily):");
+    if (name) {
+        systemData.categories.push({ name, rooms: {} });
         await sync(); renderUI();
     }
 }
 
-async function addCategory() {
-    const name = prompt("Category Name:");
-    if (name) { systemData.categories.push({ name, rooms: {} }); await sync(); renderUI(); }
-}
-
 async function addRoom(catIdx) {
-    const name = prompt("Room Name:").toLowerCase().replace(/\s+/g, '-');
+    const name = prompt("Channel Name:").toLowerCase().replace(/\s+/g, '-');
     if (!name) return;
-    let pin = confirm("PIN protect?") ? prompt("Set 4-digit PIN:") : null;
+    let pin = confirm("Do you want to PIN lock this channel?") ? prompt("Set 4-digit PIN:") : null;
     systemData.categories[catIdx].rooms[name] = { messages: [], pin };
     await sync(); switchRoom(name);
 }
@@ -209,9 +221,14 @@ async function addRoom(catIdx) {
 function switchRoom(roomKey) {
     let targetRoom = null;
     systemData.categories.forEach(c => { if(c.rooms[roomKey]) targetRoom = c.rooms[roomKey]; });
-    if (targetRoom?.pin && prompt("Enter PIN:") !== targetRoom.pin) return alert("Access Denied");
+    
+    if (targetRoom?.pin && prompt("🔒 This channel is private. Enter PIN:") !== targetRoom.pin) {
+        return alert("Access Denied.");
+    }
+    
     systemData.activeRoom = roomKey;
     document.getElementById('current-room-name').innerText = `# ${roomKey}`;
+    document.getElementById('room-lock-status').innerText = targetRoom?.pin ? "🔒 PIN Protected" : "Public to system";
     renderUI();
     if (document.getElementById('sidebar').classList.contains('open')) toggleMenu();
 }
@@ -221,6 +238,7 @@ function renderMessages() {
     display.innerHTML = '';
     let activeRoomObj = null;
     systemData.categories.forEach(c => { if(c.rooms[systemData.activeRoom]) activeRoomObj = c.rooms[systemData.activeRoom]; });
+    
     if (activeRoomObj) {
         activeRoomObj.messages.forEach(msg => {
             display.innerHTML += `
@@ -228,7 +246,7 @@ function renderMessages() {
                     <img src="${msg.pfp}" class="msg-pfp">
                     <div class="msg-content">
                         <div class="bubble">${msg.text}</div>
-                        <div class="msg-meta" style="font-size:0.6rem; color:#999;">${msg.name} • ${msg.time}</div>
+                        <div class="msg-meta" style="font-size:0.6rem; color:#999; margin-top:2px;">${msg.name} • ${msg.time}</div>
                     </div>
                 </div>`;
         });
@@ -239,10 +257,27 @@ function renderMessages() {
 async function sendInternalMessage() {
     const input = document.getElementById('msg-input');
     if (!input.value.trim()) return;
-    let speaker = currentProxyId === 'system' ? { name: "System", pfp: "https://via.placeholder.com/150/ff00ff/ffffff?text=SYS" } : systemData.members.find(m => m.id == currentProxyId);
-    const msg = { id: currentProxyId, name: speaker.name, pfp: speaker.pfp, text: input.value, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
-    systemData.categories.forEach(c => { if (c.rooms[systemData.activeRoom]) c.rooms[systemData.activeRoom].messages.push(msg); });
-    input.value = ''; renderMessages(); await sync();
+
+    let speaker = currentProxyId === 'system' 
+        ? { name: "System", pfp: "https://via.placeholder.com/150/ff00ff/ffffff?text=SYS" }
+        : systemData.members.find(m => m.id == currentProxyId);
+
+    const msg = {
+        id: currentProxyId,
+        name: speaker.name,
+        pfp: speaker.pfp,
+        text: input.value,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+
+    systemData.categories.forEach(c => {
+        if (c.rooms[systemData.activeRoom]) c.rooms[systemData.activeRoom].messages.push(msg);
+    });
+
+    input.value = '';
+    input.style.height = 'auto';
+    renderMessages();
+    await sync();
 }
 
 async function sync() {
@@ -253,10 +288,13 @@ async function sync() {
 function renderMemberPicker() {
     const picker = document.getElementById('member-picker');
     picker.innerHTML = `<div class="picker-btn ${currentProxyId==='system'?'active':''}" onclick="setSpeaker('system')"><img src="https://via.placeholder.com/150/ff00ff/ffffff?text=SYS"></div>`;
-    systemData.members.forEach(m => { picker.innerHTML += `<div class="picker-btn ${currentProxyId==m.id?'active':''}" onclick="setSpeaker('${m.id}')"><img src="${m.pfp}"></div>`; });
+    (systemData.members || []).forEach(m => {
+        picker.innerHTML += `<div class="picker-btn ${currentProxyId==m.id?'active':''}" onclick="setSpeaker('${m.id}')"><img src="${m.pfp}" style="border: 2px solid ${m.color}"></div>`;
+    });
 }
 
 function setSpeaker(id) { currentProxyId = id; renderMemberPicker(); renderMessages(); }
+
 function toggleMenu() {
     const s = document.getElementById('sidebar');
     const o = document.getElementById('sidebar-overlay');

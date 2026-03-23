@@ -37,14 +37,14 @@
         .file-input-label { display: block; width: 100%; text-align: center; padding: 10px; background: var(--soft-pink); color: var(--magenta); border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 5px; border: 2px dashed var(--magenta); }
 
         /* FRONTING */
-        .fronting-container { background: var(--front-gold); padding: 15px; border-radius: 20px; border: 2px dashed var(--magenta); margin-bottom: 20px; text-align: center; }
+        .fronting-container { background: var(--front-gold); padding: 15px; border-radius: 20px; border: 2px dashed var(--magenta); margin-bottom: 20px; text-align: center; min-height: 100px; }
         .front-bubble { display: inline-flex; flex-direction: column; align-items: center; margin: 5px; position: relative; }
         .mini-pfp { width: 55px; height: 55px; border-radius: 50%; object-fit: cover; border: 3px solid var(--magenta); background: white; }
-        .remove-front-dot { position: absolute; top: -2px; right: -2px; background: red; color: white; border-radius: 50%; width: 22px; height: 22px; border: 2px solid white; font-weight: bold; font-size: 14px; display: flex; align-items: center; justify-content: center; z-index: 10; }
+        .remove-front-dot { position: absolute; top: -2px; right: -2px; background: #ff4d4d; color: white; border-radius: 50%; width: 22px; height: 22px; border: 2px solid white; font-weight: bold; font-size: 14px; display: flex; align-items: center; justify-content: center; z-index: 10; cursor: pointer; }
         .history-card { padding: 10px 15px; border-bottom: 1px solid var(--soft-pink); display: flex; align-items: center; gap: 12px; }
         
-        #toast { visibility: hidden; background: var(--magenta); color: white; padding: 12px 25px; border-radius: 50px; position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); z-index: 3000; }
-        #toast.show { visibility: visible; }
+        #toast { visibility: hidden; background: var(--magenta); color: white; padding: 12px 25px; border-radius: 50px; position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); z-index: 3000; transition: 0.3s; opacity: 0; }
+        #toast.show { visibility: visible; opacity: 1; }
     </style>
 </head>
 <body>
@@ -116,27 +116,21 @@
     <div id="settings" class="view-section">
         <section>
             <h3 style="color:var(--magenta); margin-top:0;">System Profile</h3>
-            
             <div style="text-align:center; margin-bottom:15px;">
                 <img id="edit-pfp-preview" src="" style="width:80px; height:80px; border-radius:50%; border:3px solid var(--magenta); object-fit:cover;">
                 <label for="pfp-upload" class="file-input-label">Change Photo</label>
                 <input type="file" id="pfp-upload" accept="image/*" style="display:none;" onchange="previewImage(this)">
             </div>
-
             <label>System Name</label>
             <input type="text" id="edit-sys-name" placeholder="Display Name">
-            
             <label>Username</label>
             <input type="text" id="edit-username" placeholder="handle">
-
             <label>Bio</label>
             <textarea id="edit-bio" rows="3" placeholder="Tell us about your system..."></textarea>
-            
             <div class="card" style="background: var(--soft-pink); text-align: center; border: none;">
                 <span style="font-size: 0.8rem; color: var(--magenta); font-weight: bold;">Alter Count: </span>
                 <span id="edit-alter-count" style="font-weight: bold; color: var(--magenta);">0</span>
             </div>
-            
             <button class="main-btn" onclick="saveSettings()">Save Changes</button>
             <button class="main-btn" style="background:#ccc; margin-top:10px;" onclick="showTab('overview')">Cancel</button>
         </section>
@@ -221,6 +215,11 @@ function refreshUI() {
     const hList = document.getElementById('front-history-list');
     fDisp.innerHTML = ''; oList.innerHTML = ''; hList.innerHTML = '';
 
+    const frontingCount = (systemData.members || []).filter(m => m.isFronting).length;
+    if(frontingCount === 0) {
+        fDisp.innerHTML = '<div style="color:#aaa; font-style:italic; font-size:0.8rem; margin-top:10px;">No one is fronting</div>';
+    }
+
     (systemData.members || []).forEach(m => {
         if(m.isFronting) {
             fDisp.innerHTML += `<div class="front-bubble"><button class="remove-front-dot" onclick="toggleFront(${m.id})">×</button><img src="${m.pfp}" class="mini-pfp" style="border-color:${m.color}"><div style="font-size:0.6rem; font-weight:bold; margin-top:2px;">${m.name}</div></div>`;
@@ -282,25 +281,59 @@ function showTab(id) {
     if(navBtn) navBtn.classList.add('active'); 
 }
 
-async function sync() { await _supabase.from('profiles').update({ system_data: systemData }).eq('user_id', currentUser.id); showToast("Synced ✨"); }
-function showToast(m) { const t = document.getElementById('toast'); t.innerText = m; t.className = 'show'; setTimeout(() => t.className = '', 2000); }
-async function logout() { await _supabase.auth.signOut(); location.reload(); }
-function toggleFront(id) {
-    const m = systemData.members.find(m => m.id == id);
-    const now = new Date();
-    if(!m.isFronting) {
-        const s = prompt(`Status for ${m.name}?`);
-        m.isFronting = true; m.status = s || ""; m.startTime = now.toISOString();
-        systemData.history.push({ id: m.id, name: m.name, pfp: m.pfp, status: m.status, startTime: m.startTime, displayTime: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), timestamp: now.toISOString() });
-    } else { m.isFronting = false; }
-    sync(); refreshUI();
+async function sync() { 
+    await _supabase.from('profiles').update({ system_data: systemData }).eq('user_id', currentUser.id); 
+    showToast("Synced ✨"); 
 }
+
+function showToast(m) { 
+    const t = document.getElementById('toast'); 
+    t.innerText = m; 
+    t.classList.add('show'); 
+    setTimeout(() => t.classList.remove('show'), 2000); 
+}
+
+async function logout() { await _supabase.auth.signOut(); location.reload(); }
+
+function toggleFront(id) {
+    const m = systemData.members.find(alter => alter.id == id);
+    if (!m) return;
+
+    const now = new Date();
+    if (!m.isFronting) {
+        const s = prompt(`Status for ${m.name}?`);
+        m.isFronting = true; 
+        m.status = s || "Fronting"; 
+        m.startTime = now.toISOString();
+        
+        systemData.history.push({ 
+            id: m.id, 
+            name: m.name, 
+            pfp: m.pfp, 
+            status: m.status, 
+            startTime: m.startTime, 
+            displayTime: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), 
+            timestamp: now.toISOString() 
+        });
+    } else {
+        // Correctly reset the fronting status
+        m.isFronting = false;
+        m.status = "";
+        m.startTime = null;
+    }
+    
+    // Refresh the UI immediately and then sync to database
+    refreshUI();
+    sync(); 
+}
+
 async function loadFriendsLive() {
     try {
         const { data: conn } = await _supabase.from('connections').select('friend_id').eq('user_id', currentUser.id);
         if (!conn || conn.length === 0) return;
         const { data: profs } = await _supabase.from('profiles').select('username, system_data').in('user_id', conn.map(c => c.friend_id));
-        const cont = document.getElementById('friends-list-container'); cont.innerHTML = '';
+        const cont = document.getElementById('friends-list-container'); 
+        cont.innerHTML = '';
         profs?.forEach(p => {
             const fronts = (p.system_data?.members || []).filter(m => m.isFronting);
             let fH = fronts.length > 0 ? '' : '<div style="font-size:0.75rem; color:#999;">Offline</div>';

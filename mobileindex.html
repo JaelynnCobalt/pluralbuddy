@@ -54,9 +54,10 @@
         .view-section { display: none; }
         .view-section.active { display: block; }
         section, .card { background: var(--panel); padding: 15px; border-radius: 20px; border: 2px solid var(--soft-pink); margin-bottom: 15px; }
-        .main-btn { background: var(--magenta); color: white; border: none; padding: 12px; border-radius: 12px; width: 100%; font-weight: bold; font-size: 1rem; margin-top: 5px; }
+        .main-btn { background: var(--magenta); color: white; border: none; padding: 12px; border-radius: 12px; width: 100%; font-weight: bold; font-size: 1rem; margin-top: 5px; cursor: pointer; }
         .logout-btn { background: white; color: var(--magenta); border: 2px solid var(--soft-pink); padding: 5px 12px; border-radius: 10px; font-weight: bold; font-size: 0.8rem; cursor: pointer; }
         input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid var(--soft-pink); border-radius: 12px; font-size: 16px; background: #fafafa; }
+        label { font-size: 0.8rem; font-weight: bold; color: #666; margin-left: 5px; }
 
         /* FRONTING & HISTORY */
         .fronting-container { background: var(--front-gold); padding: 15px; border-radius: 20px; border: 2px dashed var(--magenta); margin-bottom: 20px; text-align: center; }
@@ -95,7 +96,7 @@
         <h2 style="margin:0; font-size: 1.1rem; color: #555;">Dashboard</h2>
         <div style="display:flex; gap:10px; align-items:center;">
             <button class="logout-btn" onclick="logout()">Logout</button>
-            <button style="background:none; border:none; font-size:1.4rem;">⚙️</button>
+            <button onclick="showSettings()" style="background:none; border:none; font-size:1.4rem; cursor:pointer;">⚙️</button>
         </div>
     </header>
 
@@ -133,6 +134,24 @@
             <button class="main-btn">Add Sidekick</button>
         </section>
         <div id="friends-list-container"></div>
+    </div>
+
+    <div id="settings" class="view-section">
+        <section>
+            <h3 style="color:var(--magenta); margin-top:0;">System Settings</h3>
+            
+            <label>System Name</label>
+            <input type="text" id="edit-sys-name" placeholder="Display Name">
+            
+            <label>Username</label>
+            <input type="text" id="edit-username" placeholder="handle">
+            
+            <label>Profile Picture URL</label>
+            <input type="text" id="edit-sys-pfp" placeholder="https://...">
+            
+            <button class="main-btn" onclick="saveSettings()">Save Changes</button>
+            <button class="main-btn" style="background:#ccc; margin-top:10px;" onclick="showTab('overview')">Cancel</button>
+        </section>
     </div>
 
     <nav class="bottom-nav">
@@ -258,7 +277,39 @@ async function loadFriendsLive() {
 
 async function sync() { await _supabase.from('profiles').update({ system_data: systemData }).eq('user_id', currentUser.id); showToast("Synced ✨"); }
 function showToast(m) { const t = document.getElementById('toast'); t.innerText = m; t.className = 'show'; setTimeout(() => t.className = '', 2000); }
-function showTab(id) { document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); document.getElementById(id).classList.add('active'); document.getElementById('tab-'+id).classList.add('active'); }
+
+function showTab(id) { 
+    document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active')); 
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); 
+    document.getElementById(id).classList.add('active'); 
+    const navBtn = document.getElementById('tab-'+id);
+    if(navBtn) navBtn.classList.add('active'); 
+}
+
+function showSettings() {
+    document.getElementById('edit-sys-name').value = systemData.name || "";
+    document.getElementById('edit-username').value = currentUsername || "";
+    document.getElementById('edit-sys-pfp').value = systemData.pfp || "";
+    showTab('settings');
+}
+
+async function saveSettings() {
+    systemData.name = document.getElementById('edit-sys-name').value;
+    systemData.pfp = document.getElementById('edit-sys-pfp').value;
+    currentUsername = document.getElementById('edit-username').value;
+
+    try {
+        const { error } = await _supabase.from('profiles').update({ 
+            system_data: systemData,
+            username: currentUsername 
+        }).eq('user_id', currentUser.id);
+
+        if (error) throw error;
+        showToast("Updated! ✨");
+        refreshUI();
+        showTab('overview');
+    } catch (e) { alert(e.message); }
+}
 
 async function logout() { 
     await _supabase.auth.signOut(); 

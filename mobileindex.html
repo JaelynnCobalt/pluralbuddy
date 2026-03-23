@@ -25,7 +25,6 @@
             position: relative; width: 250px; height: 30px; 
             border: 3px solid var(--magenta); 
             background: white;
-            /* Hand-drawn wobbly border */
             border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
             padding: 4px; display: flex; align-items: center;
             box-shadow: 4px 4px 0px var(--soft-pink);
@@ -56,6 +55,7 @@
         .view-section.active { display: block; }
         section, .card { background: var(--panel); padding: 15px; border-radius: 20px; border: 2px solid var(--soft-pink); margin-bottom: 15px; }
         .main-btn { background: var(--magenta); color: white; border: none; padding: 12px; border-radius: 12px; width: 100%; font-weight: bold; font-size: 1rem; margin-top: 5px; }
+        .logout-btn { background: white; color: var(--magenta); border: 2px solid var(--soft-pink); padding: 5px 12px; border-radius: 10px; font-weight: bold; font-size: 0.8rem; cursor: pointer; }
         input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid var(--soft-pink); border-radius: 12px; font-size: 16px; background: #fafafa; }
 
         /* FRONTING & HISTORY */
@@ -93,7 +93,10 @@
 <div id="dashboard" style="display:none;">
     <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
         <h2 style="margin:0; font-size: 1.1rem; color: #555;">Dashboard</h2>
-        <button style="background:none; border:none; font-size:1.4rem;">⚙️</button>
+        <div style="display:flex; gap:10px; align-items:center;">
+            <button class="logout-btn" onclick="logout()">Logout</button>
+            <button style="background:none; border:none; font-size:1.4rem;">⚙️</button>
+        </div>
     </header>
 
     <div id="overview" class="view-section active">
@@ -103,7 +106,6 @@
                 <h2 id="view-sys-name" style="margin:0; font-size:1.1rem;">System</h2>
                 <div id="view-sys-user" style="font-size:0.8rem; color:var(--magenta);">@username</div>
             </div>
-            <button onclick="logout()" style="background:none; border:1px solid #ccc; padding:4px 8px; border-radius:8px; font-size:0.7rem;">Exit</button>
         </div>
 
         <div class="fronting-container">
@@ -152,7 +154,6 @@ let currentUsername = "";
 
 function updateLoading(percent) {
     document.getElementById('load-bar').style.width = percent + '%';
-    // Offsetting the star so it stays at the tip of the bar
     document.getElementById('load-star').style.left = (percent - 8) + '%';
 }
 
@@ -258,7 +259,12 @@ async function loadFriendsLive() {
 async function sync() { await _supabase.from('profiles').update({ system_data: systemData }).eq('user_id', currentUser.id); showToast("Synced ✨"); }
 function showToast(m) { const t = document.getElementById('toast'); t.innerText = m; t.className = 'show'; setTimeout(() => t.className = '', 2000); }
 function showTab(id) { document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); document.getElementById(id).classList.add('active'); document.getElementById('tab-'+id).classList.add('active'); }
-function logout() { _supabase.auth.signOut(); location.reload(); }
+
+async function logout() { 
+    await _supabase.auth.signOut(); 
+    location.reload(); 
+}
+
 function clearHistory() { if(confirm("Clear history?")) { systemData.history = []; sync(); refreshUI(); } }
 window.onload = loadData;
 </script>

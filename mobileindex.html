@@ -175,12 +175,39 @@ async function loadData() {
         
         const { data, error: profileError } = await _supabase.from('profiles').select('*').eq('user_id', user.id).single();
         
-        // Safety Check: Initialize systemData if profile or system_data is missing
         if (data) {
             systemData = data.system_data || { members: [], history: [], bio: "" };
             if (!systemData.members) systemData.members = [];
             if (!systemData.history) systemData.history = [];
             currentUsername = data.username || "user";
+
+            // --- DEEP CLEAN GHOST DATA ---
+            const today = new Date();
+            let madeClean = false;
+            systemData.history.forEach(entry => {
+                if (!entry.endTime) {
+                    const entryDate = new Date(entry.startTime || entry.timestamp);
+                    const hoursOld = (today - entryDate) / 3600000;
+                    if (hoursOld > 12) {
+                        entry.endTime = entryDate.toISOString(); 
+                        entry.duration = 1; 
+                        madeClean = true;
+                    }
+                }
+            });
+            // Also clean members list
+            systemData.members.forEach(m => {
+                if (m.isFronting && m.startTime) {
+                    const sDate = new Date(m.startTime);
+                    if ((today - sDate) / 3600000 > 24) {
+                        m.isFronting = false;
+                        m.status = "";
+                        madeClean = true;
+                    }
+                }
+            });
+            if (madeClean) await sync();
+            // -----------------------------
         }
 
         updateLoading(85);
@@ -198,7 +225,6 @@ async function loadData() {
 
     } catch (err) { 
         console.error("Critical Load Error:", err);
-        // Force show dashboard even if things are broken so user isn't stuck
         document.getElementById('loading-screen').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
     }
@@ -256,15 +282,21 @@ async function toggleFront(id) {
             timestamp: now.toISOString() 
         });
     } else {
-        const start = new Date(m.startTime);
+        const start = new Date(m.startTime || now);
         const duration = Math.round((now - start) / 60000);
-        const entry = systemData.history.findLast(h => h.id == id && !h.endTime);
-        if(entry) { 
-            entry.endTime = now.toISOString(); 
-            entry.duration = Math.max(0, duration); 
+        
+        // HARD CLEAN: Close all open history entries for this ID
+        if(systemData.history) {
+            systemData.history.forEach(entry => {
+                if (entry.id == id && !entry.endTime) {
+                    entry.endTime = now.toISOString();
+                    entry.duration = duration > 0 ? duration : 1;
+                }
+            });
         }
         systemData.members[mIdx].isFronting = false;
         systemData.members[mIdx].status = "";
+        systemData.members[mIdx].startTime = null;
     }
     refreshUI(); 
     await sync();

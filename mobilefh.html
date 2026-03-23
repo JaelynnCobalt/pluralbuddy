@@ -9,7 +9,7 @@
         :root { --bg: #fff0f6; --panel: #ffffff; --soft-pink: #ffdeeb; --magenta: #ff00ff; --gold: #fff9c4; }
         * { font-family: 'system-ui', -apple-system, sans-serif; box-sizing: border-box; }
         
-        body { background-color: var(--bg); margin: 0; padding: 20px 15px; min-height: 100vh; pb: 50px; }
+        body { background-color: var(--bg); margin: 0; padding: 20px 15px 50px 15px; min-height: 100vh; }
 
         /* HEADER */
         .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; position: sticky; top: 0; background: var(--bg); z-index: 100; padding: 10px 0; }
@@ -40,8 +40,7 @@
         <h2 style="margin:0; color:var(--magenta); font-size: 1.2rem;">Full History</h2>
     </div>
 
-    <div id="history-container">
-        </div>
+    <div id="history-container"></div>
 
 <script>
     const SB_URL = 'https://ctrbkrwiwpojbzfpsxwl.supabase.co';
@@ -87,32 +86,42 @@
                     currentGroup = [entry];
                 }
             }
-            // Push the final group
-            if (index === sorted.length - 1) groups.push(currentGroup);
+            // Ensure the last group gets pushed
+            if (index === sorted.length - 1) {
+                groups.push(currentGroup);
+            }
         });
 
         // 3. Build the HTML
         container.innerHTML = '';
         groups.forEach(group => {
-            const firstEntryDate = new Date(group[0].startTime || group[0].timestamp).toLocaleDateString();
+            // Use the date of the group
+            const firstEntryDate = new Date(group[0].startTime || group[0].timestamp).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
             
             let groupHtml = `<div class="session-group">
                 <div class="group-header">
                     <span>${firstEntryDate}</span>
-                    <span>${group.length > 1 ? 'Co-Front / Switch' : 'Session'}</span>
+                    <span>${group.length > 1 ? 'Switch / Co-Front' : 'Solo Session'}</span>
                 </div>`;
             
             group.forEach(entry => {
                 const start = entry.startTime ? new Date(entry.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '??:??';
-                const end = entry.endTime ? new Date(entry.endTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Active';
-                const duration = entry.duration ? `${entry.duration}m` : '...';
+                
+                // End time handling
+                let end = 'Active';
+                let duration = 'Now';
+                
+                if (entry.endTime) {
+                    end = new Date(entry.endTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    duration = entry.duration ? `${entry.duration}m` : '...';
+                }
 
                 groupHtml += `
                     <div class="entry">
                         <img src="${entry.pfp}" class="entry-pfp">
                         <div class="entry-info">
                             <div class="entry-name">${entry.name}</div>
-                            <div class="entry-status">${entry.status || 'No status set'}</div>
+                            <div class="entry-status">${entry.status || 'Fronting'}</div>
                         </div>
                         <div class="entry-times">
                             <div>${start} - ${end}</div>

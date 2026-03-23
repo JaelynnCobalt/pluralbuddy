@@ -2,187 +2,335 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>System Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>PluralPoint | Home</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --bg: #fff0f6; --panel: #ffffff; --soft-pink: #ffdeeb; --magenta: #ff00ff; --front-gold: #fff9c4; }
-        * { font-family: 'Georgia', serif; box-sizing: border-box; color: var(--magenta); }
-        body { background-color: var(--bg); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
-        
-        /* LOADING SCREEN - Now with a fail-safe */
+        :root { --bg: #fff0f6; --panel: #ffffff; --soft-pink: #ffdeeb; --magenta: #ff00ff; --front-gold: #fff9c4; --nav-height: 70px; }
+        * { font-family: 'system-ui', -apple-system, sans-serif; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg); margin: 0; padding: 20px 15px calc(var(--nav-height) + 30px) 15px; min-height: 100vh; }
+
+        /* LOADING SCREEN */
         #loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 20000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .loader-container { width: 200px; height: 6px; background: var(--soft-pink); border-radius: 10px; overflow: hidden; margin-top: 15px; }
-        .loader-bar { width: 0%; height: 100%; background: var(--magenta); transition: width 0.3s ease; }
-        
-        #dashboard { display: none; width: 100%; max-width: 1100px; }
-        nav { margin-bottom: 30px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-        .tab-btn, .nav-link { padding: 10px 20px; border: 2px solid var(--magenta); background: white; cursor: pointer; border-radius: 50px; font-weight: bold; transition: 0.3s; text-decoration: none; font-size: 0.9rem; display: inline-block; text-align: center; }
-        .tab-btn.active { background: var(--magenta); color: white !important; }
-        
-        .view-section { display: none; width: 100%; }
+        .loader-bar { width: 40%; height: 100%; background: var(--magenta); animation: loading-anim 2s infinite ease-in-out; }
+        @keyframes loading-anim { 0% { transform: translateX(-100%); } 100% { transform: translateX(250%); } }
+        .loading-text { font-weight: bold; color: #444; letter-spacing: 1px; }
+
+        /* NAVIGATION */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: var(--nav-height); background: white; display: flex; justify-content: space-around; border-top: 2px solid var(--soft-pink); z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
+        .nav-item { display: flex; flex-direction: column; align-items: center; background: none; border: none; color: #888; font-size: 0.7rem; font-weight: bold; flex: 1; padding-top: 10px; text-decoration: none; }
+        .nav-item.active { color: var(--magenta); }
+        .nav-item span { font-size: 1.4rem; }
+
+        /* UI ELEMENTS */
+        .view-section { display: none; }
         .view-section.active { display: block; }
-        section, .card { background: var(--panel); padding: 20px; border-radius: 20px; border: 2px solid var(--soft-pink); box-shadow: 0 10px 25px rgba(255, 0, 255, 0.05); margin-bottom: 20px; }
-        input { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid var(--soft-pink); border-radius: 10px; }
-        .main-btn { background: var(--magenta); color: white !important; border: none; padding: 12px; border-radius: 10px; cursor: pointer; width: 100%; font-size: 1rem; font-weight: bold; }
-        
-        .directory-card { border-left: 10px solid; display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; }
-        .fronting-box { background: var(--front-gold); border: 2px dashed var(--magenta); padding: 25px; border-radius: 20px; text-align: center; margin-bottom: 20px; }
-        .front-card-mini { background: white; padding: 10px 15px; border-radius: 15px; border: 2px solid; display: flex; align-items: center; gap: 12px; }
-        
-        #toast { visibility: hidden; min-width: 250px; background-color: var(--magenta); color: #fff; text-align: center; border-radius: 50px; padding: 16px; position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 30000; }
-        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
-        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
-        @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+        section, .card { background: var(--panel); padding: 15px; border-radius: 20px; border: 2px solid var(--soft-pink); margin-bottom: 15px; }
+        .main-btn { background: var(--magenta); color: white; border: none; padding: 12px; border-radius: 12px; width: 100%; font-weight: bold; font-size: 1rem; margin-top: 5px; }
+        .secondary-btn { background: var(--soft-pink); color: var(--magenta); border: none; padding: 10px; border-radius: 10px; width: 100%; font-weight: bold; margin-top: 5px; }
+        input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid var(--soft-pink); border-radius: 12px; font-size: 16px; background: #fafafa; }
+
+        /* FRONTING */
+        .fronting-container { background: var(--front-gold); padding: 15px; border-radius: 20px; border: 2px dashed var(--magenta); margin-bottom: 20px; text-align: center; }
+        .front-bubble { display: inline-flex; flex-direction: column; align-items: center; margin: 5px; position: relative; }
+        .mini-pfp { width: 55px; height: 55px; border-radius: 50%; object-fit: cover; border: 3px solid var(--magenta); background: white; }
+        .remove-front-dot { position: absolute; top: -2px; right: -2px; background: red; color: white; border-radius: 50%; width: 22px; height: 22px; border: 2px solid white; font-weight: bold; font-size: 14px; display: flex; align-items: center; justify-content: center; z-index: 10; }
+        .history-card { padding: 10px 15px; border-bottom: 1px solid var(--soft-pink); display: flex; align-items: center; gap: 12px; position: relative; }
+        .grouped-indicator { position: absolute; left: 5px; top: 10%; bottom: 10%; width: 3px; background: var(--magenta); border-radius: 10px; opacity: 0.5; }
+
+        /* OVERLAYS */
+        .overlay { display: none; position: fixed; inset: 0; background: white; z-index: 2000; padding: 20px; overflow-y: auto; padding-top: env(safe-area-inset-top); }
+        .close-overlay { background: var(--bg); border: none; padding: 10px 20px; border-radius: 10px; font-weight: bold; margin-bottom: 20px; color: var(--magenta); }
+        #toast { visibility: hidden; background: var(--magenta); color: white; padding: 12px 25px; border-radius: 50px; position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); z-index: 3000; }
+        #toast.show { visibility: visible; }
     </style>
 </head>
 <body>
 
 <div id="loading-screen">
-    <div class="loading-text">SYNCING INNER WORLD...</div>
-    <div class="loader-container"><div id="load-progress" class="loader-bar"></div></div>
+    <div class="loading-text">CONNECTING TO INNER WORLD...</div>
+    <div class="loader-container">
+        <div class="loader-bar"></div>
+    </div>
 </div>
 
-<div id="toast">Synced! ✨</div>
+<div id="toast">Synced ✨</div>
 
-<div id="auth-screen" style="display:none;">
-    <section class="card" style="max-width: 400px; margin: 50px auto; text-align: center;">
-        <h1>System Entry</h1>
+<div id="editor-overlay" class="overlay">
+    <button class="close-overlay" onclick="closeOverlay()">← Back</button>
+    <div id="editor-content"></div>
+</div>
+
+<div id="auth-screen">
+    <section style="text-align: center; margin-top: 80px;">
+        <h1 style="color:var(--magenta)">PluralPoint</h1>
         <input type="email" id="email-input" placeholder="Email">
         <input type="password" id="passcode-input" placeholder="Password">
-        <button class="main-btn" onclick="handleAuth()">Login / Register</button>
+        <button class="main-btn" onclick="handleAuth()">Login</button>
     </section>
 </div>
 
-<div id="dashboard">
-    <nav>
-        <button class="tab-btn active" id="btn-overview" onclick="showTab('overview')">Overview</button>
-        <a href="alters.html" class="nav-link">Manage Alters 👤</a>
-        <button class="tab-btn" id="btn-sidekicks" onclick="showTab('sidekicks')">Sidekicks</button>
-        <button class="tab-btn" style="border-color: #aaa; color: #aaa;" onclick="logout()">Logout</button>
-    </nav>
+<div id="dashboard" style="display:none;">
+    <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <h2 style="margin:0; font-size: 1.1rem; color: #555;">Dashboard</h2>
+        <button onclick="openSystemEditor()" style="background:none; border:none; font-size:1.4rem;">⚙️</button>
+    </header>
 
     <div id="overview" class="view-section active">
-        <section>
-            <h1 id="view-sys-name">System Name</h1>
-            <p id="view-sys-bio">System Bio...</p>
-            <div style="display: flex; gap: 5px;">
-                <input type="text" id="edit-sys-name" placeholder="New Name">
-                <input type="text" id="edit-sys-bio" placeholder="New Bio">
-                <button class="main-btn" style="width: 80px;" onclick="updateSystemInfo()">Save</button>
+        <div class="card" style="display:flex; align-items:center; gap:15px;">
+            <img src="" id="sys-pfp-display" style="width:60px; height:60px; border-radius:15px; object-fit:cover; border:2px solid var(--magenta);">
+            <div style="flex:1">
+                <h2 id="view-sys-name" style="margin:0; font-size:1.1rem;">System</h2>
+                <div id="view-sys-user" style="font-size:0.8rem; color:var(--magenta);">@username</div>
             </div>
-        </section>
-
-        <div class="fronting-box">
-            <h3>Currently Fronting</h3>
-            <div id="fronting-display" style="display:flex; flex-wrap:wrap; justify-content:center; gap:10px;"></div>
+            <button onclick="logout()" style="background:none; border:1px solid #ccc; padding:4px 8px; border-radius:8px; font-size:0.7rem;">Exit</button>
         </div>
 
-        <h3>System Directory</h3>
+        <div class="fronting-container">
+            <h4 style="margin: 0 0 10px 0">Fronting Now</h4>
+            <div id="fronting-display" style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap;"></div>
+        </div>
+        
         <div id="overview-list"></div>
+
+        <section style="padding: 0; overflow: hidden; margin-top:20px;">
+            <div style="background: var(--soft-pink); padding: 10px 15px; font-weight: bold; color: var(--magenta); display: flex; justify-content: space-between; align-items: center;">
+                <span>Front History</span>
+                <div style="display:flex; gap:10px;">
+                    <button onclick="window.location.href='mobilefh.html'" style="background:white; border:none; border-radius:5px; padding:3px 8px; font-size:0.7rem; color:var(--magenta);">Details</button>
+                    <button onclick="clearHistory()" style="background:none; border:none; font-size:0.7rem; color:#888;">Clear</button>
+                </div>
+            </div>
+            <div id="front-history-list" style="max-height: 250px; overflow-y: auto;"></div>
+        </section>
+    </div>
+
+    <div id="profiles" class="view-section">
+        <button class="main-btn" style="margin-bottom:15px;" onclick="openAlterEditor()">+ New Alter</button>
+        <div id="detailed-profiles-list"></div>
     </div>
 
     <div id="sidekicks" class="view-section">
         <section>
-            <h3>Add Buddy</h3>
-            <input type="text" id="sidekick-search" placeholder="Username...">
-            <button class="main-btn" onclick="addSidekick()">Add Sidekick</button>
+            <input type="text" id="friend-search" placeholder="Username...">
+            <button class="main-btn" onclick="addFriend()">Add Sidekick</button>
         </section>
-        <div id="sidekicks-list"></div>
+        <div id="friends-list-container"></div>
     </div>
+
+    <nav class="bottom-nav">
+        <button class="nav-item active" id="tab-overview" onclick="showTab('overview')"><span>🏠</span>Home</button>
+        <button class="nav-item" id="tab-profiles" onclick="showTab('profiles')"><span>👥</span>Alters</button>
+        <a href="mobileinternal.html" class="nav-item"><span>💭</span>Internal</a>
+        <a href="mobilechat.html" class="nav-item"><span>🌎</span>Global</a>
+        <button class="nav-item" id="tab-sidekicks" onclick="showTab('sidekicks')"><span>✨</span>Friends</button>
+    </nav>
 </div>
 
 <script>
 const SB_URL = 'https://ctrbkrwiwpojbzfpsxwl.supabase.co';
 const SB_KEY = 'sb_publishable_uK-ihohO48o6BPRW8rmDqQ_LbJnfTI7';
 const _supabase = supabase.createClient(SB_URL, SB_KEY);
-
-let systemData = { name: "System", bio: "", members: [], front_history: [] };
+let systemData = { name: '', bio: '', pfp: '', members: [], history: [] };
+let currentUser = null;
+let currentUsername = "";
 
 async function handleAuth() {
     const email = document.getElementById('email-input').value;
     const password = document.getElementById('passcode-input').value;
-    const { error } = await _supabase.auth.signInWithPassword({ email, password });
-    if (error) await _supabase.auth.signUp({ email, password });
+    await _supabase.auth.signInWithPassword({ email, password });
     location.reload();
 }
 
-async function sync() {
+async function loadData() {
     const { data: { user } } = await _supabase.auth.getUser();
-    if(!user) return;
-    await _supabase.from('profiles').upsert({ user_id: user.id, system_data: systemData });
-    document.getElementById('toast').className = 'show';
-    setTimeout(() => document.getElementById('toast').className = '', 3000);
-}
-
-function updateSystemInfo() {
-    systemData.name = document.getElementById('edit-sys-name').value || systemData.name;
-    systemData.bio = document.getElementById('edit-sys-bio').value || systemData.bio;
-    refreshUI(); sync();
+    if (!user) {
+        // If no user, hide loading screen to show login
+        document.getElementById('loading-screen').style.display = 'none';
+        return;
+    };
+    currentUser = user;
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    
+    const { data } = await _supabase.from('profiles').select('*').eq('user_id', user.id).single();
+    if (data) {
+        systemData = data.system_data || { members: [], history: [] };
+        if(!systemData.history) systemData.history = [];
+        currentUsername = data.username || "";
+    }
+    refreshUI();
+    loadFriendsLive();
+    
+    // HIDE LOADING SCREEN AFTER DATA IS LOADED
+    document.getElementById('loading-screen').style.display = 'none';
 }
 
 function refreshUI() {
-    document.getElementById('view-sys-name').innerText = systemData.name;
-    document.getElementById('view-sys-bio').innerText = systemData.bio;
-    const frontDisplay = document.getElementById('fronting-display');
-    const overviewList = document.getElementById('overview-list');
+    document.getElementById('view-sys-name').innerText = systemData.name || "System";
+    document.getElementById('view-sys-user').innerText = "@" + currentUsername;
+    document.getElementById('sys-pfp-display').src = systemData.pfp || "https://via.placeholder.com/150";
     
-    frontDisplay.innerHTML = ''; overviewList.innerHTML = '';
+    const fDisp = document.getElementById('fronting-display');
+    const oList = document.getElementById('overview-list');
+    const hList = document.getElementById('front-history-list');
+    const pList = document.getElementById('detailed-profiles-list');
+    fDisp.innerHTML = ''; oList.innerHTML = ''; hList.innerHTML = ''; pList.innerHTML = '';
 
-    systemData.members.forEach(m => {
-        if(m.isFronting) frontDisplay.innerHTML += `<div class="front-card-mini" style="border-color:${m.color}"><b>${m.name}</b></div>`;
-        overviewList.innerHTML += `<div class="card directory-card" style="border-color:${m.color}"><strong>${m.name}</strong><button class="main-btn" style="width:70px; padding:5px;" onclick="toggleFront(${m.id})">${m.isFronting ? 'Exit' : 'Front'}</button></div>`;
+    (systemData.members || []).forEach(m => {
+        if(m.isFronting) {
+            fDisp.innerHTML += `<div class="front-bubble"><button class="remove-front-dot" onclick="toggleFront(${m.id})">×</button><img src="${m.pfp}" class="mini-pfp" style="border-color:${m.color}"><div style="font-size:0.6rem; font-weight:bold; margin-top:2px;">${m.name}</div></div>`;
+        }
+        oList.innerHTML += `<div class="card" style="display:flex; justify-content:space-between; align-items:center; border-left: 8px solid ${m.color}"><strong>${m.name}</strong><button class="main-btn" style="width:auto; padding:8px 12px; margin:0;" onclick="toggleFront(${m.id})">${m.isFronting ? 'Leave' : 'Front'}</button></div>`;
+        pList.innerHTML += `<div class="card" onclick="openAlterEditor(${m.id})" style="display:flex; align-items:center; gap:15px; border-left: 8px solid ${m.color}"><img src="${m.pfp}" style="width:50px; height:50px; border-radius:10px; object-fit:cover;"><div style="flex:1"><div style="font-weight:bold;">${m.name}</div><div style="font-size:0.8rem; color:#888;">${m.role || ''} • ${m.pronouns || ''}</div></div><span>›</span></div>`;
     });
+
+    const hist = [...systemData.history].reverse().slice(0, 10);
+    hist.forEach((entry, i) => {
+        let isGrouped = false;
+        if (i < hist.length - 1) {
+            const diff = Math.abs(new Date(entry.timestamp || entry.startTime) - new Date(hist[i+1].timestamp || hist[i+1].startTime)) / 60000;
+            if (diff <= 3) isGrouped = true;
+        }
+        hList.innerHTML += `<div class="history-card">${isGrouped ? '<div class="grouped-indicator"></div>' : ''}<img src="${entry.pfp}" style="width:35px; height:35px; border-radius:50%; object-fit:cover;"><div style="flex:1"><div style="font-size:0.85rem; font-weight:bold;">${entry.name}</div><div style="font-size:0.7rem; color:#666;">${entry.status || 'Fronting'}</div></div><div style="font-size:0.7rem; color:#bbb;">${entry.displayTime || ''}</div></div>`;
+    });
+}
+
+function openSystemEditor() {
+    const overlay = document.getElementById('editor-overlay');
+    overlay.style.display = 'block';
+    document.getElementById('editor-content').innerHTML = `
+        <h2 style="color:var(--magenta)">System Settings</h2>
+        <div style="text-align:center;"><img src="${systemData.pfp || 'https://via.placeholder.com/150'}" id="preview-sys-pfp" style="width:100px; height:100px; border-radius:20px; border:3px solid var(--magenta); object-fit:cover;"></div>
+        <button class="secondary-btn" onclick="document.getElementById('sys-file-upload').click()">📷 Upload System PFP</button>
+        <input type="file" id="sys-file-upload" accept="image/*" style="display:none" onchange="handleSystemUpload(this)">
+        <label>System Name</label><input type="text" id="edit-sys-name" value="${systemData.name || ''}">
+        <label>Username</label><input type="text" id="edit-sys-user" value="${currentUsername}">
+        <label>Bio</label><textarea id="edit-sys-bio" rows="3">${systemData.bio || ''}</textarea>
+        <button class="main-btn" onclick="saveSystemSettings()">Save Changes</button>
+        <button class="secondary-btn" style="margin-top:20px;" onclick="exportData()">💾 Export Data Backup</button>`;
+}
+
+function handleSystemUpload(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            document.getElementById('preview-sys-pfp').src = e.target.result;
+            systemData.pfp = e.target.result;
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+async function saveSystemSettings() {
+    systemData.name = document.getElementById('edit-sys-name').value;
+    systemData.bio = document.getElementById('edit-sys-bio').value;
+    currentUsername = document.getElementById('edit-sys-user').value.replace('@','');
+    await _supabase.from('profiles').update({ system_data: systemData, username: currentUsername }).eq('user_id', currentUser.id);
+    refreshUI(); closeOverlay(); showToast("Updated ✨");
+}
+
+function openAlterEditor(id = null) {
+    const m = id ? systemData.members.find(x => x.id === id) : { id: Date.now(), name: '', role: '', pronouns: '', pfp: '', color: '#ff00ff', bio: '', isNew: true };
+    const overlay = document.getElementById('editor-overlay');
+    overlay.style.display = 'block';
+    document.getElementById('editor-content').innerHTML = `
+        <h2 style="color:var(--magenta)">${m.isNew ? 'New Alter' : 'Edit Profile'}</h2>
+        <div style="text-align:center;"><img src="${m.pfp || 'https://via.placeholder.com/150'}" id="preview-pfp" style="width:120px; height:120px; border-radius:20px; border:4px solid ${m.color}; object-fit:cover;"></div>
+        <button class="secondary-btn" onclick="document.getElementById('file-upload').click()">📷 Upload Photo</button>
+        <input type="file" id="file-upload" accept="image/*" style="display:none" onchange="handleAlterUpload(this)">
+        <label>Name</label><input type="text" id="edit-name" value="${m.name || ''}">
+        <label>PFP URL (Optional)</label><input type="text" id="edit-pfp" value="${m.pfp || ''}" onchange="document.getElementById('preview-pfp').src=this.value">
+        <label>Role</label><input type="text" id="edit-role" value="${m.role || ''}">
+        <label>Pronouns</label><input type="text" id="edit-pronouns" value="${m.pronouns || ''}">
+        <label>Theme Color</label><input type="color" id="edit-color" value="${m.color || '#ff00ff'}" style="height:50px;">
+        <label>Bio / Notes</label><textarea id="edit-bio" rows="4">${m.bio || ''}</textarea>
+        <button class="main-btn" onclick="saveAlter(${m.id}, ${m.isNew || false})">Save Alter</button>
+        ${!m.isNew ? `<button class="main-btn" style="background:none; color:red; border:1px solid red; margin-top:15px;" onclick="deleteAlter(${m.id})">Delete Alter</button>` : ''}`;
+}
+
+function handleAlterUpload(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            document.getElementById('preview-pfp').src = e.target.result;
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function saveAlter(id, isNew) {
+    const data = { 
+        id, 
+        name: document.getElementById('edit-name').value, 
+        pfp: document.getElementById('preview-pfp').src, 
+        role: document.getElementById('edit-role').value, 
+        pronouns: document.getElementById('edit-pronouns').value, 
+        color: document.getElementById('edit-color').value, 
+        bio: document.getElementById('edit-bio').value, 
+        isFronting: isNew ? false : systemData.members.find(x => x.id === id).isFronting,
+        status: isNew ? "" : (systemData.members.find(x => x.id === id).status || "")
+    };
+    if(isNew) systemData.members.push(data); 
+    else systemData.members[systemData.members.findIndex(x => x.id === id)] = data;
+    sync(); refreshUI(); closeOverlay();
 }
 
 function toggleFront(id) {
     const m = systemData.members.find(m => m.id == id);
-    if(!m) return;
-    m.isFronting = !m.isFronting;
-    refreshUI(); sync();
-}
-
-async function loadData() {
-    const bar = document.getElementById('load-progress');
-    const loader = document.getElementById('loading-screen');
-    
-    // Fail-safe: If it takes more than 6 seconds, just show the screen regardless
-    setTimeout(() => {
-        if(loader.style.display !== 'none') {
-            console.log("Loading taking too long, forcing display.");
-            loader.style.display = 'none';
+    const now = new Date();
+    if(!m.isFronting) {
+        const s = prompt(`Status for ${m.name}?`);
+        m.isFronting = true; m.status = s || ""; m.startTime = now.toISOString();
+        systemData.history.push({ id: m.id, name: m.name, pfp: m.pfp, status: m.status, startTime: m.startTime, displayTime: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), timestamp: now.toISOString() });
+    } else {
+        m.isFronting = false;
+        for (let i = systemData.history.length - 1; i >= 0; i--) {
+            if (systemData.history[i].id === m.id && !systemData.history[i].endTime) {
+                systemData.history[i].endTime = now.toISOString();
+                systemData.history[i].duration = Math.round((now - new Date(systemData.history[i].startTime)) / 60000);
+                break;
+            }
         }
-    }, 6000);
-
-    bar.style.width = '30%';
-    const { data: { user } } = await _supabase.auth.getUser();
-    
-    if (!user) {
-        loader.style.display = 'none';
-        document.getElementById('auth-screen').style.display = 'block';
-        return;
     }
-
-    bar.style.width = '60%';
-    const { data, error } = await _supabase.from('profiles').select('*').eq('user_id', user.id).single();
-    
-    if (data?.system_data) systemData = data.system_data;
-    
-    bar.style.width = '100%';
-    refreshUI();
-    
-    setTimeout(() => {
-        loader.style.display = 'none';
-        document.getElementById('dashboard').style.display = 'block';
-    }, 500);
+    if (systemData.history.length > 50) systemData.history.shift();
+    sync(); refreshUI();
 }
 
-function showTab(id) {
-    document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
+function exportData() {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(systemData));
+    const dlAnchorElem = document.createElement('a');
+    dlAnchorElem.setAttribute("href", dataStr);
+    dlAnchorElem.setAttribute("download", "pluralpoint_backup.json");
+    dlAnchorElem.click();
 }
 
+async function addFriend() {
+    const u = document.getElementById('friend-search').value.replace('@','');
+    const { data } = await _supabase.from('profiles').select('user_id').eq('username', u).single();
+    if(data) { await _supabase.from('connections').insert([{ user_id: currentUser.id, friend_id: data.user_id }]); loadFriendsLive(); showToast("Added ✨"); }
+}
+
+async function loadFriendsLive() {
+    const { data: conn } = await _supabase.from('connections').select('friend_id').eq('user_id', currentUser.id);
+    const { data: profs } = await _supabase.from('profiles').select('username, system_data').in('user_id', conn?.map(c => c.friend_id) || []);
+    const cont = document.getElementById('friends-list-container'); cont.innerHTML = '';
+    profs?.forEach(p => {
+        const fronts = (p.system_data?.members || []).filter(m => m.isFronting);
+        let fH = fronts.length > 0 ? '' : '<div style="font-size:0.75rem; color:#999;">Offline</div>';
+        fronts.forEach(f => fH += `<div style="display:flex; align-items:center; gap:8px; margin-top:5px;"><img src="${f.pfp}" style="width:30px; height:30px; border-radius:50%; border:2px solid ${f.color}"><div style="font-size:0.8rem;"><strong>${f.name}</strong>: ${f.status || 'Fronting'}</div></div>`);
+        cont.innerHTML += `<div class="card"><strong>@${p.username}</strong>${fH}</div>`;
+    });
+}
+
+async function deleteAlter(id) { if(confirm("Permanently delete this alter?")) { systemData.members = systemData.members.filter(m => m.id !== id); sync(); refreshUI(); closeOverlay(); } }
+async function sync() { await _supabase.from('profiles').update({ system_data: systemData }).eq('user_id', currentUser.id); showToast("Synced ✨"); }
+function showToast(m) { const t = document.getElementById('toast'); t.innerText = m; t.className = 'show'; setTimeout(() => t.className = '', 2000); }
+function showTab(id) { document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); document.getElementById(id).classList.add('active'); document.getElementById('tab-'+id).classList.add('active'); }
+function closeOverlay() { document.getElementById('editor-overlay').style.display = 'none'; }
 function logout() { _supabase.auth.signOut(); location.reload(); }
+function clearHistory() { if(confirm("Clear history?")) { systemData.history = []; sync(); refreshUI(); } }
 window.onload = loadData;
 </script>
 </body>

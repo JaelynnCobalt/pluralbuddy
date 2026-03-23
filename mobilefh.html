@@ -2,332 +2,131 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>System Master Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>PluralPoint | Detailed History</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --bg: #fff0f6; --panel: #ffffff; --soft-pink: #ffdeeb; --magenta: #ff00ff; --front-gold: #fff9c4; }
-        * { font-family: 'Georgia', serif; box-sizing: border-box; color: var(--magenta); }
-        body { background-color: var(--bg); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
-        h1, h2, h3 { color: var(--magenta) !important; }
-
-        /* LOADING SCREEN */
-        #loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 20000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .loader-container { width: 200px; height: 6px; background: var(--soft-pink); border-radius: 10px; overflow: hidden; margin-top: 15px; }
-        .loader-bar { width: 0%; height: 100%; background: var(--magenta); transition: width 0.3s ease; }
-        .loading-text { font-weight: bold; font-size: 1.1rem; letter-spacing: 1px; }
-
-        #dashboard { display: none; width: 100%; max-width: 1100px; }
-        nav { margin-bottom: 30px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-        .tab-btn, .nav-link { padding: 10px 20px; border: 2px solid var(--magenta); background: white; cursor: pointer; border-radius: 50px; font-weight: bold; transition: 0.3s; text-decoration: none; font-size: 0.9rem; }
-        .tab-btn.active { background: var(--magenta); color: white !important; }
-
-        .view-section { display: none; width: 100%; }
-        .view-section.active { display: block; }
-        section, .card { background: var(--panel); padding: 20px; border-radius: 20px; border: 2px solid var(--soft-pink); box-shadow: 0 10px 25px rgba(255, 0, 255, 0.05); margin-bottom: 20px; }
-        input, textarea, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid var(--soft-pink); border-radius: 10px; }
-        .main-btn { background: var(--magenta); color: white !important; border: none; padding: 12px; border-radius: 10px; cursor: pointer; width: 100%; font-size: 1rem; font-weight: bold; }
-
-        .directory-card { border-left: 10px solid; display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; }
-        .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-        .profile-card { border-top: 10px solid; position: relative; display: flex; flex-direction: column; }
-        .pfp-img { width: 120px; height: 120px; border-radius: 15px; object-fit: cover; border: 3px solid var(--soft-pink); align-self: center; margin-bottom: 15px; }
-        .detail-label { font-weight: bold; font-size: 0.7rem; text-transform: uppercase; margin-top: 10px; opacity: 0.7; }
-        .detail-text { font-size: 0.95rem; font-weight: bold; white-space: pre-wrap; margin: 0; }
-        .mini-btn { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--soft-pink); cursor: pointer; background: white; font-size: 0.8rem; margin-top: 5px; font-weight: bold; }
-
-        .fronting-box { background: var(--front-gold); border: 2px dashed var(--magenta); padding: 25px; border-radius: 20px; text-align: center; margin-bottom: 20px; }
-        .front-card-mini { background: white; padding: 10px 15px; border-radius: 15px; border: 2px solid; display: flex; align-items: center; gap: 12px; position: relative; }
-        .remove-front-btn { position: absolute; top: -8px; right: -8px; background: white; border: 2px solid; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; }
-
-        .history-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; }
-        .history-table th { text-align: left; border-bottom: 2px solid var(--soft-pink); padding: 10px; color: var(--magenta); }
-        .history-table td { padding: 12px 10px; border-bottom: 1px solid var(--soft-pink); vertical-align: top; }
-
-        #profile-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 240, 246, 0.98); z-index: 9999; overflow-y: auto; padding: 20px; }
-        .overlay-content { max-width: 1000px; margin: 40px auto; background: white; padding: 30px; border-radius: 30px; border: 3px solid var(--magenta); position: relative; }
-        .close-overlay { position: absolute; top: 20px; right: 25px; font-size: 40px; cursor: pointer; }
+        :root { --bg: #fff0f6; --panel: #ffffff; --soft-pink: #ffdeeb; --magenta: #ff00ff; --gold: #fff9c4; }
+        * { font-family: 'system-ui', -apple-system, sans-serif; box-sizing: border-box; }
         
-        #toast { visibility: hidden; min-width: 250px; background-color: var(--magenta); color: #fff; text-align: center; border-radius: 50px; padding: 16px; position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 30000; }
-        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
-        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
-        @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+        body { background-color: var(--bg); margin: 0; padding: 20px 15px; min-height: 100vh; pb: 50px; }
+
+        /* HEADER */
+        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; position: sticky; top: 0; background: var(--bg); z-index: 100; padding: 10px 0; }
+        .back-btn { background: var(--panel); border: 2px solid var(--soft-pink); padding: 8px 15px; border-radius: 12px; text-decoration: none; color: var(--magenta); font-weight: bold; font-size: 0.9rem; }
+
+        /* SESSION CARDS */
+        .session-group { background: var(--panel); border-radius: 20px; border: 2px solid var(--soft-pink); margin-bottom: 15px; overflow: hidden; box-shadow: 0 4px 10px rgba(255, 0, 255, 0.05); }
+        .group-header { background: var(--soft-pink); padding: 8px 15px; font-size: 0.75rem; font-weight: bold; color: var(--magenta); display: flex; justify-content: space-between; }
+        
+        .entry { display: flex; align-items: center; padding: 15px; border-bottom: 1px solid #f0f0f0; gap: 12px; }
+        .entry:last-child { border-bottom: none; }
+        .entry-pfp { width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--magenta); object-fit: cover; }
+        
+        .entry-info { flex: 1; }
+        .entry-name { font-weight: bold; font-size: 1rem; margin-bottom: 2px; }
+        .entry-status { font-size: 0.8rem; color: #666; font-style: italic; }
+        
+        .entry-times { text-align: right; font-size: 0.7rem; color: #888; line-height: 1.4; }
+        .duration-tag { display: inline-block; background: var(--gold); color: #856404; padding: 2px 6px; border-radius: 6px; font-weight: bold; margin-top: 4px; }
+
+        .empty-state { text-align: center; padding: 40px 20px; color: #999; }
     </style>
 </head>
 <body>
 
-<div id="loading-screen">
-    <div class="loading-text">CONNECTING TO INNER WORLD...</div>
-    <div class="loader-container">
-        <div id="load-progress" class="loader-bar"></div>
+    <div class="header">
+        <a href="mobileindex.html" class="back-btn">← Home</a>
+        <h2 style="margin:0; color:var(--magenta); font-size: 1.2rem;">Full History</h2>
     </div>
-</div>
 
-<div id="toast">Synced to Cloud! ✨</div>
-
-<div id="profile-overlay">
-    <div class="overlay-content">
-        <span class="close-overlay" onclick="closeOverlay()">&times;</span>
-        <div id="overlay-body"></div>
-    </div>
-</div>
-
-<div id="auth-screen" style="display:none;">
-    <section class="card" style="max-width: 400px; margin: 100px auto; text-align: center;">
-        <h1>System Entry</h1>
-        <input type="email" id="email-input" placeholder="Email">
-        <input type="password" id="passcode-input" placeholder="Password">
-        <button class="main-btn" onclick="handleAuth()">Login / Register</button>
-    </section>
-</div>
-
-<div id="dashboard">
-    <nav>
-        <button class="tab-btn active" id="btn-overview" onclick="showTab('overview')">Overview</button>
-        <button class="tab-btn" id="btn-profiles" onclick="showTab('profiles')">Profiles</button>
-        <button class="tab-btn" id="btn-sidekicks" onclick="showTab('sidekicks')">Sidekicks</button>
-        <button class="tab-btn" style="border-color: #aaa; color: #aaa;" onclick="logout()">Logout</button>
-    </nav>
-
-    <div id="overview" class="view-section active">
-        <section>
-            <h1 id="view-sys-name">Loading...</h1>
-            <p id="view-sys-bio">Accessing system files...</p>
-            <div style="display: flex; gap: 10px; margin-top:15px;">
-                <input type="text" id="edit-sys-name" placeholder="System Name" style="flex:1">
-                <input type="text" id="edit-sys-bio" placeholder="System Bio" style="flex:2">
-                <button class="mini-btn" onclick="updateSystemInfo()" style="width: 80px;">Save</button>
-            </div>
-            <div style="margin-top: 15px;">
-                <label style="font-size: 0.7rem; font-weight: bold;">SYSTEM USERNAME:</label>
-                <div style="display: flex; gap: 10px;">
-                    <input type="text" id="edit-username" placeholder="Username">
-                    <button class="mini-btn" onclick="updateUsername()" style="width: 100px;">Set</button>
-                </div>
-            </div>
-        </section>
-
-        <div class="fronting-box">
-            <h3 style="margin-top:0">Currently Fronting</h3>
-            <div id="fronting-display" style="display:flex; flex-wrap:wrap; justify-content:center; gap:15px;"></div>
+    <div id="history-container">
         </div>
-
-        <section>
-            <h3>Front History Chart</h3>
-            <div style="max-height: 300px; overflow-y: auto;">
-                <table class="history-table">
-                    <thead>
-                        <tr>
-                            <th>Time</th>
-                            <th>Alters</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="front-history-rows"></tbody>
-                </table>
-            </div>
-            <button class="mini-btn" style="margin-top:10px; color:red; border-color:red; width:120px;" onclick="clearHistory()">Clear History</button>
-        </section>
-
-        <h3>System Directory</h3>
-        <div id="overview-list"></div>
-    </div>
-
-    <div id="profiles" class="view-section">
-        <section>
-            <h2 id="form-title">Manage Alters</h2>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <input type="hidden" id="edit-id">
-                <input type="text" id="name" placeholder="Name">
-                <input type="text" id="pronouns" placeholder="Pronouns">
-                <input type="text" id="role" placeholder="Role">
-                <input type="text" id="fandoms" placeholder="Fandoms">
-                <div style="grid-column: span 2;">
-                    <label style="font-size: 0.7rem; font-weight:bold;">Theme Color:</label>
-                    <input type="color" id="color" value="#ff00ff">
-                </div>
-                <textarea id="bio" placeholder="Bio..." style="grid-column: span 2; height: 100px;"></textarea>
-                <input type="file" id="pfp" accept="image/*" style="grid-column: span 2;">
-            </div>
-            <button class="main-btn" onclick="saveAlter()" style="margin-top:10px;">Save Alter</button>
-            <button class="mini-btn" id="cancel-edit" style="display:none;" onclick="clearForm()">Cancel Edit</button>
-        </section>
-        <div id="detailed-profiles-list" class="grid-container"></div>
-    </div>
-
-    <div id="sidekicks" class="view-section">
-        <div style="display:grid; grid-template-columns: 1fr 2fr; gap:20px;">
-            <section>
-                <h3>Add Buddy</h3>
-                <input type="text" id="sidekick-search" placeholder="Username...">
-                <button class="main-btn" onclick="addSidekick()">Add Sidekick</button>
-            </section>
-            <section>
-                <h3>My Sidekicks</h3>
-                <div id="sidekicks-list"></div>
-            </section>
-        </div>
-    </div>
-</div>
 
 <script>
-const SB_URL = 'https://ctrbkrwiwpojbzfpsxwl.supabase.co';
-const SB_KEY = 'sb_publishable_uK-ihohO48o6BPRW8rmDqQ_LbJnfTI7';
-const _supabase = supabase.createClient(SB_URL, SB_KEY);
+    const SB_URL = 'https://ctrbkrwiwpojbzfpsxwl.supabase.co';
+    const SB_KEY = 'sb_publishable_uK-ihohO48o6BPRW8rmDqQ_LbJnfTI7';
+    const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
-let systemData = { name: "System Name", bio: "Bio...", members: [], front_history: [] };
-let realtimeChannel = null;
+    async function loadFullHistory() {
+        const { data: { user } } = await _supabase.auth.getUser();
+        if (!user) { window.location.href = 'mobileindex.html'; return; }
 
-// --- UTILS ---
-function showToast() { const t = document.getElementById('toast'); t.className = 'show'; setTimeout(() => t.className = '', 3000); }
-function logout() { _supabase.auth.signOut(); location.reload(); }
-function showTab(id) {
-    document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
-    document.getElementById('btn-'+id).classList.add('active');
-    if(id === 'sidekicks') loadSidekicks();
-}
+        const { data } = await _supabase.from('profiles').select('system_data').eq('user_id', user.id).single();
+        const history = data?.system_data?.history || [];
+        renderHistory(history);
+    }
 
-// --- AUTH ---
-async function handleAuth() {
-    const email = document.getElementById('email-input').value;
-    const password = document.getElementById('passcode-input').value;
-    const { error } = await _supabase.auth.signInWithPassword({ email, password });
-    if (error) await _supabase.auth.signUp({ email, password });
-    location.reload();
-}
-
-// --- CORE DATA ---
-async function sync() {
-    const { data: { user } } = await _supabase.auth.getUser();
-    await _supabase.from('profiles').upsert({ user_id: user.id, system_data: systemData });
-    showToast();
-}
-
-async function subscribeToUpdates() {
-    if (realtimeChannel) _supabase.removeChannel(realtimeChannel);
-    realtimeChannel = _supabase.channel('public:profiles')
-        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, () => {
-            loadSidekicks(); 
-        }).subscribe();
-}
-
-function refreshUI() {
-    document.getElementById('view-sys-name').innerText = systemData.name;
-    document.getElementById('view-sys-bio').innerText = systemData.bio;
-    const frontDisplay = document.getElementById('fronting-display');
-    const overviewList = document.getElementById('overview-list');
-    const detailedList = document.getElementById('detailed-profiles-list');
-    const historyRows = document.getElementById('front-history-rows');
-    
-    frontDisplay.innerHTML = ''; overviewList.innerHTML = ''; detailedList.innerHTML = ''; historyRows.innerHTML = '';
-
-    systemData.front_history.forEach(entry => {
-        historyRows.innerHTML += `<tr><td>${entry.time}</td><td>${entry.members.join(', ')}</td><td>${entry.statuses.join('<br>') || '—'}</td></tr>`;
-    });
-
-    systemData.members.forEach(m => {
-        if(m.isFronting) {
-            frontDisplay.innerHTML += `<div class="front-card-mini" style="border-color:${m.color}"><b>${m.name}</b><button class="remove-front-btn" onclick="toggleFront(${m.id})">×</button></div>`;
+    function renderHistory(history) {
+        const container = document.getElementById('history-container');
+        if (history.length === 0) {
+            container.innerHTML = `<div class="empty-state">No history recorded yet. Start fronting to see logs!</div>`;
+            return;
         }
-        overviewList.innerHTML += `<div class="card directory-card" style="border-color:${m.color}"><div><strong style="color:${m.color}">${m.name}</strong></div><button class="mini-btn" style="width:70px;" onclick="toggleFront(${m.id})">${m.isFronting ? 'Exit' : 'Front'}</button></div>`;
-        detailedList.innerHTML += `<div class="card profile-card" style="border-color:${m.color}"><h2>${m.name}</h2><button class="mini-btn" onclick="toggleFront(${m.id})">Toggle Front</button><button class="mini-btn" onclick="editAlter(${m.id})">Edit</button></div>`;
-    });
-}
 
-function toggleFront(id) {
-    const m = systemData.members.find(m => m.id == id);
-    m.isFronting = !m.isFronting;
-    if (m.isFronting) {
-        const status = prompt(`Status for ${m.name}:`, "Fronting");
-        const timestamp = new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-        const last = systemData.front_history[0];
-        if (last && last.time === timestamp) {
-            last.members.push(m.name);
-            if (status) last.statuses.push(`${m.name}: ${status}`);
-        } else {
-            systemData.front_history.unshift({ time: timestamp, members: [m.name], statuses: status ? [`${m.name}: ${status}`] : [] });
-        }
-    }
-    refreshUI(); sync();
-}
+        // 1. Sort history newest first
+        const sorted = [...history].reverse();
+        
+        // 2. Grouping Logic (3-minute window)
+        let groups = [];
+        let currentGroup = [];
 
-// --- SIDEKICKS ---
-async function addSidekick() {
-    const target = document.getElementById('sidekick-search').value;
-    const { data: friend } = await _supabase.from('profiles').select('user_id').eq('username', target).single();
-    if(!friend) return alert("Not found.");
-    const { data: { user } } = await _supabase.auth.getUser();
-    await _supabase.from('connections').insert([{ user_id: user.id, friend_id: friend.user_id }]);
-    loadSidekicks();
-}
+        sorted.forEach((entry, index) => {
+            if (currentGroup.length === 0) {
+                currentGroup.push(entry);
+            } else {
+                const prevEntry = currentGroup[currentGroup.length - 1];
+                const timeA = new Date(entry.timestamp || entry.startTime);
+                const timeB = new Date(prevEntry.timestamp || prevEntry.startTime);
+                const diff = Math.abs(timeA - timeB) / 60000; // minutes
 
-async function loadSidekicks() {
-    const { data: { user } } = await _supabase.auth.getUser();
-    const { data: connections } = await _supabase.from('connections').select('friend_id').eq('user_id', user.id);
-    if (!connections?.length) return;
-    const { data: profiles } = await _supabase.from('profiles').select('username, system_data').in('user_id', connections.map(c => c.friend_id));
-    const list = document.getElementById('sidekicks-list');
-    list.innerHTML = '';
-    profiles.forEach(p => {
-        list.innerHTML += `<div class="card" onclick='openOverlay(${JSON.stringify(p)})'><strong>${p.username}</strong></div>`;
-    });
-}
+                if (diff <= 3) {
+                    currentGroup.push(entry);
+                } else {
+                    groups.push(currentGroup);
+                    currentGroup = [entry];
+                }
+            }
+            // Push the final group
+            if (index === sorted.length - 1) groups.push(currentGroup);
+        });
 
-function openOverlay(buddy) {
-    const bData = buddy.system_data || {};
-    document.getElementById('overlay-body').innerHTML = `<h1>${buddy.username}</h1><p>${bData.bio || ''}</p>`;
-    document.getElementById('profile-overlay').style.display = 'block';
-}
-function closeOverlay() { document.getElementById('profile-overlay').style.display = 'none'; }
+        // 3. Build the HTML
+        container.innerHTML = '';
+        groups.forEach(group => {
+            const firstEntryDate = new Date(group[0].startTime || group[0].timestamp).toLocaleDateString();
+            
+            let groupHtml = `<div class="session-group">
+                <div class="group-header">
+                    <span>${firstEntryDate}</span>
+                    <span>${group.length > 1 ? 'Co-Front / Switch' : 'Session'}</span>
+                </div>`;
+            
+            group.forEach(entry => {
+                const start = entry.startTime ? new Date(entry.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '??:??';
+                const end = entry.endTime ? new Date(entry.endTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Active';
+                const duration = entry.duration ? `${entry.duration}m` : '...';
 
-// --- SYSTEM SETTINGS ---
-function updateSystemInfo() {
-    systemData.name = document.getElementById('edit-sys-name').value || systemData.name;
-    systemData.bio = document.getElementById('edit-sys-bio').value || systemData.bio;
-    refreshUI(); sync();
-}
-function updateUsername() {
-    const newU = document.getElementById('edit-username').value;
-    _supabase.auth.getUser().then(({data}) => {
-        _supabase.from('profiles').update({ username: newU }).eq('user_id', data.user.id).then(() => alert("Saved!"));
-    });
-}
+                groupHtml += `
+                    <div class="entry">
+                        <img src="${entry.pfp}" class="entry-pfp">
+                        <div class="entry-info">
+                            <div class="entry-name">${entry.name}</div>
+                            <div class="entry-status">${entry.status || 'No status set'}</div>
+                        </div>
+                        <div class="entry-times">
+                            <div>${start} - ${end}</div>
+                            <div class="duration-tag">${duration}</div>
+                        </div>
+                    </div>`;
+            });
 
-// --- INITIAL LOAD (OPTIMIZED) ---
-async function loadData() {
-    const bar = document.getElementById('load-progress');
-    bar.style.width = '20%';
-
-    const { data: { user } } = await _supabase.auth.getUser();
-    if (!user) {
-        document.getElementById('loading-screen').style.display = 'none';
-        document.getElementById('auth-screen').style.display = 'block';
-        return;
+            groupHtml += `</div>`;
+            container.innerHTML += groupHtml;
+        });
     }
 
-    bar.style.width = '50%';
-    const { data } = await _supabase.from('profiles').select('*').eq('user_id', user.id).single();
-    
-    if (data) {
-        if (data.system_data) systemData = data.system_data;
-        if (data.username) document.getElementById('edit-username').value = data.username;
-    }
-
-    bar.style.width = '90%';
-    refreshUI();
-    subscribeToUpdates();
-    
-    // Quick exit from loading screen
-    bar.style.width = '100%';
-    setTimeout(() => {
-        document.getElementById('loading-screen').style.display = 'none';
-        document.getElementById('dashboard').style.display = 'block';
-    }, 500);
-}
-
-window.onload = loadData;
+    loadFullHistory();
 </script>
 </body>
 </html>

@@ -27,24 +27,23 @@
         /* UI ELEMENTS */
         .view-section { display: none; }
         .view-section.active { display: block; }
-        section, .card { background: var(--panel); padding: 15px; border-radius: 20px; border: 2px solid var(--soft-pink); margin-bottom: 15px; }
+        section, .card { background: var(--panel); padding: 15px; border-radius: 20px; border: 2px solid var(--soft-pink); margin-bottom: 15px; position: relative; }
         .main-btn { background: var(--magenta); color: white; border: none; padding: 12px; border-radius: 12px; width: 100%; font-weight: bold; font-size: 1rem; margin-top: 5px; cursor: pointer; }
         .logout-btn { background: white; color: var(--magenta); border: 2px solid var(--soft-pink); padding: 5px 12px; border-radius: 10px; font-weight: bold; font-size: 0.8rem; cursor: pointer; }
         input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid var(--soft-pink); border-radius: 12px; font-size: 16px; background: #fafafa; }
         label { font-size: 0.8rem; font-weight: bold; color: #666; margin-left: 5px; }
         
-        /* FILE INPUT HACK */
         .file-input-label { display: block; width: 100%; text-align: center; padding: 10px; background: var(--soft-pink); color: var(--magenta); border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 5px; border: 2px dashed var(--magenta); }
 
         /* FRONTING */
-        .fronting-container { background: var(--front-gold); padding: 15px; border-radius: 20px; border: 2px dashed var(--magenta); margin-bottom: 20px; text-align: center; min-height: 100px; }
+        .fronting-container { background: var(--front-gold); padding: 15px; border-radius: 20px; border: 2px dashed var(--magenta); margin-bottom: 20px; text-align: center; min-height: 80px; }
         .front-bubble { display: inline-flex; flex-direction: column; align-items: center; margin: 5px; position: relative; }
         .mini-pfp { width: 55px; height: 55px; border-radius: 50%; object-fit: cover; border: 3px solid var(--magenta); background: white; }
-        .remove-front-dot { position: absolute; top: -2px; right: -2px; background: #ff4d4d; color: white; border-radius: 50%; width: 22px; height: 22px; border: 2px solid white; font-weight: bold; font-size: 14px; display: flex; align-items: center; justify-content: center; z-index: 10; cursor: pointer; }
+        .remove-front-dot { position: absolute; top: -2px; right: -2px; background: #ff4444; color: white; border-radius: 50%; width: 22px; height: 22px; border: 2px solid white; font-weight: bold; font-size: 16px; display: flex; align-items: center; justify-content: center; z-index: 10; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
         .history-card { padding: 10px 15px; border-bottom: 1px solid var(--soft-pink); display: flex; align-items: center; gap: 12px; }
         
-        #toast { visibility: hidden; background: var(--magenta); color: white; padding: 12px 25px; border-radius: 50px; position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); z-index: 3000; transition: 0.3s; opacity: 0; }
-        #toast.show { visibility: visible; opacity: 1; }
+        #toast { visibility: hidden; background: var(--magenta); color: white; padding: 12px 25px; border-radius: 50px; position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); z-index: 3000; }
+        #toast.show { visibility: visible; }
     </style>
 </head>
 <body>
@@ -127,10 +126,6 @@
             <input type="text" id="edit-username" placeholder="handle">
             <label>Bio</label>
             <textarea id="edit-bio" rows="3" placeholder="Tell us about your system..."></textarea>
-            <div class="card" style="background: var(--soft-pink); text-align: center; border: none;">
-                <span style="font-size: 0.8rem; color: var(--magenta); font-weight: bold;">Alter Count: </span>
-                <span id="edit-alter-count" style="font-weight: bold; color: var(--magenta);">0</span>
-            </div>
             <button class="main-btn" onclick="saveSettings()">Save Changes</button>
             <button class="main-btn" style="background:#ccc; margin-top:10px;" onclick="showTab('overview')">Cancel</button>
         </section>
@@ -178,31 +173,23 @@ async function loadData() {
             document.getElementById('auth-screen').style.display = 'block';
             return;
         };
-        
-        updateLoading(60);
         currentUser = user;
+        updateLoading(60);
         const { data } = await _supabase.from('profiles').select('*').eq('user_id', user.id).single();
-        
         if (data) {
             systemData = data.system_data || { members: [], history: [], bio: "" };
             if(!systemData.history) systemData.history = [];
             currentUsername = data.username || "";
         }
-        
         updateLoading(85);
         refreshUI();
         await loadFriendsLive();
         updateLoading(100);
-        
         setTimeout(() => {
             document.getElementById('loading-screen').style.display = 'none';
             document.getElementById('dashboard').style.display = 'block';
         }, 600);
-    } catch (err) {
-        console.error(err);
-        document.getElementById('loading-screen').style.display = 'none';
-        document.getElementById('dashboard').style.display = 'block';
-    }
+    } catch (err) { console.error(err); }
 }
 
 function refreshUI() {
@@ -215,16 +202,22 @@ function refreshUI() {
     const hList = document.getElementById('front-history-list');
     fDisp.innerHTML = ''; oList.innerHTML = ''; hList.innerHTML = '';
 
-    const frontingCount = (systemData.members || []).filter(m => m.isFronting).length;
-    if(frontingCount === 0) {
-        fDisp.innerHTML = '<div style="color:#aaa; font-style:italic; font-size:0.8rem; margin-top:10px;">No one is fronting</div>';
-    }
-
     (systemData.members || []).forEach(m => {
         if(m.isFronting) {
-            fDisp.innerHTML += `<div class="front-bubble"><button class="remove-front-dot" onclick="toggleFront(${m.id})">×</button><img src="${m.pfp}" class="mini-pfp" style="border-color:${m.color}"><div style="font-size:0.6rem; font-weight:bold; margin-top:2px;">${m.name}</div></div>`;
+            fDisp.innerHTML += `
+            <div class="front-bubble">
+                <button class="remove-front-dot" onclick="toggleFront(${m.id})">×</button>
+                <img src="${m.pfp}" class="mini-pfp" style="border-color:${m.color}">
+                <div style="font-size:0.6rem; font-weight:bold; margin-top:2px;">${m.name}</div>
+            </div>`;
         }
-        oList.innerHTML += `<div class="card" style="display:flex; justify-content:space-between; align-items:center; border-left: 8px solid ${m.color}"><strong>${m.name}</strong><button class="main-btn" style="width:auto; padding:8px 12px; margin:0;" onclick="toggleFront(${m.id})">${m.isFronting ? 'Leave' : 'Front'}</button></div>`;
+        oList.innerHTML += `
+        <div class="card" style="display:flex; justify-content:space-between; align-items:center; border-left: 8px solid ${m.color}">
+            <strong>${m.name}</strong>
+            <button class="main-btn" style="width:auto; padding:8px 12px; margin:0; background: ${m.isFronting ? '#ff4444' : 'var(--magenta)'}" onclick="toggleFront(${m.id})">
+                ${m.isFronting ? 'Leave' : 'Front'}
+            </button>
+        </div>`;
     });
 
     const hist = [...systemData.history].reverse().slice(0, 5);
@@ -234,44 +227,44 @@ function refreshUI() {
     });
 }
 
-function previewImage(input) {
-    if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            uploadedPfpBase64 = e.target.result;
-            document.getElementById('edit-pfp-preview').src = e.target.result;
-        }
-        reader.readAsDataURL(input.files[0]);
+async function toggleFront(id) {
+    const m = systemData.members.find(member => member.id == id);
+    if (!m) return;
+
+    if (!m.isFronting) {
+        const s = prompt(`Status for ${m.name}?`);
+        const now = new Date();
+        m.isFronting = true;
+        m.status = s || "Fronting";
+        m.startTime = now.toISOString();
+        systemData.history.push({ 
+            id: m.id, 
+            name: m.name, 
+            pfp: m.pfp, 
+            status: m.status, 
+            displayTime: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), 
+            timestamp: now.toISOString() 
+        });
+    } else {
+        m.isFronting = false;
+        m.status = "";
     }
+    
+    // UI updates immediately for snappiness
+    refreshUI();
+    // Then sync with database
+    await sync();
 }
 
-function showSettings() {
-    document.getElementById('edit-sys-name').value = systemData.name || "";
-    document.getElementById('edit-username').value = currentUsername || "";
-    document.getElementById('edit-bio').value = systemData.bio || "";
-    document.getElementById('edit-pfp-preview').src = systemData.pfp || "https://via.placeholder.com/150";
-    document.getElementById('edit-alter-count').innerText = (systemData.members || []).length;
-    showTab('settings');
+async function sync() { 
+    if (!currentUser) return;
+    const { error } = await _supabase.from('profiles').update({ system_data: systemData }).eq('user_id', currentUser.id);
+    if (error) console.error("Sync Error:", error);
+    showToast("Synced ✨"); 
 }
 
-async function saveSettings() {
-    systemData.name = document.getElementById('edit-sys-name').value;
-    systemData.bio = document.getElementById('edit-bio').value;
-    if(uploadedPfpBase64) systemData.pfp = uploadedPfpBase64;
-    currentUsername = document.getElementById('edit-username').value;
-
-    try {
-        const { error } = await _supabase.from('profiles').update({ 
-            system_data: systemData,
-            username: currentUsername 
-        }).eq('user_id', currentUser.id);
-
-        if (error) throw error;
-        showToast("✨ Profile Updated! ✨");
-        refreshUI();
-        showTab('overview');
-    } catch (e) { alert(e.message); }
-}
+function showToast(m) { const t = document.getElementById('toast'); t.innerText = m; t.className = 'show'; setTimeout(() => t.className = '', 2000); }
+async function logout() { await _supabase.auth.signOut(); location.reload(); }
 
 function showTab(id) { 
     document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active')); 
@@ -281,50 +274,36 @@ function showTab(id) {
     if(navBtn) navBtn.classList.add('active'); 
 }
 
-async function sync() { 
-    await _supabase.from('profiles').update({ system_data: systemData }).eq('user_id', currentUser.id); 
-    showToast("Synced ✨"); 
-}
-
-function showToast(m) { 
-    const t = document.getElementById('toast'); 
-    t.innerText = m; 
-    t.classList.add('show'); 
-    setTimeout(() => t.classList.remove('show'), 2000); 
-}
-
-async function logout() { await _supabase.auth.signOut(); location.reload(); }
-
-function toggleFront(id) {
-    const m = systemData.members.find(alter => alter.id == id);
-    if (!m) return;
-
-    const now = new Date();
-    if (!m.isFronting) {
-        const s = prompt(`Status for ${m.name}?`);
-        m.isFronting = true; 
-        m.status = s || "Fronting"; 
-        m.startTime = now.toISOString();
-        
-        systemData.history.push({ 
-            id: m.id, 
-            name: m.name, 
-            pfp: m.pfp, 
-            status: m.status, 
-            startTime: m.startTime, 
-            displayTime: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), 
-            timestamp: now.toISOString() 
-        });
-    } else {
-        // Correctly reset the fronting status
-        m.isFronting = false;
-        m.status = "";
-        m.startTime = null;
+function previewImage(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            uploadedPfpBase64 = e.target.result;
+            document.getElementById('edit-pfp-preview').src = e.target.result;
+        };
+        reader.readAsDataURL(input.files[0]);
     }
-    
-    // Refresh the UI immediately and then sync to database
-    refreshUI();
-    sync(); 
+}
+
+function showSettings() {
+    document.getElementById('edit-sys-name').value = systemData.name || "";
+    document.getElementById('edit-username').value = currentUsername || "";
+    document.getElementById('edit-bio').value = systemData.bio || "";
+    document.getElementById('edit-pfp-preview').src = systemData.pfp || "https://via.placeholder.com/150";
+    showTab('settings');
+}
+
+async function saveSettings() {
+    systemData.name = document.getElementById('edit-sys-name').value;
+    systemData.bio = document.getElementById('edit-bio').value;
+    if(uploadedPfpBase64) systemData.pfp = uploadedPfpBase64;
+    currentUsername = document.getElementById('edit-username').value;
+    try {
+        await _supabase.from('profiles').update({ system_data: systemData, username: currentUsername }).eq('user_id', currentUser.id);
+        showToast("✨ Profile Updated! ✨");
+        refreshUI();
+        showTab('overview');
+    } catch (e) { alert(e.message); }
 }
 
 async function loadFriendsLive() {
@@ -332,8 +311,7 @@ async function loadFriendsLive() {
         const { data: conn } = await _supabase.from('connections').select('friend_id').eq('user_id', currentUser.id);
         if (!conn || conn.length === 0) return;
         const { data: profs } = await _supabase.from('profiles').select('username, system_data').in('user_id', conn.map(c => c.friend_id));
-        const cont = document.getElementById('friends-list-container'); 
-        cont.innerHTML = '';
+        const cont = document.getElementById('friends-list-container'); cont.innerHTML = '';
         profs?.forEach(p => {
             const fronts = (p.system_data?.members || []).filter(m => m.isFronting);
             let fH = fronts.length > 0 ? '' : '<div style="font-size:0.75rem; color:#999;">Offline</div>';
